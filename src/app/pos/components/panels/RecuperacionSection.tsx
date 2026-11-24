@@ -35,6 +35,7 @@ interface RecoveryData {
   queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string; daysLeft?: number; minDays?: number }[]
   queueTotal?: number; pendingSurvey?: number; pendingCoupon?: number
   recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
+  recoveredClients?: { name: string | null; email: string; phone: string | null; orderId: string; orderTotal: number; orderDate: string; branchName: string | null; usedCoupon: boolean; items: { name: string; qty: number; price: number }[] }[]
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -236,7 +237,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       </div>
 
       {/* ── Resumen (embudo + estado de clientes) ── */}
-      <RecoverySummary k={k} queueCount={data.queueTotal ?? data.queue.length} pendingSurvey={data.pendingSurvey ?? 0} pendingCoupon={data.pendingCoupon ?? 0} couponRecipients={data.couponRecipients ?? []} onSelectClient={onSelectClient} />
+      <RecoverySummary k={k} queueCount={data.queueTotal ?? data.queue.length} pendingSurvey={data.pendingSurvey ?? 0} pendingCoupon={data.pendingCoupon ?? 0} couponRecipients={data.couponRecipients ?? []} recoveredClients={data.recoveredClients ?? []} onSelectClient={onSelectClient} />
 
       {/* ── Motivos de abandono (barras) ── */}
       {Object.keys(data.reasons).length > 0 && (
@@ -443,7 +444,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
 const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0)
 const fmt = (n: number) => n.toLocaleString('es-CL')
 
-type Stat = { label: string; value: string; hint?: string; color?: string }
+type Stat = { label: string; value: string; hint?: string; color?: string; onClick?: () => void }
 
 function StatGroup({ title, color, icon, stats, children }: { title: string; color: string; icon: React.ReactNode; stats: Stat[]; children?: React.ReactNode }) {
   return (
@@ -454,8 +455,10 @@ function StatGroup({ title, color, icon, stats, children }: { title: string; col
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, gap: 8 }}>
         {stats.map((st, i) => (
-          <div key={st.label} style={{ minWidth: 0, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? '1px solid var(--line)' : 'none' }}>
-            <div style={{ fontFamily: F, fontSize: '1.3rem', fontWeight: 900, color: st.color ?? 'var(--ink)', lineHeight: 1.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.value}</div>
+          <div key={st.label} onClick={st.onClick} style={{ minWidth: 0, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? '1px solid var(--line)' : 'none', cursor: st.onClick ? 'pointer' : undefined, borderRadius: st.onClick ? 8 : undefined, transition: 'background .15s' }}
+            onMouseEnter={st.onClick ? (e) => { (e.currentTarget as HTMLElement).style.background = 'var(--sunk)' } : undefined}
+            onMouseLeave={st.onClick ? (e) => { (e.currentTarget as HTMLElement).style.background = '' } : undefined}>
+            <div style={{ fontFamily: F, fontSize: '1.3rem', fontWeight: 900, color: st.color ?? 'var(--ink)', lineHeight: 1.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.value}{st.onClick && <span style={{ fontSize: '0.7rem', marginLeft: 4, opacity: 0.5 }}>{'>'}</span>}</div>
             <div style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, lineHeight: 1.25 }}>{st.label}</div>
             {st.hint && <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 500, color: 'var(--ink-4)', marginTop: 2 }}>{st.hint}</div>}
           </div>
@@ -468,12 +471,14 @@ function StatGroup({ title, color, icon, stats, children }: { title: string; col
 
 const ic = (d: React.ReactNode) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 
-function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, couponRecipients, onSelectClient }: {
+function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, couponRecipients, recoveredClients, onSelectClient }: {
   k: RecoveryData['kpis']; queueCount: number; pendingSurvey: number; pendingCoupon: number
   couponRecipients: NonNullable<RecoveryData['couponRecipients']>
+  recoveredClients: NonNullable<RecoveryData['recoveredClients']>
   onSelectClient?: (client: { email: string; name: string; phone: string }) => void
 }) {
   const [showCoupons, setShowCoupons] = useState(false)
+  const [showRecovered, setShowRecovered] = useState(false)
   const surveysSent = k.surveysSent ?? Math.max(0, k.contacted - k.couponsSent)
   const surveysOpened = k.surveysOpened ?? k.opened
   return (
@@ -534,9 +539,39 @@ function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, couponRe
       <StatGroup title="Resultados" color="#16a34a"
         icon={ic(<><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></>)}
         stats={[
-          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recoveryRate}% de contactados` : undefined },
+          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recoveryRate}% de contactados` : undefined, onClick: k.recovered > 0 ? () => setShowRecovered(v => !v) : undefined },
           { label: 'Ingresos recuperados', value: clp(k.recoveredRevenue), color: k.recoveredRevenue > 0 ? '#16a34a' : undefined },
-        ]} />
+        ]}>
+        {showRecovered && recoveredClients.length > 0 && (
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink-2)', marginBottom: 2 }}>Clientes que volvieron a pedir</div>
+            {recoveredClients.map(c => (
+              <div key={c.orderId} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
+                style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                  <span style={{ fontFamily: M, fontSize: '0.82rem', fontWeight: 900, color: '#16a34a', flexShrink: 0 }}>{clp(c.orderTotal)}</span>
+                </div>
+                <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', lineHeight: 1.4 }}>
+                  {new Date(c.orderDate).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {c.branchName ? ` \u00B7 ${c.branchName}` : ''}
+                  {c.usedCoupon ? ' \u00B7 \uD83C\uDF81 Us\u00F3 cup\u00F3n' : ' \u00B7 sin cup\u00F3n'}
+                </div>
+                {c.items.length > 0 && (
+                  <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {c.items.slice(0, 5).map((it, i) => (
+                      <span key={i} style={{ fontSize: '0.62rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--surface)', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+                        {it.qty > 1 ? `${it.qty}x ` : ''}{it.name}
+                      </span>
+                    ))}
+                    {c.items.length > 5 && <span style={{ fontSize: '0.62rem', color: 'var(--ink-4)' }}>+{c.items.length - 5} m\u00E1s</span>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </StatGroup>
     </div>
   )
 }

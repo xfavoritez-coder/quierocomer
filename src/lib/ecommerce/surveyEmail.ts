@@ -77,9 +77,6 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
       ${stars}
     </table>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:18px;"><tr><td align="center">
-      <a href="${esc(args.link)}" style="display:inline-block;background:${accent};color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;">Escribir un comentario →</a>
-    </td></tr></table>
     <p style="font-size:11px;color:#ccc;margin:14px 0 0;">Al tocar una estrella se guarda tu valoración automáticamente.</p>
   </td></tr>
   <tr><td align="center" style="padding:16px 0 0;">

@@ -65,16 +65,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         .slice(0, 6)
         .map((url) => ({ url }));
       const logoImage = tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : [];
+      const catTitle = `${category.name} · ${tenant.name}`;
+      const catDesc = `Pide ${category.name} en ${tenant.name}. ${categoryProducts.length} opciones disponibles.`;
+      const catOgImages = [...categoryImages, ...logoImage];
       return {
-        title: `${category.name} · ${tenant.name}`,
-        description: `Pide ${category.name} en ${tenant.name}. ${categoryProducts.length} opciones disponibles.`,
+        title: catTitle,
+        description: catDesc,
         ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
-        openGraph: {
-          title: `${category.name} · ${tenant.name}`,
-          description: `Pide ${category.name} en ${tenant.name}. ${categoryProducts.length} opciones disponibles.`,
-          images: [...categoryImages, ...logoImage],
-          type: "website",
-        },
+        openGraph: { title: catTitle, description: catDesc, images: catOgImages, type: "website" },
+        twitter: { card: "summary_large_image", title: catTitle, description: catDesc, images: catOgImages[0]?.url ? [catOgImages[0].url] : [] },
       };
     }
   }
@@ -83,19 +82,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = data.products.find((p) => slugify(p.name) === productSlug);
   const productImage = product?.image_url && /^https?:\/\//i.test(product.image_url) ? product.image_url : null;
 
+  const prodTitle = product ? `${product.name} · ${tenant.name}` : title;
+  const prodDesc = product?.description || tenant.metaDescription || `Haz tu pedido en ${tenant.name}. Rápido y fácil.`;
+  const prodOgImages = [
+    ...(productImage ? [{ url: productImage, width: 1200, height: 630, alt: product?.name || tenant.name }] : []),
+    ...(iconUrl ? [{ url: iconUrl, width: 400, height: 400, alt: tenant.name }] : []),
+  ];
   return {
-    title: product ? `${product.name} · ${tenant.name}` : title,
-    description: product?.description || tenant.metaDescription || `Haz tu pedido en ${tenant.name}. Rápido y fácil.`,
+    title: prodTitle,
+    description: prodDesc,
     ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
     openGraph: {
       title: product ? product.name : (tenant.pageTitle || tenant.name),
-      description: product?.description || tenant.metaDescription || `Haz tu pedido en ${tenant.name}.`,
-      images: [
-        ...(productImage ? [{ url: productImage }] : []),
-        ...(iconUrl ? [{ url: iconUrl, width: 400, height: 400, alt: tenant.name }] : []),
-      ],
+      description: prodDesc,
+      images: prodOgImages,
       type: "website",
     },
+    twitter: { card: "summary_large_image", title: prodTitle, description: prodDesc, images: prodOgImages[0]?.url ? [prodOgImages[0].url] : [] },
   };
 }
 

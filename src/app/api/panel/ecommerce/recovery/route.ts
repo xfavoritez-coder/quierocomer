@@ -72,7 +72,9 @@ export async function GET(req: NextRequest) {
   const sent = { length: sentEmails.size };
   const convertedEmails = new Set(enrollments.filter(e => e.status === "converted" || couponUsed(e)).map(e => e.customerEmail.toLowerCase()));
   const converted = { length: convertedEmails.size };
-  const openedEmails = new Set(enrollments.filter(e => e.openedAt || e.clickedAt || e.surveyAnsweredAt || e.status === "opened" || e.status === "clicked" || e.status === "converted").map(e => e.customerEmail.toLowerCase()));
+  // "Abierto" = el cliente interactuó (visitó la página, respondió encuesta, usó cupón).
+  // No se cuenta openedAt del pixel (falsos positivos de proxies de email).
+  const openedEmails = new Set(enrollments.filter(e => e.clickedAt || e.surveyAnsweredAt || e.status === "clicked" || e.status === "converted" || couponUsed(e)).map(e => e.customerEmail.toLowerCase()));
   const opened = { length: openedEmails.size };
 
   // Ingresos recuperados — deduplicar por orderId para no contar el mismo pedido 2 veces
@@ -94,6 +96,40 @@ export async function GET(req: NextRequest) {
     recoveredRevenue =
       onlineOrders.reduce((s, o) => s + Math.max(0, (o.total || 0) - (o.deliveryFee || 0)), 0) +
       posOrders.reduce((s, o) => s + Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)), 0);
+  }
+
+  // Detalle de clientes recuperados (para modal)
+  type RecoveredClient = { name: string | null; email: string; phone: string | null; orderId: string; orderTotal: number; orderDate: string; branchName: string | null; usedCoupon: boolean; items: { name: string; qty: number; price: number }[] };
+  const recoveredClients: RecoveredClient[] = [];
+  if (converted.length > 0) {
+    const convertedEnrollmentsList = enrollments.filter(e => e.status === "converted" || couponUsed(e));
+    // Deduplicar por email — un enrollment por cliente
+    const seenRecoveredEmail = new Set<string>();
+    for (const e of convertedEnrollmentsList) {
+      const em = e.customerEmail.toLowerCase();
+      if (seenRecoveredEmail.has(em)) continue;
+      seenRecoveredEmail.add(em);
+      const oid = couponUsed(e) ? useByCode.get(e.couponCode!)?.orderId : e.convertedOrderId;
+      if (!oid) continue;
+      // Intentar primero como OnlineOrder, luego como PosOrder
+      const oo = await prisma.onlineOrder.findUnique({
+        where: { id: oid },
+        select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, restaurant: { select: { name: true, ecommerceStoreConfig: true } } },
+      });
+      if (oo) {
+        const branchCfg = oo.restaurant?.ecommerceStoreConfig as Record<string, unknown> | null;
+        const branchName = (branchCfg?.branchName as string) || null;
+        const items = Array.isArray(oo.items) ? (oo.items as { name?: string; quantity?: number; price?: number }[]).map(it => ({
+          name: it.name || "?", qty: it.quantity ?? 1, price: it.price ?? 0,
+        })) : [];
+        recoveredClients.push({
+          name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null,
+          orderId: oo.id, orderTotal: Math.max(0, (oo.total || 0) - (oo.deliveryFee || 0)),
+          orderDate: oo.createdAt.toISOString(), branchName,
+          usedCoupon: couponUsed(e), items,
+        });
+      }
+    }
   }
 
   // Razones de abandono
@@ -247,12 +283,13 @@ export async function GET(req: NextRequest) {
       recovered: converted.length,
       recoveryRate: sent.length > 0 ? Math.round((converted.length / sent.length) * 100) : 0,
       recoveredRevenue,
-      // Encuestas
+      // Encuestas — "abierta" = el cliente visitó la página de encuesta (clickedAt) o respondió.
+      // No se cuenta openedAt del pixel porque los proxies de email (Gmail, Outlook) lo disparan automáticamente.
       surveysSent: enrollments.filter(e => e.automation === "abandonment_survey" && e.sentAt).length,
-      surveysOpened: enrollments.filter(e => e.automation === "abandonment_survey" && (e.openedAt || e.clickedAt || e.surveyAnsweredAt)).length,
-      // Cupones
+      surveysOpened: enrollments.filter(e => e.automation === "abandonment_survey" && (e.clickedAt || e.surveyAnsweredAt)).length,
+      // Cupones — "abierto" = el cliente hizo click en el enlace del cupón o lo usó.
       couponsSent: enrollments.filter(e => e.automation === "recovery_incentive" && e.sentAt).length,
-      couponsOpened: enrollments.filter(e => e.automation === "recovery_incentive" && (e.openedAt || e.clickedAt)).length,
+      couponsOpened: enrollments.filter(e => e.automation === "recovery_incentive" && (e.clickedAt || couponUsed(e))).length,
       couponsUsed: enrollments.filter(e => e.automation === "recovery_incentive" && couponUsed(e)).length,
     },
     reasons,
@@ -269,5 +306,7 @@ export async function GET(req: NextRequest) {
     queueTotal, pendingSurvey, pendingCoupon,
     // Envíos de los últimos 7 días con el estado ACTUAL del cliente
     recentSends,
+    // Detalle de clientes recuperados (para modal)
+    recoveredClients,
   });
 }

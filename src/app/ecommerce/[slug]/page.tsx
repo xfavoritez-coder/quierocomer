@@ -29,7 +29,7 @@ export const viewport = {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  // Dominio de marca (ej. kojo.cl): metadata de la marca.
+  // Dominio de marca (ej. kojo.cl): metadata de la marca con fotos de productos.
   if (slug.includes(".")) {
     const brand = await loadEcommerceBrandByDomain(slug);
     if (brand) {
@@ -37,14 +37,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       const brandLogo = brand.logoUrl || brand.faviconUrl;
       const brandTitle = brand.pageTitle || `${brand.brandName} · Pedir online`;
       const brandDesc = brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`;
-      const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = brandLogo
-        ? [{ url: brandLogo, width: 400, height: 400, alt: brand.brandName }]
-        : [];
+      // Cargar productos del representante para og:image (Google Search preview)
+      const visible = brand.branches.filter((b) => !b.hidden);
+      const repData = visible[0] ? await getEcommerceStorefrontBaseCached(visible[0].slug) : null;
+      const brandProductImages = (repData?.products ?? [])
+        .map((p) => p.image_url)
+        .filter((u): u is string => !!u && /^https?:\/\//i.test(u))
+        .slice(0, 6)
+        .map((url) => ({ url, width: 1200, height: 630, alt: brand.brandName }));
+      const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = [
+        ...brandProductImages,
+        ...(brandLogo ? [{ url: brandLogo, width: 400, height: 400, alt: brand.brandName }] : []),
+      ];
       return {
         title: brandTitle,
         description: brandDesc,
         ...(brandFavicon ? { icons: { icon: brandFavicon, shortcut: brandFavicon, apple: brandFavicon } } : {}),
         openGraph: { title: brand.pageTitle || brand.brandName, description: brandDesc, images: ogImages, type: "website" },
+        twitter: { card: "summary_large_image", title: brand.pageTitle || brand.brandName, description: brandDesc, images: ogImages[0]?.url ? [ogImages[0].url] : [] },
       };
     }
   }
@@ -53,14 +63,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!data) return {};
   const { tenant } = data;
   const iconUrl = tenant.faviconUrl || tenant.logoUrl;
-  // Logo primero (WhatsApp toma la primera), luego fotos de productos (Google Search preview).
+  // Fotos de productos primero (Google toma la 1ra para preview en resultados de búsqueda),
+  // luego logo al final (WhatsApp fallback).
+  const productImages = data.products
+    .map((p) => p.image_url)
+    .filter((u): u is string => !!u && /^https?:\/\//i.test(u))
+    .slice(0, 6)
+    .map((url) => ({ url, width: 1200, height: 630, alt: tenant.name }));
   const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = [
+    ...productImages,
     ...(tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : []),
-    ...data.products
-      .map((p) => p.image_url)
-      .filter((u): u is string => !!u && /^https?:\/\//i.test(u))
-      .slice(0, 4)
-      .map((url) => ({ url })),
   ];
   // PWA: manifest por local. base "" en dominio propio, "/ecommerce/<slug>" en el principal.
   const base = tenant.customDomain && slug === tenant.customDomain ? "" : `/ecommerce/${tenant.slug}`;
@@ -79,6 +91,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: tenant.metaDescription || `Haz tu pedido en ${tenant.name}.`,
       images: ogImages,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: tenant.pageTitle || tenant.name,
+      description,
+      images: ogImages[0]?.url ? [ogImages[0].url] : [],
     },
   };
 }
