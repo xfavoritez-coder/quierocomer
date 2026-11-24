@@ -54,7 +54,10 @@ export function pickAutomation(
   idx: EnrollmentIndex,
   now = Date.now(),
 ): RecoveryAutomation | null {
-  if (client.status !== "churned" || client.orders < 2) return null;
+  if (client.status !== "churned") return null;
+  // Clientes importados manualmente (0 pedidos) entran igual como perdidos.
+  // Los reales exigen 2+ pedidos para no molestar a compradores de una sola vez.
+  if (!client.imported && client.orders < 2) return null;
 
   // Encuesta de abandono
   if (rc.abandonmentSurvey.enabled && client.daysSinceLastOrder >= surveyMinDays(client, rc)) {

@@ -5,6 +5,7 @@ import { isSuperAdmin } from "@/lib/adminAuth";
 import { getClientSegmentation, type ClientRow } from "@/lib/ecommerce/client-segmentation";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { pickAutomation, surveyMinDays, indexEnrollments } from "@/lib/ecommerce/recovery-eligibility";
+import { readImportedClients, buildImportedChurnedClients } from "@/lib/ecommerce/recoveryImport";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +36,11 @@ export async function GET(req: NextRequest) {
   }
 
   // Clientes segmentados (todos de la marca, sin filtro de branch — para stats globales)
-  const clients = await getClientSegmentation(restaurantId);
+  const realClients = await getClientSegmentation(restaurantId);
+  // Clientes importados manualmente que NO tienen pedidos: se tratan como perdidos.
+  const existingEmails = new Set(realClients.filter(c => c.email).map(c => c.email.toLowerCase()));
+  const importedClients = buildImportedChurnedClients(readImportedClients(thisR?.ecommerceStoreConfig), existingEmails, restaurantId);
+  const clients = [...realClients, ...importedClients];
 
   const atRisk = clients.filter(c => c.status === "at_risk");
   const churned = clients.filter(c => c.status === "churned");

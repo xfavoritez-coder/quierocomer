@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { parseStoreConfig, type RecoveryConfig } from "@/lib/ecommerce/store-config";
 import { getClientSegmentation, resolveBrandIds, type ClientRow } from "@/lib/ecommerce/client-segmentation";
 import { pickAutomation, indexEnrollments, type RecoveryAutomation } from "@/lib/ecommerce/recovery-eligibility";
+import { readImportedClients, buildImportedChurnedClients } from "@/lib/ecommerce/recoveryImport";
 import { branchDisplayName } from "@/lib/ecommerce/recoveryCoupon";
 import { storeAbsBase } from "@/lib/ecommerce/surveyEmail";
 import { firstBuyerSubject, firstBuyerHtml, firstBuyerText } from "@/lib/email/recovery/firstBuyerEmail";
@@ -63,8 +64,11 @@ export async function GET(req: NextRequest) {
       const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : `${BASE}/ecommerce/${rest.slug}`;
 
       try {
-        // 2. Segmentar clientes
-        const clients = await getClientSegmentation(rest.id);
+        // 2. Segmentar clientes (+ importados manuales como perdidos sintéticos)
+        const realClients = await getClientSegmentation(rest.id);
+        const existingEmails = new Set(realClients.filter(c => c.email).map(c => c.email.toLowerCase()));
+        const importedClients = buildImportedChurnedClients(readImportedClients(rest.ecommerceStoreConfig), existingEmails, rest.id);
+        const clients = [...realClients, ...importedClients];
         if (!clients.length) continue;
 
         // 3. Historial de envíos de TODA la marca (últimos 180 días): así no se repite

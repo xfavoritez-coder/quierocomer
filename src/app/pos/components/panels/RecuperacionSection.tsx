@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const F = 'var(--sans)'
 const M = 'var(--mono)'
@@ -37,6 +37,10 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const [couponPercent, setCouponPercent] = useState(15)
   const [toggling, setToggling] = useState(false)
   const [savingPct, setSavingPct] = useState(false)
+  const [importedCount, setImportedCount] = useState(0)
+  const [importBusy, setImportBusy] = useState(false)
+  const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
   const [respFilter, setRespFilter] = useState<string | null>(null)
   const [respSearch, setRespSearch] = useState('')
   const [respSort, setRespSort] = useState<'date' | 'spent'>('date')
@@ -45,16 +49,23 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const [queuePage, setQueuePage] = useState(0)
   const QUEUE_PAGE = 10
 
-  useEffect(() => {
-    setLoading(true)
-    Promise.all([
-      fetch(`/api/panel/ecommerce/recovery?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
-    ]).then(([d, s]) => {
+  const loadData = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
+    try {
+      const [d, s, imp] = await Promise.all([
+        fetch(`/api/panel/ecommerce/recovery?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/panel/ecommerce/recovery/import?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
+      ])
       if (d) setData(d)
       if (s) { setEnabled(s.enabled); if (s.couponPercent) setCouponPercent(s.couponPercent) }
-    }).finally(() => setLoading(false))
+      if (imp && typeof imp.count === 'number') setImportedCount(imp.count)
+    } finally {
+      if (!opts?.silent) setLoading(false)
+    }
   }, [restaurantId])
+
+  useEffect(() => { loadData() }, [loadData])
 
   const toggle = async () => {
     setToggling(true)
@@ -78,6 +89,46 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       setCouponPercent(pct)
     } catch { /* noop */ }
     setSavingPct(false)
+  }
+
+  const onPickFile = () => fileRef.current?.click()
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) await uploadFile(file)
+  }
+  const uploadFile = async (file: File) => {
+    setImportBusy(true); setImportMsg(null)
+    try {
+      const text = await file.text()
+      const res = await fetch(`/api/panel/ecommerce/recovery/import?restaurantId=${restaurantId}`, {
+        method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: text,
+      })
+      const d = await res.json().catch(() => null)
+      if (!res.ok || !d?.ok) {
+        setImportMsg({ ok: false, text: d?.error || 'No se pudo procesar el archivo.' })
+      } else {
+        const parts = [`${d.added} agregados`]
+        if (d.updated) parts.push(`${d.updated} actualizados`)
+        if (d.duplicatesInFile) parts.push(`${d.duplicatesInFile} duplicados`)
+        if (d.invalid) parts.push(`${d.invalid} inválidos`)
+        setImportMsg({ ok: true, text: `Columna "${d.emailColumn}" · ${parts.join(' · ')}. Total guardado: ${d.total}.${d.truncated ? ' (máximo alcanzado)' : ''}` })
+        await loadData({ silent: true })
+      }
+    } catch {
+      setImportMsg({ ok: false, text: 'Error leyendo el archivo.' })
+    }
+    setImportBusy(false)
+  }
+  const clearImported = async () => {
+    if (!window.confirm('¿Borrar todo el listado de correos importados?')) return
+    setImportBusy(true)
+    try {
+      await fetch(`/api/panel/ecommerce/recovery/import?restaurantId=${restaurantId}`, { method: 'DELETE' })
+      setImportMsg(null)
+      await loadData({ silent: true })
+    } catch { /* noop */ }
+    setImportBusy(false)
   }
 
   if (loading) return (
@@ -141,6 +192,42 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
             </div>
           </div>
         )}
+
+        {/* ── Importar listado de correos (clientes perdidos manuales) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0, flex: '1 1 220px' }}>
+              <div style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)' }}>Importar clientes perdidos</div>
+              <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 1 }}>
+                Sube un CSV con correos. Los que no tengan pedidos entran como perdidos y recibirán la recuperación.
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {importedCount > 0 && (
+                <span style={{ fontFamily: M, fontSize: '0.7rem', color: 'var(--ink-2)', fontWeight: 700, whiteSpace: 'nowrap' }}>{importedCount.toLocaleString('es-CL')} cargados</span>
+              )}
+              <button onClick={onPickFile} disabled={importBusy} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 8,
+                border: 'none', background: 'var(--ink)', color: '#fff', fontFamily: F, fontSize: '0.76rem', fontWeight: 700,
+                cursor: importBusy ? 'default' : 'pointer', opacity: importBusy ? 0.5 : 1, whiteSpace: 'nowrap',
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V5M8 9l4-4 4 4M5 19h14"/></svg>
+                {importBusy ? 'Subiendo…' : 'Subir CSV'}
+              </button>
+              {importedCount > 0 && (
+                <button onClick={clearImported} disabled={importBusy} style={{ ...pillBtn, color: '#dc2626', borderColor: '#f3c0c0' }}>Borrar</button>
+              )}
+            </div>
+          </div>
+          <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" onChange={onFileChange} style={{ display: 'none' }} />
+          {importMsg && (
+            <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 600, padding: '7px 10px', borderRadius: 8,
+              background: importMsg.ok ? '#f0fdf4' : '#fef2f2', color: importMsg.ok ? '#16a34a' : '#dc2626',
+              border: `1px solid ${importMsg.ok ? '#bbf7d0' : '#fecaca'}` }}>
+              {importMsg.text}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Resumen (embudo + estado de clientes) ── */}
@@ -464,7 +551,7 @@ function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryDat
         </div>
       </div>
       <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
-        A quién se le envió cada email y cómo está ese cliente hoy. "Sin pedir" muestra los días al momento actual y el mínimo que exigía la regla.
+        A quién se le envió cada email y cómo está ese cliente hoy. &quot;Sin pedir&quot; muestra los días al momento actual y el mínimo que exigía la regla.
       </div>
       {list.length === 0 ? (
         <p style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-3)', textAlign: 'center', padding: '12px 0', margin: 0 }}>Sin envíos {range === 'today' ? 'hoy' : 'en los últimos 7 días'}.</p>

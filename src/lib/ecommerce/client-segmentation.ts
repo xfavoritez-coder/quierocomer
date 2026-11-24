@@ -24,6 +24,8 @@ export interface ClientRow {
   topProduct: string | null;
   /** Sucursal (restaurantId) del último pedido del cliente. */
   lastRestaurantId?: string;
+  /** true = cliente importado manualmente (sin pedidos en el sistema), tratado como perdido. */
+  imported?: boolean;
 }
 
 export function computeStatus(daysSince: number, freq: number | null): ClientRow["status"] {
