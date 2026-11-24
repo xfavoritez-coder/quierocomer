@@ -41,11 +41,20 @@ export async function PUT(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { cartaAccentColor: true, orderingPaymentMethods: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { cartaAccentColor: true, orderingPaymentMethods: true, ecommerceStoreConfig: true } });
   if (!r) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const config = parseStoreConfig(body?.config, fallbackFor(r));
-  await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceStoreConfig: config as unknown as object } });
+  // IMPORTANTE: parseStoreConfig solo conserva los campos del esquema conocido y
+  // descarta cualquier clave extra. Hay datos que viven en este mismo JSON pero
+  // NO están en el form de la tienda (ej. recoveryImportedClients = los correos
+  // importados de clientes perdidos). Si guardáramos solo `config` se perderían al
+  // guardar la Configuración de la tienda. Por eso superponemos los campos del form
+  // sobre el JSON existente, preservando esas claves extra.
+  const prevRaw = (r.ecommerceStoreConfig && typeof r.ecommerceStoreConfig === "object" && !Array.isArray(r.ecommerceStoreConfig))
+    ? (r.ecommerceStoreConfig as Record<string, unknown>) : {};
+  const merged = { ...prevRaw, ...(config as unknown as Record<string, unknown>) };
+  await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceStoreConfig: merged as object } });
   revalidateEcommerceCache({ id: restaurantId });
   return NextResponse.json({ ok: true, config });
 }
