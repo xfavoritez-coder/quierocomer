@@ -115,6 +115,16 @@ export default async function EcommerceProductPage({ params }: { params: Promise
 
   // ── Dominio de MARCA (ej. kojo.cl) ──────────────────────────────────
   if (slug.includes(".")) {
+    // Ruta /ecommerce/{branchSlug}/local en dominio de marca → ficha de sucursal
+    if (path.length >= 2 && path[path.length - 1] === "local") {
+      const branchSlug = path[path.length - 2];
+      const branchData = await getEcommerceStorefrontBaseCached(branchSlug);
+      if (branchData) {
+        const { default: BranchDetail } = await import("@/components/ecommerce/BranchDetail");
+        return <BranchDetail tenant={branchData.tenant} categories={branchData.categories} products={branchData.products} />;
+      }
+    }
+
     const brand = await loadEcommerceBrandByDomain(slug);
     if (brand && brand.branches.length > 0) {
       const representative = await getEcommerceStorefront(brand.branches[0].slug, { fromApp });
