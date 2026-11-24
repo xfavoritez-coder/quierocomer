@@ -128,6 +128,25 @@ export async function GET(req: NextRequest) {
           orderDate: oo.createdAt.toISOString(), branchName,
           usedCoupon: couponUsed(e), items,
         });
+      } else {
+        // Fallback: PosOrder (el cron de atribución usa PosOrder para detectar conversiones)
+        const po = await prisma.posOrder.findUnique({
+          where: { id: oid },
+          select: { id: true, totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, items: true, restaurant: { select: { name: true, ecommerceStoreConfig: true } } },
+        });
+        if (po) {
+          const branchCfg = po.restaurant?.ecommerceStoreConfig as Record<string, unknown> | null;
+          const branchName = (branchCfg?.branchName as string) || null;
+          const posItems = Array.isArray(po.items) ? (po.items as { name?: string; quantity?: number; qty?: number; price?: number; unitPrice?: number }[]).map(it => ({
+            name: it.name || "?", qty: it.quantity ?? it.qty ?? 1, price: it.unitPrice ?? it.price ?? 0,
+          })) : [];
+          recoveredClients.push({
+            name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null,
+            orderId: po.id, orderTotal: Math.max(0, (po.totalAmount || 0) - (po.deliveryFee || 0) - (po.tipAmount || 0)),
+            orderDate: po.createdAt.toISOString(), branchName,
+            usedCoupon: couponUsed(e), items: posItems,
+          });
+        }
       }
     }
   }
