@@ -271,6 +271,37 @@ export async function GET(req: NextRequest) {
   }
   const surveyResponses = [...surveyResponseMap.values()];
 
+  // Total de compras de quienes respondieron (solo esos correos, para no cargar
+  // toda la segmentación en la fase rápida). Mismo neto que la segmentación:
+  // total − despacho − propina, en toda la marca; los pedidos web ya espejados
+  // al POS (externalId "oo-<id>") no se cuentan dos veces.
+  if (surveyResponses.length) {
+    const emails = surveyResponses.map(r => r.customerEmail.toLowerCase());
+    const [posOrders, onlineOrders] = await Promise.all([
+      prisma.posOrder.findMany({
+        where: { restaurantId: { in: allIds }, posStatus: { not: "canceled" }, customerEmail: { in: emails, mode: "insensitive" } },
+        select: { externalId: true, customerEmail: true, totalAmount: true, deliveryFee: true, tipAmount: true },
+      }),
+      prisma.onlineOrder.findMany({
+        where: {
+          restaurantId: { in: allIds }, source: "ecommerce", status: { not: "CANCELLED" },
+          customerEmail: { in: emails, mode: "insensitive" },
+          OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
+        },
+        select: { id: true, customerEmail: true, total: true, deliveryFee: true },
+      }),
+    ]);
+    const spent = new Map<string, number>();
+    const add = (em: string | null, n: number) => { if (em) spent.set(em.toLowerCase(), (spent.get(em.toLowerCase()) ?? 0) + Math.max(0, n)); };
+    const mirrored = new Set<string>();
+    for (const o of posOrders) {
+      if (o.externalId?.startsWith("oo-")) mirrored.add(o.externalId.slice(3));
+      add(o.customerEmail, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    }
+    for (const o of onlineOrders) if (!mirrored.has(o.id)) add(o.customerEmail, (o.total || 0) - (o.deliveryFee || 0));
+    for (const r of surveyResponses) r.totalSpent = spent.get(r.customerEmail.toLowerCase()) ?? 0;
+  }
+
   // Actividad reciente
   const recent = enrollments.slice(0, 30).map(e => ({
     automation: e.automation, status: e.status,
