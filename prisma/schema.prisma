@@ -491,6 +491,7 @@ model OnlineOrder {
   webpayToken          String?
   webpayBuyOrder       String?
   webpayPaymentType    String?    // payment_type_code de Transbank: VD/VP=débito/prepago (solo total), VN/VC/...=crédito (admite parcial)
+  customerNote         String?    // nota libre del cliente (campo "Notas" del checkout), aparte de acompañamientos/cupón; se muestra destacada en la comanda de cocina
   paidAt               DateTime?
   orderNumber          Int?
   toteatOrderId        String?

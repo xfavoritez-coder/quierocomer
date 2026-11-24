@@ -420,6 +420,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           deliveryLng: isDelivery ? deliveryAddress?.lng : null,
           items,
           notes: [notes.trim(), accom.notesPart].filter(Boolean).join(" · ") || null,
+          customerNote: notes.trim() || null, // nota libre del cliente, aparte (para destacarla en la comanda de cocina)
           paymentMethod: payment,
           couponCode: coupon?.code || null,
           scheduledFor: scheduleMode === "scheduled" && scheduledIso ? scheduledIso : null,

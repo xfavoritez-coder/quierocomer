@@ -48,9 +48,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryAddressParts, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode, scheduledFor, fromApp, guestId } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryAddressParts, deliveryZone, deliveryLat, deliveryLng, items, notes, customerNote, paymentMethod, couponCode, scheduledFor, fromApp, guestId } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; deliveryAddressParts?: Record<string, string> | null; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string; fromApp?: boolean; guestId?: string;
+      orderType?: string; deliveryAddress?: string; deliveryAddressParts?: Record<string, string> | null; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; customerNote?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string; fromApp?: boolean; guestId?: string;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -296,6 +296,7 @@ export async function POST(req: NextRequest) {
         discount,
         couponCode: appliedCoupon?.code ?? null,
         notes: finalNotes,
+        customerNote: customerNote?.trim() || null,
         orderNumber,
         status: isOnline ? "PENDING" : "ACCEPTED",
         statusHistory: [{ status: isOnline ? "PENDING" : "ACCEPTED", ts: new Date().toISOString() }],

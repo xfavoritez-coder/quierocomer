@@ -39,6 +39,7 @@ export interface KitchenComandaPayload {
   customerAddress?: string
   pickupTime?: string
   waiter?: string             // garzón (solo mesa)
+  customerNote?: string       // nota libre del cliente (campo "Notas" del checkout) → bloque destacado
   sentBy: string
   items: ComandaItem[]
 }

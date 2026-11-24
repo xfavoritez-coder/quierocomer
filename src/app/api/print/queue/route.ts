@@ -8,6 +8,7 @@ import { encodeKitchenComanda, bytesToBase64 } from "@/lib/pos/escpos";
 function kitchenEscposFor(o: {
   id: string; orderNumber: number | null; customerName: string | null; customerPhone: string | null;
   orderType: string; deliveryAddress: string | null; items: unknown; deliveryAddressParts?: unknown;
+  customerNote?: string | null;
 }): string {
   // Dine-in (mesa): la comanda es "MESA <label>" y SOLO los ítems de la ronda
   // pendiente (deliveryAddressParts.lastRound), no todo el pedido.
@@ -39,6 +40,7 @@ function kitchenEscposFor(o: {
     customerAddress: !isDineIn && o.orderType === "DELIVERY" ? (o.deliveryAddress || undefined) : undefined,
     // Mesa: garzón que abrió la mesa (deliveryAddressParts.garzon) → va en la comanda.
     waiter: isDineIn ? (String(dp?.garzon ?? "").trim() || undefined) : undefined,
+    customerNote: o.customerNote || undefined,
     sentBy: "ecommerce",
     items,
   });
@@ -100,7 +102,7 @@ export async function GET(req: NextRequest) {
     select: {
       id: true, orderNumber: true, customerName: true, customerPhone: true,
       orderType: true, deliveryAddress: true, paymentMethod: true, paymentStatus: true, paymentGateway: true,
-      items: true, total: true, deliveryFee: true, discount: true, couponCode: true, notes: true, createdAt: true,
+      items: true, total: true, deliveryFee: true, discount: true, couponCode: true, notes: true, customerNote: true, createdAt: true,
       reprintTicketOnly: true, deliveryAddressParts: true,
     },
   });
@@ -127,6 +129,7 @@ export async function GET(req: NextRequest) {
       discount: o.discount,
       couponCode: o.couponCode,
       notes: o.notes,
+      customerNote: o.customerNote,
       createdAt: o.createdAt.toISOString(),
       deliveryAddressParts: o.deliveryAddressParts,
     }));

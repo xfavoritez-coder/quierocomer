@@ -56,6 +56,7 @@ interface PosOrderLite {
   deliveryFee: number
   discountAmount?: number | null
   couponCode?: string | null  // cupón usado (enriquecido desde el pedido online)
+  customerNote?: string | null  // nota libre del cliente ("Notas" del checkout) → comanda de cocina
   vendorName?: string | null
   items: unknown
   createdAt: string
@@ -922,6 +923,7 @@ export function OrderDetailPanel({
       customerName: order.customerName,
       customerPhone: order.customerPhone,
       customerAddress: order.addressLine,
+      customerNote: order.customerNote || undefined,
       sentBy: 'cocina',
       items,
     })

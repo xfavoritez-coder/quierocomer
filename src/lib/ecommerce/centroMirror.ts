@@ -103,6 +103,7 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         rawPayload: ({
           ...(alreadyPaid ? { webPayment: { method: payMethod || "online", at: new Date().toISOString() } } : {}),
           ...(order.notes?.trim() ? { orderNotes: order.notes.trim() } : {}),
+          ...(order.customerNote?.trim() ? { customerNote: order.customerNote.trim() } : {}),
           ...(isDineIn && (covers || garzon) ? { mesa: { ...(covers ? { covers } : {}), ...(garzon ? { garzon } : {}) } } : {}),
         } as object),
         deliveryFee: order.deliveryFee || 0,

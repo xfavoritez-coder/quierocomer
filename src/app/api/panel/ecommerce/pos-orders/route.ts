@@ -181,13 +181,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const ordersOut = visible.map((o) => ({
-    ...o,
-    customerEmail: o.customerEmail || emailMap.get(o.externalId.slice(3)) || "",
-    couponCode: couponMap.get(o.externalId.slice(3)) ?? null,
-    dailyNumber: nums[o.id] ?? null,
-    driverTime, pickupTime, deliveryTime,
-  }));
+  const ordersOut = visible.map((o) => {
+    const rp = (o.rawPayload && typeof o.rawPayload === "object" && !Array.isArray(o.rawPayload)) ? (o.rawPayload as Record<string, unknown>) : {};
+    return {
+      ...o,
+      customerEmail: o.customerEmail || emailMap.get(o.externalId.slice(3)) || "",
+      couponCode: couponMap.get(o.externalId.slice(3)) ?? null,
+      // Nota libre del cliente (espejada en rawPayload) → el board la pasa a la comanda.
+      customerNote: typeof rp.customerNote === "string" ? rp.customerNote : null,
+      dailyNumber: nums[o.id] ?? null,
+      driverTime, pickupTime, deliveryTime,
+    };
+  });
   // Seguimiento Delifast pausado globalmente (desde /admin/ajustes) → el board
   // no muestra la alerta de "Delifast no asigna" (no hay datos porque no consultamos).
   const delifastTrackingPaused = (await getPlatformSetting("delifast_tracking_paused")) === "1";

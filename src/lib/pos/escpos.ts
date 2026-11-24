@@ -295,6 +295,13 @@ export function encodeKitchenComanda(c: KitchenComandaPayload): Uint8Array {
     e.lf();
   }
 
+  // Nota libre del cliente (campo "Notas" del checkout): bloque destacado al final.
+  if (c.customerNote && c.customerNote.trim()) {
+    e.line("-".repeat(WIDTH));
+    e.alignCenter().boldOn().line("** NOTA DEL CLIENTE **").boldOff().alignLeft();
+    e.boldOn().line(wrapText(c.customerNote.trim().toUpperCase(), WIDTH, 0)).boldOff();
+  }
+
   e.line("-".repeat(WIDTH)).lf().lf().lf().cut();
   return e.toBytes();
 }
