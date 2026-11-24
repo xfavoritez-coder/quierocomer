@@ -242,42 +242,202 @@ function SceneChart() {
   );
 }
 
-function SceneLoyalty() {
+/* ============================================================================
+ * Mini-escenas animadas para los íconos de add-ons (mismo lenguaje visual que
+ * las escenas grandes, pero compactas ~110px y de tamaño consistente). Nada de
+ * "emoji sobre una placa": cada ícono es una pequeña escena construida.
+ * ========================================================================== */
+const MINISHADOW = "0 12px 24px -14px rgba(90,65,20,.4)";
+
+function MiniLoyalty() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-      {/* teléfono con el Wallet: la tarjeta cae dentro */}
-      <div style={{ width: 152, borderRadius: 22, background: "#211E18", padding: 9, boxShadow: "0 18px 30px -16px rgba(0,0,0,.5)" }}>
-        <div style={{ background: PAPER, borderRadius: 15, padding: "10px 9px 14px", position: "relative", overflow: "hidden" }}>
-          <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: INKSOFT, textAlign: "center", marginBottom: 8 }}>Wallet</div>
-          <div style={{ height: 58, borderRadius: 10, background: "#EADFC9", marginBottom: -42 }} />
-          <div style={{ height: 82, borderRadius: 12, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: 11, position: "relative", boxShadow: "0 10px 16px -8px rgba(180,110,20,.6)", animation: "qcdrop 3.8s ease-in-out infinite" }}>
-            <div style={{ fontFamily: DISP, color: "#2a1c08", fontWeight: 600, fontSize: 13 }}>Tu Restaurante</div>
-            <div style={{ fontFamily: SANS, color: "#4a330f", fontSize: 8, marginTop: 1 }}>Miembro desde 2026</div>
-            <div style={{ position: "absolute", bottom: 11, left: 11, display: "flex", gap: 4 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: i < 3 ? "#2a1c08" : "rgba(42,28,8,.25)" }} />)}</div>
-            <div style={{ position: "absolute", top: 9, right: 10, fontSize: 13 }}>★</div>
-          </div>
-        </div>
-      </div>
-      {/* billeteras */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 6, background: "#1b1b1d", color: "#f2f2f2", borderRadius: 20, padding: "6px 12px", fontFamily: SANS, fontSize: 11, fontWeight: 700 }}><span style={{ width: 11, height: 11, borderRadius: 3, background: "#f2f2f2" }} />Apple Wallet</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 6, background: PAPER, border: "1px solid #E6D9BF", color: INK, borderRadius: 20, padding: "6px 12px", fontFamily: SANS, fontSize: 11, fontWeight: 700 }}><span style={{ width: 11, height: 11, borderRadius: "50%", background: "conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0 100%)" }} />Google Wallet</span>
+    <div style={{ width: 128, height: 104, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 96, height: 60, borderRadius: 12, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: "10px 11px", position: "relative", boxShadow: "0 12px 18px -8px rgba(180,110,20,.6)", animation: "qcfloat 3.8s ease-in-out infinite" }}>
+        <div style={{ fontFamily: DISP, color: "#2a1c08", fontWeight: 600, fontSize: 11, lineHeight: 1 }}>Tu Restaurante</div>
+        <div style={{ fontFamily: SANS, color: "#4a330f", fontSize: 7, marginTop: 2 }}>Miembro 2026</div>
+        <div style={{ position: "absolute", bottom: 9, left: 11, display: "flex", gap: 3 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i < 3 ? "#2a1c08" : "rgba(42,28,8,.28)" }} />)}</div>
+        <div style={{ position: "absolute", top: 8, right: 10, fontSize: 13, animation: "qcpulse 1.8s infinite" }}>★</div>
       </div>
     </div>
   );
 }
 
-function SceneQr() {
+function MiniQr() {
   const on = new Set([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24, 7, 12, 17]);
   return (
-    <div style={{ width: 128, height: 186, borderRadius: 20, background: "#211E18", padding: 9, boxShadow: "0 16px 30px -14px rgba(0,0,0,.5)" }}>
-      <div style={{ background: PAPER, borderRadius: 13, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 8 }}>
-        <div style={{ fontFamily: DISP, fontWeight: 600, color: INK, fontSize: 14 }}>Carta QR</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 2.5, width: 74 }}>
+    <div style={{ width: 92, borderRadius: 16, background: "#211E18", padding: 7, boxShadow: MINISHADOW }}>
+      <div style={{ background: PAPER, borderRadius: 11, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 8px", position: "relative", overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 2, width: 58 }}>
           {Array.from({ length: 25 }).map((_, i) => <div key={i} style={{ aspectRatio: "1", background: on.has(i) ? INK : "transparent", borderRadius: 1 }} />)}
         </div>
-        <div style={{ fontFamily: SANS, fontSize: 9, color: INKSOFT }}>Escanea y pide</div>
+        <div style={{ fontFamily: SANS, fontSize: 7.5, color: INKSOFT, fontWeight: 700 }}>Escanea y pide</div>
+        <div style={{ position: "absolute", left: 0, right: 0, height: 10, top: 6, background: "linear-gradient(180deg,rgba(216,138,31,.5),transparent)", animation: "qcscan 2.6s ease-in-out infinite" }} />
       </div>
+    </div>
+  );
+}
+
+function MiniMap() {
+  const path = "M12 90 C 42 76, 48 40, 76 44 S 114 22, 130 12";
+  return (
+    <div style={{ width: 146, height: 104, maxWidth: "100%", position: "relative", borderRadius: 14, overflow: "hidden", background: "linear-gradient(160deg,#EFE7D6,#E2D8C1)", border: "1px solid #E0D4B8", boxShadow: MINISHADOW }}>
+      <svg viewBox="0 0 146 104" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+        <g stroke="#D7CBAD" strokeWidth="6" fill="none" strokeLinecap="round">
+          <line x1="0" y1="40" x2="146" y2="40" /><line x1="54" y1="0" x2="54" y2="104" />
+          <line x1="0" y1="78" x2="146" y2="78" /><line x1="104" y1="0" x2="104" y2="104" />
+        </g>
+        <path d={path} stroke="#E8A33A" strokeWidth="3" fill="none" strokeDasharray="4 6" strokeLinecap="round" />
+      </svg>
+      <div style={{ position: "absolute", left: 5, top: 80, fontSize: 14 }}>🏪</div>
+      <div style={{ position: "absolute", left: 125, top: 2, fontSize: 14 }}>🏠</div>
+      <div style={{ position: "absolute", left: 0, top: 0, fontSize: 18, animation: "qcdot 4.5s linear infinite", offsetPath: `path('${path}')`, offsetRotate: "0deg" } as React.CSSProperties}>🛵</div>
+      <div style={{ position: "absolute", right: 5, bottom: 5, background: "#211E18", color: PAPER, fontFamily: SANS, fontSize: 8, fontWeight: 700, padding: "3px 7px", borderRadius: 20, display: "flex", alignItems: "center", gap: 4 }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#2ecc71", display: "inline-block", animation: "qcpulse 1.2s infinite" }} /> En vivo
+      </div>
+    </div>
+  );
+}
+
+function MiniKds() {
+  const tk: [string, string][] = [["#42", "#E8A33A"], ["#43", "#7fd1a8"], ["#44", "#7fd1a8"]];
+  return (
+    <div style={{ width: 150, background: "#0d0f12", borderRadius: 12, padding: 7, border: "3px solid #2b2f36", boxShadow: MINISHADOW }}>
+      <div style={{ background: "#14181c", borderRadius: 7, padding: 7, position: "relative", overflow: "hidden" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontFamily: SANS, color: "#7fd1a8", fontSize: 7.5, fontWeight: 700 }}>COCINA · 3</span>
+          <span style={{ fontFamily: SANS, color: "#6b7a82", fontSize: 7 }}>12:24</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+          {tk.map(([n, c]) => (
+            <div key={n} style={{ background: "#1e242a", border: `1px solid ${c}`, borderRadius: 4, padding: 4 }}>
+              <div style={{ color: "#dfe7ea", fontFamily: SANS, fontSize: 7, fontWeight: 700, marginBottom: 3 }}>{n}</div>
+              {[0, 1, 2].map((j) => <div key={j} style={{ height: 3, background: "#2c353c", borderRadius: 2, marginBottom: 2, width: `${88 - j * 20}%` }} />)}
+            </div>
+          ))}
+        </div>
+        <div style={{ position: "absolute", top: 0, bottom: 0, width: 42, background: "linear-gradient(90deg,transparent,rgba(127,209,168,.16),transparent)", animation: "qcsweep 3.6s linear infinite" }} />
+      </div>
+    </div>
+  );
+}
+
+function MiniStore() {
+  const tiles = [0, 1, 2, 3, 4, 5];
+  return (
+    <div style={{ width: 150, background: PAPER, border: "1px solid #E6D9BF", borderRadius: 12, overflow: "hidden", boxShadow: MINISHADOW }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 8px", borderBottom: "1px solid #EFE2C6" }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8A33A" }} />
+        <div style={{ flex: 1, background: "#F7EFDD", borderRadius: 20, padding: "2px 8px", fontFamily: SANS, fontSize: 7.5, color: INKSOFT, display: "flex", alignItems: "center", gap: 3 }}>turestaurante.cl<span style={{ width: 1, height: 8, background: INK, display: "inline-block", animation: "qcblink 1s step-end infinite" }} /></div>
+      </div>
+      <div style={{ padding: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
+        {tiles.map((i) => (
+          <div key={i} style={{ borderRadius: 6, overflow: "hidden", border: `1px solid ${i === 1 ? "#E8A33A" : "#EFE2C6"}`, animation: i === 1 ? "qcpulse 2.2s ease-in-out infinite" : undefined }}>
+            <div style={{ height: 16, background: i % 2 ? "linear-gradient(135deg,#F2D7A0,#E8A33A)" : "linear-gradient(135deg,#EAD9BC,#D9BE90)" }} />
+            <div style={{ padding: "3px 4px" }}><div style={{ height: 3, background: "#E4D6B8", borderRadius: 2, marginBottom: 2 }} /><div style={{ height: 3, width: "60%", background: "#E8A33A", borderRadius: 2 }} /></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MiniMesa() {
+  const on = new Set([0, 1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 15, 6, 9]);
+  return (
+    <div style={{ width: 132, height: 104, position: "relative", borderRadius: 14, background: "linear-gradient(160deg,#F3EAD7,#E7DAC0)", border: "1px solid #E0D4B8", boxShadow: MINISHADOW, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "absolute", top: 11, left: "50%", transform: "translateX(-50%)", width: 26, height: 8, borderRadius: 6, background: "#B99a6a" }} />
+      <div style={{ position: "absolute", bottom: 11, left: "50%", transform: "translateX(-50%)", width: 26, height: 8, borderRadius: 6, background: "#B99a6a" }} />
+      <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 26, borderRadius: 6, background: "#B99a6a" }} />
+      <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 26, borderRadius: 6, background: "#B99a6a" }} />
+      <div style={{ width: 66, height: 66, borderRadius: "50%", background: "radial-gradient(circle at 38% 32%,#C98A4A,#8a5a2c)", boxShadow: "0 10px 16px -8px rgba(0,0,0,.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 32, height: 32, background: PAPER, borderRadius: 5, padding: 3, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 1.5 }}>
+          {Array.from({ length: 16 }).map((_, i) => <div key={i} style={{ aspectRatio: "1", background: on.has(i) ? INK : "transparent", borderRadius: 1 }} />)}
+        </div>
+      </div>
+      <div style={{ position: "absolute", right: 5, bottom: 5, background: "#211E18", color: PAPER, fontFamily: SANS, fontSize: 8, fontWeight: 700, padding: "3px 7px", borderRadius: 20, animation: "qcpulse 2s infinite" }}>Mesa 4</div>
+    </div>
+  );
+}
+
+function MiniCombo() {
+  return (
+    <div style={{ width: 132, height: 104, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "relative", width: 92, height: 76, animation: "qcfloat 4s ease-in-out infinite" }}>
+        <div style={{ position: "absolute", left: 2, top: 20, width: 62, height: 42, borderRadius: 10, background: "linear-gradient(135deg,#EAD9BC,#D9BE90)", transform: "rotate(-9deg)", boxShadow: MINISHADOW }} />
+        <div style={{ position: "absolute", left: 20, top: 10, width: 62, height: 42, borderRadius: 10, background: "linear-gradient(135deg,#F2D7A0,#E8A33A)", transform: "rotate(5deg)", boxShadow: MINISHADOW }} />
+        <div style={{ position: "absolute", left: 10, top: 22, width: 62, height: 42, borderRadius: 10, background: PAPER, border: "1px solid #E7C98A", boxShadow: MINISHADOW, display: "flex", flexDirection: "column", gap: 4, padding: "9px 9px" }}>
+          <div style={{ height: 4, width: "70%", background: "#E8A33A", borderRadius: 2 }} />
+          <div style={{ height: 3, width: "92%", background: "#E4D6B8", borderRadius: 2 }} />
+          <div style={{ height: 3, width: "80%", background: "#E4D6B8", borderRadius: 2 }} />
+        </div>
+        <div style={{ position: "absolute", right: -4, top: -6, width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#C9771A,#E8A33A)", color: "#2a1c08", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, boxShadow: "0 8px 14px -6px rgba(180,110,20,.6)", animation: "qcpulse 1.8s infinite" }}>★</div>
+      </div>
+    </div>
+  );
+}
+
+function MiniPos() {
+  return (
+    <div style={{ width: 120, height: 104, position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 7 }}>
+      <div style={{ width: 72, background: "linear-gradient(180deg,#3a3630,#2B2620)", borderRadius: "10px 10px 6px 6px", padding: "8px 8px 10px", boxShadow: MINISHADOW }}>
+        <div style={{ background: "#14181c", borderRadius: 5, padding: "4px 6px", marginBottom: 6 }}>
+          <div style={{ fontFamily: SANS, color: "#7fd1a8", fontSize: 8.5, fontWeight: 700, textAlign: "right" }}>$7.000</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 3 }}>
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ height: 7, background: "#4a453d", borderRadius: 2 }} />)}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#1F9D57", color: PAPER, fontFamily: SANS, fontSize: 9, fontWeight: 700, padding: "4px 11px", borderRadius: 20, animation: "qcpop 2.6s ease-in-out infinite" }}>✓ Cobrado</div>
+    </div>
+  );
+}
+
+function MiniBodega() {
+  const boxes: [number, number][] = [[0, 34], [1, 54], [2, 42]];
+  return (
+    <div style={{ width: 124, height: 104, position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 7, paddingBottom: 10 }}>
+      {boxes.map(([i, h]) => (
+        <div key={i} style={{ width: 28, height: h, borderRadius: "4px 4px 2px 2px", background: "linear-gradient(135deg,#E0C79A,#C79A5E)", border: "1px solid #B98A4e", position: "relative", boxShadow: MINISHADOW }}>
+          <div style={{ position: "absolute", top: "40%", left: 0, right: 0, height: 3, background: "rgba(120,80,30,.35)" }} />
+          <div style={{ position: "absolute", top: 5, left: 5, right: 5, height: 7, background: PAPER, borderRadius: 2, opacity: 0.85 }} />
+        </div>
+      ))}
+      <div style={{ position: "absolute", right: 6, top: 8, background: "#1F9D57", color: PAPER, fontFamily: SANS, fontSize: 8, fontWeight: 700, padding: "2px 7px", borderRadius: 10, animation: "qcpulse 2s infinite" }}>+12</div>
+    </div>
+  );
+}
+
+function MiniChart() {
+  const bars = [40, 64, 52, 82, 70];
+  return (
+    <div style={{ width: 132, background: PAPER, borderRadius: 12, padding: "10px 11px", border: "1px solid #E6D9BF", boxShadow: MINISHADOW }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 7 }}>
+        <span style={{ fontFamily: SANS, fontWeight: 700, color: INK, fontSize: 8.5 }}>Ventas</span>
+        <span style={{ fontFamily: SANS, color: "#1f9d57", fontSize: 8.5, fontWeight: 700 }}>▲ +18%</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 52 }}>
+        {bars.map((h, i) => <div key={i} style={{ flex: 1, height: `${h}%`, borderRadius: "3px 3px 0 0", background: "linear-gradient(180deg,#E8A33A,#C9771A)", transformOrigin: "bottom", animation: `qcbar 3s ease-in-out ${i * 0.12}s infinite` }} />)}
+      </div>
+    </div>
+  );
+}
+
+function MiniCoupon() {
+  return (
+    <div style={{ width: 124, height: 96, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "relative", background: "linear-gradient(135deg,#E8A33A,#C9771A)", borderRadius: 14, padding: "14px 20px", boxShadow: "0 12px 22px -10px rgba(180,110,20,.6)", animation: "qcfloat 3.8s ease-in-out infinite", border: "2px dashed rgba(253,251,246,.6)" }}>
+        <div style={{ fontFamily: DISP, fontWeight: 600, color: "#2a1c08", fontSize: 22, lineHeight: 1 }}>30%<span style={{ fontSize: 10, fontFamily: SANS, fontWeight: 700 }}> OFF</span></div>
+        <div style={{ fontFamily: SANS, fontSize: 7, fontWeight: 700, color: "#4a330f", letterSpacing: 1.5, marginTop: 3 }}>CUPÓN</div>
+      </div>
+    </div>
+  );
+}
+
+function MiniSpark() {
+  return (
+    <div style={{ width: 104, height: 104, borderRadius: 20, background: "linear-gradient(135deg,#FBF2DF,#EFDFBE)", border: "1px solid #E7C98A", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: MINISHADOW, position: "relative", overflow: "hidden" }}>
+      <div style={{ fontSize: 40, color: GOLD, animation: "qcfloat 3.6s ease-in-out infinite" }}>✦</div>
+      <div style={{ position: "absolute", top: 0, bottom: 0, width: 40, background: "linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent)", animation: "qcsweep 3.6s linear infinite" }} />
     </div>
   );
 }
@@ -296,27 +456,22 @@ const FEATURES: Feature[] = [
   { id: "datos", scope: "Incluido en todos los planes", title: "Cupones, encuestas y reportes", desc: "Crea descuentos y promociones para atraer clientes, pídeles su opinión automáticamente, y mira cuánto vendes, tus productos top y tus mejores clientes. Creces con datos, no con corazonadas.", scene: "chart" },
 ];
 
-// Icono identificador por add-on según su nombre (emoji en una placa, consistente y sin romper layout).
+// Ícono identificador por add-on según su nombre: cada uno es una mini-escena
+// animada construida (mismo lenguaje visual que las escenas grandes), sin emojis sueltos.
 function AddonIcon({ name }: { name: string }) {
   const n = (name || "").toLowerCase();
-  if (/loyal|fideliz|wallet|membres|punto|sello/.test(n)) return <SceneLoyalty />;
-  if (/qr|carta/.test(n)) return <SceneQr />;
-  const emoji =
-    /delivery|apps/.test(n) ? "🛵" :
-    /kds|pantalla|cocina/.test(n) ? "🖥️" :
-    /repartidor|moto|rider|driver/.test(n) ? "🏍️" :
-    /mesa/.test(n) ? "🍽️" :
-    /combo|total|pack|completo|todo/.test(n) ? "📦" :
-    /pos|caja/.test(n) ? "🧾" :
-    /bodega|inventario|stock|receta/.test(n) ? "📦" :
-    /web|tienda|online|ecommerce|sitio/.test(n) ? "🛒" :
-    /banc|concilia|contab|gasto|arqueo/.test(n) ? "🏦" :
-    /report|estad|dato|anal|gráfic|grafic/.test(n) ? "📊" :
-    /cupon|promo|descuento/.test(n) ? "🏷️" :
-    /multicaja|multi|sucursal/.test(n) ? "🏪" :
-    /cliente|proveedor/.test(n) ? "🤝" :
-    "✨";
-  return <div style={{ width: "clamp(72px,7vw,104px)", height: "clamp(72px,7vw,104px)", borderRadius: 22, background: "linear-gradient(135deg,#F3E9D4,#E6D6B6)", border: "1px solid #E0D4B8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "clamp(34px,3.6vw,52px)", boxShadow: "0 14px 26px -14px rgba(0,0,0,.35)" }}>{emoji}</div>;
+  if (/loyal|fideliz|wallet|membres|punto|sello|cumple/.test(n)) return <MiniLoyalty />;
+  if (/qr|carta/.test(n)) return <MiniQr />;
+  if (/delivery|apps|repartidor|moto|rider|driver|despacho|flota|seguimiento/.test(n)) return <MiniMap />;
+  if (/kds|pantalla|cocina/.test(n)) return <MiniKds />;
+  if (/mesa|garz[oó]n|salón|salon|comedor/.test(n)) return <MiniMesa />;
+  if (/combo|total|pack|completo|full|todo incluido/.test(n)) return <MiniCombo />;
+  if (/pos|caja|cobro|terminal|punto de venta/.test(n)) return <MiniPos />;
+  if (/bodega|inventario|stock|receta|insumo|merma/.test(n)) return <MiniBodega />;
+  if (/web|tienda|online|ecommerce|sitio|dominio/.test(n)) return <MiniStore />;
+  if (/report|estad[íi]stic|dato|anal[íi]tic|gr[áa]fic|venta/.test(n)) return <MiniChart />;
+  if (/cup[oó]n|promo|descuento|oferta/.test(n)) return <MiniCoupon />;
+  return <MiniSpark />;
 }
 
 export default function PresentacionPage() {
@@ -672,7 +827,8 @@ export default function PresentacionPage() {
 @keyframes qcdot{from{offset-distance:0%}to{offset-distance:100%}}
 @keyframes qcfeed{0%{transform:translateY(-100%);opacity:1}45%{transform:translateY(0);opacity:1}80%{transform:translateY(0);opacity:1}92%{transform:translateY(8%);opacity:0}100%{transform:translateY(-100%);opacity:0}}
 @keyframes qcsweep{0%{transform:translateX(-120%)}100%{transform:translateX(560%)}}
-@keyframes qcdrop{0%{transform:translateY(-56px);opacity:0}22%{opacity:1}50%{transform:translateY(0)}82%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}`}</style>
+@keyframes qcdrop{0%{transform:translateY(-56px);opacity:0}22%{opacity:1}50%{transform:translateY(0)}82%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}
+@keyframes qcscan{0%{transform:translateY(0);opacity:.9}50%{transform:translateY(46px);opacity:.9}50.01%{opacity:0}100%{transform:translateY(0);opacity:0}}`}</style>
 
       <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 10, zIndex: 2 }}>
         {!isMobile && <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>}
