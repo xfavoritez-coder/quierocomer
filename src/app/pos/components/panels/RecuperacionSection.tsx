@@ -8,6 +8,15 @@ const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 // ~500ms entre correos). Solo para estimar el ritmo en el panel; el cron no usa la
 // tabla de 50 que se muestra abajo, re-segmenta todo y envía hasta este tope.
 const DAILY_SEND_CAP = 480
+// El cron de recuperación corre a las 14:00 UTC (≈11:00 Chile en horario de verano).
+const CRON_HOUR_UTC = 14
+/** Próxima corrida del cron: hoy a las 14:00 UTC si aún no pasó, si no mañana. */
+function nextCronRunDate(now: Date = new Date()): Date {
+  const d = new Date(now)
+  d.setUTCHours(CRON_HOUR_UTC, 0, 0, 0)
+  if (d.getTime() <= now.getTime()) d.setUTCDate(d.getUTCDate() + 1)
+  return d
+}
 
 interface RecoveryData {
   kpis: {
@@ -146,6 +155,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const k = data.kpis
   const pendingTotal = data.queueTotal ?? data.queue.length
   const daysToContactAll = Math.max(1, Math.ceil(pendingTotal / DAILY_SEND_CAP))
+  const nextRun = nextCronRunDate()
+  const nextRunDay = nextRun.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', day: '2-digit', month: 'short' })
+  const nextRunTime = nextRun.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' })
 
   // Respuestas filtradas
   const allResp = data.surveyResponses
@@ -344,6 +356,10 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
               ~{daysToContactAll.toLocaleString('es-CL')} {daysToContactAll === 1 ? 'día' : 'días'} para contactarlos a todos
             </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 7, background: 'var(--jade-tint)', border: '1px solid var(--jade-tint)', fontFamily: F, fontSize: '0.74rem', fontWeight: 800, color: 'var(--jade)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+              Próximo envío: {nextRunDay} · {nextRunTime}
+            </span>
             <span style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)', flex: '1 1 160px', minWidth: 0 }}>
               Es el tope del envío diario (una ejecución al día). La tabla de abajo es solo una muestra de los 50 de mayor riesgo, no el total que se envía.
             </span>
@@ -365,9 +381,10 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               <tbody>
                 {data.queue.slice(queuePage * QUEUE_PAGE, (queuePage + 1) * QUEUE_PAGE).map((c, idx) => {
                   const i = queuePage * QUEUE_PAGE + idx
-                  const daysUntil = Math.ceil((i + 1) / 50)
-                  const sendDate = new Date(Date.now() + daysUntil * 86400000)
-                  const sendLabel = sendDate.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
+                  // La tanda del cliente según el tope diario; la 1ª sale en la próxima corrida del cron.
+                  const batch = Math.floor(i / DAILY_SEND_CAP)
+                  const sendDate = new Date(nextRun.getTime() + batch * 86400000)
+                  const sendLabel = sendDate.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', day: '2-digit', month: 'short' })
                   return (
                   <tr key={c.email} className="rec-queue-row" onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: '' })} style={{ borderBottom: '1px solid var(--line)', background: idx % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
                     <td style={{ padding: '8px 8px', maxWidth: 180 }}>
