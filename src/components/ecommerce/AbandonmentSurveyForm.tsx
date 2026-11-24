@@ -6,6 +6,7 @@ const REASONS = [
   { id: "quality", label: "La calidad no fue la esperada", emoji: "😕" },
   { id: "delivery_slow", label: "El delivery demora mucho", emoji: "🕐" },
   { id: "delivery_expensive", label: "El delivery es muy caro", emoji: "🚗" },
+  { id: "bad_service", label: "Mala atención", emoji: "😤" },
   { id: "competitor", label: "Encontré otro local", emoji: "🔄" },
   { id: "other", label: "Otro motivo", emoji: "💬" },
 ] as const;
@@ -28,6 +29,12 @@ const DETAILS: Record<string, { id: string; label: string }[]> = {
     { id: "expensive", label: "Delivery muy caro" },
     { id: "no_coverage", label: "No llega a mi zona" },
     { id: "driver_issue", label: "Problema con el repartidor" },
+  ],
+  bad_service: [
+    { id: "rude_staff", label: "Trato poco amable" },
+    { id: "slow_service", label: "Atención muy lenta" },
+    { id: "no_response", label: "No me respondieron" },
+    { id: "wrong_info", label: "Información incorrecta" },
   ],
   competitor: [
     { id: "better_price", label: "Mejores precios" },
@@ -112,6 +119,7 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
               case "quality": return "¿Qué pasó con la calidad? Queremos mejorar."
               case "delivery_slow": return "¿Cuánto demoró y qué esperabas? Estamos mejorando."
               case "delivery_expensive": return "¿Cuánto pagaste de delivery y cuánto te parecería justo?"
+              case "bad_service": return "¿Qué pasó con la atención? Queremos mejorar."
               case "competitor": return "¿Qué local encontraste y qué te gustó de él?"
               case "other": return "Cuéntanos qué pasó, tu opinión nos importa mucho."
               default: return "Cuéntanos un poco más para poder mejorar."

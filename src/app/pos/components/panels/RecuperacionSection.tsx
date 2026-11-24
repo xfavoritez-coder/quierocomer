@@ -44,7 +44,7 @@ interface QueueData {
 const REASON_LABELS: Record<string, string> = {
   price: 'Precios altos', quality: 'Calidad', delivery_slow: 'Delivery lento',
   delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', moved: 'Se mudó',
-  competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro',
+  bad_service: 'Mala atención', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro',
 }
 
 export default function RecuperacionSection({ restaurantId, onSelectClient }: { restaurantId: string; allBranches?: { id: string }[]; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {

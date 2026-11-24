@@ -2314,7 +2314,7 @@ function FichaCliente({ client, restaurantId, allBranches, onClose }: {
               {(client as any).recovery && (() => {
                 const r = (client as any).recovery;
                 const isCoupon = r.type === 'recovery_incentive';
-                const reasonLabels: Record<string, string> = { price: 'Precios altos', quality: 'Calidad bajó', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro motivo', moved: 'Se mudó' };
+                const reasonLabels: Record<string, string> = { price: 'Precios altos', quality: 'Calidad bajó', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', bad_service: 'Mala atención', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro motivo', moved: 'Se mudó' };
                 return (
                   <div style={{ padding: '14px 16px 0' }}>
                     <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Recuperación</div>
@@ -2880,7 +2880,7 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
                   {c.phone && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.phone}</div>}
                   {(c as any).recovery && (() => {
                     const r = (c as any).recovery;
-                    const reasonLabels: Record<string, string> = { price: 'Precios', quality: 'Calidad', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro', moved: 'Se mudó' };
+                    const reasonLabels: Record<string, string> = { price: 'Precios', quality: 'Calidad', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', bad_service: 'Mala atención', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro', moved: 'Se mudó' };
                     return (
                       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 3 }}>
                         {r.hasSurvey && (

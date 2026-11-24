@@ -41,6 +41,11 @@ function personalMessage(reason: string | null | undefined, storeName: string): 
         title: "Sabemos que el delivery importa",
         body: `Entendemos que el costo de envío pesa. Con este descuento lo compensamos para que vuelvas a disfrutar de <strong>${esc(storeName)}</strong> sin que el delivery sea un problema.`,
       };
+    case "bad_service":
+      return {
+        title: "Tomamos nota y mejoramos",
+        body: `Tu experiencia nos importa. Hemos trabajado en nuestra atención para que sea la que te mereces. Danos otra oportunidad en <strong>${esc(storeName)}</strong>.`,
+      };
     case "competitor":
       return {
         title: "Te echamos de menos",
