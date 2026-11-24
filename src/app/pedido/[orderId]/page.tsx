@@ -566,7 +566,6 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           <h1 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: theme.text, margin: 0 }}>
             {order.restaurantName}
           </h1>
-          <p style={{ fontSize: 13, color: theme.text2, margin: "4px 0 0" }}>{texts.headerSubtitle}</p>
         </a>
 
         {/* Título del estado actual */}
