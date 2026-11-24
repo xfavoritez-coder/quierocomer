@@ -66,18 +66,27 @@ export async function GET(req: NextRequest) {
   const useByCode = new Map(couponUses.map(u => [u.couponCode, u]));
   const couponUsed = (e: { couponCode: string | null }) => !!e.couponCode && useByCode.has(e.couponCode);
 
-  // KPIs
-  const sent = enrollments.filter(e => e.sentAt);
-  const converted = enrollments.filter(e => e.status === "converted" || couponUsed(e));
-  const opened = enrollments.filter(e => e.openedAt || e.clickedAt || e.surveyAnsweredAt || e.status === "opened" || e.status === "clicked" || e.status === "converted");
+  // KPIs — deduplicar por email para no contar la misma persona 2 veces
+  // (un cliente puede tener enrollments en múltiples sucursales)
+  const sentEmails = new Set(enrollments.filter(e => e.sentAt).map(e => e.customerEmail.toLowerCase()));
+  const sent = { length: sentEmails.size };
+  const convertedEmails = new Set(enrollments.filter(e => e.status === "converted" || couponUsed(e)).map(e => e.customerEmail.toLowerCase()));
+  const converted = { length: convertedEmails.size };
+  const openedEmails = new Set(enrollments.filter(e => e.openedAt || e.clickedAt || e.surveyAnsweredAt || e.status === "opened" || e.status === "clicked" || e.status === "converted").map(e => e.customerEmail.toLowerCase()));
+  const opened = { length: openedEmails.size };
 
-  // Ingresos recuperados
-  // - Con cupón usado: el pedido online pagado con el cupón.
-  // - Sin cupón (volvió por su cuenta): el PosOrder atribuido por el cron.
+  // Ingresos recuperados — deduplicar por orderId para no contar el mismo pedido 2 veces
   let recoveredRevenue = 0;
   if (converted.length > 0) {
-    const onlineIds = converted.filter(couponUsed).map(e => useByCode.get(e.couponCode!)?.orderId).filter(Boolean) as string[];
-    const posIds = converted.filter(e => !couponUsed(e)).map(e => e.convertedOrderId).filter(Boolean) as string[];
+    const convertedEnrollments = enrollments.filter(e => e.status === "converted" || couponUsed(e));
+    const onlineIdSet = new Set<string>();
+    const posIdSet = new Set<string>();
+    for (const e of convertedEnrollments) {
+      if (couponUsed(e)) { const oid = useByCode.get(e.couponCode!)?.orderId; if (oid) onlineIdSet.add(oid); }
+      else if (e.convertedOrderId) posIdSet.add(e.convertedOrderId);
+    }
+    const onlineIds = [...onlineIdSet];
+    const posIds = [...posIdSet];
     const [onlineOrders, posOrders] = await Promise.all([
       onlineIds.length ? prisma.onlineOrder.findMany({ where: { id: { in: onlineIds } }, select: { total: true, deliveryFee: true } }) : [],
       posIds.length ? prisma.posOrder.findMany({ where: { id: { in: posIds } }, select: { totalAmount: true, deliveryFee: true, tipAmount: true } }) : [],
