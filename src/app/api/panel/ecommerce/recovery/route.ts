@@ -10,6 +10,19 @@ import { readImportedClients, buildImportedChurnedClients } from "@/lib/ecommerc
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Extrae items de un pedido (OnlineOrder o PosOrder). Ambos guardan items como Json
+ *  pero con formatos ligeramente distintos. */
+function parseOrderItems(items: unknown): { name: string; qty: number; price: number }[] {
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((it: Record<string, unknown>) => {
+    const name = String(it.name ?? it.productName ?? it.title ?? it.description ?? "").trim();
+    if (!name) return [];
+    const qty = Number(it.quantity ?? it.qty ?? 1) || 1;
+    const price = Number(it.unitPrice ?? it.price ?? 0) || 0;
+    return [{ name, qty, price }];
+  });
+}
+
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   if (isSuperAdmin(req)) return true;
   const panelId = req.cookies.get("panel_id")?.value;
@@ -201,9 +214,7 @@ export async function GET(req: NextRequest) {
       if (oo) {
         const branchCfg = oo.restaurant?.ecommerceStoreConfig as Record<string, unknown> | null;
         const branchName = (branchCfg?.branchName as string) || null;
-        const items = Array.isArray(oo.items) ? (oo.items as { name?: string; quantity?: number; price?: number }[]).map(it => ({
-          name: it.name || "?", qty: it.quantity ?? 1, price: it.price ?? 0,
-        })) : [];
+        const items = parseOrderItems(oo.items);
         recoveredClients.push({
           name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null,
           orderId: oo.id, orderTotal: Math.max(0, (oo.total || 0) - (oo.deliveryFee || 0)),
@@ -212,18 +223,16 @@ export async function GET(req: NextRequest) {
       } else {
         const po = await prisma.posOrder.findUnique({
           where: { id: oid },
-          select: { id: true, totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, items: true, restaurant: { select: { name: true, ecommerceStoreConfig: true } } },
+          select: { id: true, totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, items: true, customerName: true, restaurant: { select: { name: true, ecommerceStoreConfig: true } } },
         });
         if (po) {
           const branchCfg = po.restaurant?.ecommerceStoreConfig as Record<string, unknown> | null;
           const branchName = (branchCfg?.branchName as string) || null;
-          const posItems = Array.isArray(po.items) ? (po.items as { name?: string; quantity?: number; qty?: number; price?: number; unitPrice?: number }[]).map(it => ({
-            name: it.name || "?", qty: it.quantity ?? it.qty ?? 1, price: it.unitPrice ?? it.price ?? 0,
-          })) : [];
+          const items = parseOrderItems(po.items);
           recoveredClients.push({
-            name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null,
+            name: po.customerName || e.customerName, email: e.customerEmail, phone: e.customerPhone || null,
             orderId: po.id, orderTotal: Math.max(0, (po.totalAmount || 0) - (po.deliveryFee || 0) - (po.tipAmount || 0)),
-            orderDate: po.createdAt.toISOString(), branchName, usedCoupon: couponUsed(e), items: posItems,
+            orderDate: po.createdAt.toISOString(), branchName, usedCoupon: couponUsed(e), items,
           });
         }
       }

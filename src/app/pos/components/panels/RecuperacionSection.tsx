@@ -556,11 +556,14 @@ function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, atRisk, 
             {recoveredClients.map(c => (
               <div key={c.orderId} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
                 style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                    <div style={{ fontSize: '0.64rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
+                  </div>
                   <span style={{ fontFamily: M, fontSize: '0.82rem', fontWeight: 900, color: '#16a34a', flexShrink: 0 }}>{clp(c.orderTotal)}</span>
                 </div>
-                <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', lineHeight: 1.4, marginTop: 2 }}>
                   {new Date(c.orderDate).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
                   {c.branchName ? ` \u00B7 ${c.branchName}` : ''}
                   {c.usedCoupon ? ' \u00B7 \uD83C\uDF81 Us\u00F3 cup\u00F3n' : ' \u00B7 sin cup\u00F3n'}
