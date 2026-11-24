@@ -1936,26 +1936,24 @@ function BranchDetailView({ tenant, primaryColor, storeUrl, onGoToMenu }: {
 
   return (
     <div className="px-4 sm:px-8 py-8 max-w-3xl mx-auto">
-      {/* Hero card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        {/* Banner con color de marca */}
-        <div className="h-28 sm:h-36 relative" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}>
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/svg%3E\")" }} />
-        </div>
-        {/* Logo + info superpuestos */}
-        <div className="px-5 sm:px-8 pb-6 -mt-12 relative">
-          {tenant.logoUrl ? (
-            <img src={tenant.logoUrl} alt={fullName} className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white shadow-lg mb-4" />
+      {/* Info del local */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3.5 mb-4">
+          {(tenant.faviconUrl || tenant.logoUrl) ? (
+            <img src={tenant.faviconUrl || tenant.logoUrl!} alt={fullName} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0 border border-gray-100" />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-lg mb-4 grid place-items-center text-white text-3xl font-black" style={{ background: primaryColor }}>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl grid place-items-center text-white text-xl font-black shrink-0" style={{ background: primaryColor }}>
               {fullName.charAt(0)}
             </div>
           )}
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-1">{fullName}</h2>
-          {tenant.primaryCategory && <p className="text-sm text-gray-500 font-medium mb-4">{tenant.primaryCategory}</p>}
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-black text-gray-900 leading-tight">{fullName}</h2>
+            {tenant.primaryCategory && <p className="text-xs text-gray-400 font-medium mt-0.5">{tenant.primaryCategory}</p>}
+          </div>
+        </div>
 
-          {/* Estado + badges de modalidad inline */}
-          <div className="flex items-center flex-wrap gap-2.5">
+        {/* Estado + badges de modalidad */}
+        <div className="flex items-center flex-wrap gap-2">
             <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${tenant.openStatus.open ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
               <span className={`w-2 h-2 rounded-full ${tenant.openStatus.open ? "bg-green-500" : "bg-red-500"}`} />
               {tenant.openStatus.open ? "Abierto" : tenant.openStatus.opensAt ? `Abre ${tenant.openStatus.opensAt}` : "Cerrado"}
@@ -1977,11 +1975,10 @@ function BranchDetailView({ tenant, primaryColor, storeUrl, onGoToMenu }: {
             )}
           </div>
 
-          {/* CTA */}
-          <button onClick={onGoToMenu} className="mt-5 w-full sm:w-auto text-white font-bold text-[15px] px-8 py-3 rounded-xl shadow-md active:scale-[0.98] transition hover:shadow-lg" style={{ background: primaryColor }}>
-            Ver carta y pedir →
-          </button>
-        </div>
+        {/* CTA */}
+        <button onClick={onGoToMenu} className="mt-5 w-full sm:w-auto text-white font-bold text-[15px] px-8 py-3 rounded-xl shadow-md active:scale-[0.98] transition hover:shadow-lg" style={{ background: primaryColor }}>
+          Ver carta y pedir →
+        </button>
       </div>
 
       {/* Grid 2 columnas en desktop, 1 en mobile */}
