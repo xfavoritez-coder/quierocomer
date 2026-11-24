@@ -847,8 +847,8 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
       <button onClick={soldOut ? undefined : onClick} disabled={soldOut} className="flex-1 min-w-0 flex flex-col justify-center text-left">
         <div className="flex items-center gap-1.5">
           <p className="font-bold text-gray-900 text-base leading-snug">{product.name}</p>
-          {product.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🌱</span>}
-          {product.diet === "VEGETARIAN" && <span title="Vegetariano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🥬</span>}
+          {product.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🥬</span>}
+          {product.diet === "VEGETARIAN" && <span title="Vegetariano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🌱</span>}
         </div>
         {product.description && (
           <p className="text-[11px] text-gray-400 mt-1 line-clamp-2 leading-relaxed">{product.description}</p>
