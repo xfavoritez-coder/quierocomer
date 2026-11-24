@@ -119,7 +119,7 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
               case "quality": return "¿Qué pasó con la calidad? Queremos mejorar."
               case "delivery_slow": return "¿Cuánto demoró y qué esperabas? Estamos mejorando."
               case "delivery_expensive": return "¿Cuánto pagaste de delivery y cuánto te parecería justo?"
-              case "bad_service": return "¿Qué pasó con la atención? Queremos mejorar."
+              case "bad_service": return "¿Qué pasó con la atención? Nos interesa mucho saberlo."
               case "competitor": return "¿Qué local encontraste y qué te gustó de él?"
               case "other": return "Cuéntanos qué pasó, tu opinión nos importa mucho."
               default: return "Cuéntanos un poco más para poder mejorar."
