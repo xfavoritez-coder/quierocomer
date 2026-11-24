@@ -214,12 +214,24 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       try { sessionStorage.removeItem(PENDING_KEY); } catch {}
       // Pedido completado: limpiar cupón/comentario/acompañamientos guardados.
       try { localStorage.removeItem(`qc-checkout-extra:${tenant.id}`); localStorage.removeItem(`qc-accom:${tenant.id}`); } catch {}
+      // Valor REAL pagado = el total del servidor guardado antes de ir al pago (con
+      // descuento). En el retorno el carrito se recalcula sin el cupón restaurado, así
+      // que finalTotal aquí sería el valor SIN descuento; por eso NO se usa como fuente.
+      let paidValue = finalTotal;
+      try {
+        const raw = sessionStorage.getItem("qc-pay-amt");
+        if (raw) {
+          const a = JSON.parse(raw) as { orderId?: string; total?: number };
+          if (a && typeof a.total === "number" && a.total >= 0 && (!orderParam || a.orderId === orderParam)) paidValue = a.total;
+        }
+      } catch {}
+      try { sessionStorage.removeItem("qc-pay-amt"); } catch {}
       fbTrack(
         "Purchase",
-        { value: finalTotal, currency: "CLP", ...cartContents(items) },
+        { value: paidValue, currency: "CLP", ...cartContents(items) },
         orderParam ? `order-${orderParam}` : undefined,
       );
-      fbAppLogPurchase(finalTotal, orderParam || undefined); // evento de app (solo dentro de la app)
+      fbAppLogPurchase(paidValue, orderParam || undefined); // evento de app (solo dentro de la app)
       clearCart();
       if (orderParam) window.location.replace(`/pedido/${orderParam}`);
       return;
@@ -428,7 +440,17 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
 
       // Pago online: NO vaciamos el carrito todavía. Guardamos el pedido pendiente:
       // si el cliente vuelve sin pagar, marcamos el pago fallido y conserva su carrito.
-      const markPending = () => { try { if (data.orderId) sessionStorage.setItem("qc-pay-pending", data.orderId); } catch {} };
+      const markPending = () => {
+        try {
+          if (data.orderId) {
+            sessionStorage.setItem("qc-pay-pending", data.orderId);
+            // Guarda el TOTAL REAL (con descuento) del servidor para usarlo como valor de
+            // la compra al volver del pago. Sin esto, el retorno recalcula el carrito sin
+            // el cupón restaurado y manda el valor SIN descuento (bug: $10.900 vs $109).
+            if (typeof data.total === "number") sessionStorage.setItem("qc-pay-amt", JSON.stringify({ orderId: data.orderId, total: data.total }));
+          }
+        } catch {}
+      };
 
       // Pago online (Webpay): redirigir al formulario de Transbank.
       if (data.url && data.token) {
@@ -456,8 +478,10 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       // Pago offline: ir al seguimiento del pedido.
       setRedirecting(true);
       // Purchase del navegador (dedup con el CAPI del servidor vía eventID = order-<id>).
-      fbTrack("Purchase", { value: finalTotal, currency: "CLP", ...cartContents(items) }, `order-${data.orderId}`);
-      fbAppLogPurchase(finalTotal, data.orderId); // evento de app (solo dentro de la app)
+      // Usa el total REAL del servidor (con descuento), no el recalculado del cliente.
+      const paidValue = typeof data.total === "number" ? data.total : finalTotal;
+      fbTrack("Purchase", { value: paidValue, currency: "CLP", ...cartContents(items) }, `order-${data.orderId}`);
+      fbAppLogPurchase(paidValue, data.orderId); // evento de app (solo dentro de la app)
       clearCart();
       window.location.href = `/pedido/${data.orderId}`;
     } catch {

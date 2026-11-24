@@ -344,7 +344,7 @@ export async function POST(req: NextRequest) {
       notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});
       // Correo de confirmación al cliente (con el link de seguimiento).
       if (customerEmail?.trim()) void sendOrderStatusEmail(order.id, "ACCEPTED");
-      return NextResponse.json({ ok: true, orderId: order.id, paid: false, pos });
+      return NextResponse.json({ ok: true, orderId: order.id, paid: false, pos, total });
     }
 
     const origin = req.nextUrl.origin;
@@ -366,7 +366,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: init.error || "No se pudo iniciar el pago con Flow" }, { status: 502 });
       }
       await prisma.onlineOrder.update({ where: { id: order.id }, data: { flowToken: init.token } });
-      return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl });
+      return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl, total });
     }
 
     // ── Pago online: MercadoPago ──
@@ -390,7 +390,7 @@ export async function POST(req: NextRequest) {
         await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });
         return NextResponse.json({ error: init.error || "No se pudo iniciar el pago con MercadoPago" }, { status: 502 });
       }
-      return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl });
+      return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl, total });
     }
 
     // ── Pago online: Webpay ──
@@ -403,7 +403,7 @@ export async function POST(req: NextRequest) {
     }
     await prisma.onlineOrder.update({ where: { id: order.id }, data: { webpayToken: init.token, webpayBuyOrder: buyOrder } });
 
-    return NextResponse.json({ ok: true, orderId: order.id, url: init.url, token: init.token });
+    return NextResponse.json({ ok: true, orderId: order.id, url: init.url, token: init.token, total });
   } catch (e) {
     console.error("[ecommerce/checkout]", e);
     return NextResponse.json({ error: "Error al procesar el pedido" }, { status: 500 });
