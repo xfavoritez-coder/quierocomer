@@ -160,6 +160,10 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const nextRun = nextCronRunDate()
   const nextRunDay = nextRun.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', day: '2-digit', month: 'short' })
   const nextRunTime = nextRun.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' })
+  // ¿La próxima corrida del cron es HOY (aún no pasó) o mañana (ya corrió hoy)?
+  // La columna "Envío estimado" usa esto: un cliente listo (daysLeft 0) no sale
+  // "hoy" si el cron de las 11:00 ya corrió — sale en la próxima corrida.
+  const nextRunIsToday = nextRun.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' }) === new Date().toLocaleDateString('en-CA', { timeZone: 'America/Santiago' })
 
   // Respuestas filtradas
   const allResp = data.surveyResponses
@@ -399,7 +403,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                       <AutomationBadge automation={c.nextEmail} />
                     </td>
                     <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.72rem', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', color: daysLeft === 0 ? '#16a34a' : daysLeft <= 7 ? '#3b82f6' : 'var(--ink-3)' }}>
-                      {daysLeft === 0 ? '🟢 Hoy' : `~${sendLabel}`}
+                      {daysLeft === 0 ? (nextRunIsToday ? '🟢 Hoy' : `🟢 ${nextRunDay}`) : `~${sendLabel}`}
                       {daysLeft > 0 && <span style={{ fontSize: '0.62rem', color: 'var(--ink-4)', marginLeft: 4 }}>({daysLeft}d)</span>}
                     </td>
                   </tr>
