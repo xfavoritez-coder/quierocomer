@@ -176,22 +176,8 @@ export default function AppResumenPage() {
               </span>
             </div>
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>
-              Cada vez que un dispositivo nuevo abre la app por primera vez (datos propios, en vivo — sin el desfase de Play Console / App Store Connect).
+              Cada vez que un dispositivo nuevo abre la app por primera vez (datos propios, en vivo — sin el desfase de Play Console / App Store Connect). Total {days}d: <b style={{ color: "var(--adm-text)" }}>{s.devices.new}</b>.
             </p>
-            {(() => {
-              const tot = s.devices.series.reduce((a, d) => a + (d.total || 0), 0);
-              const ios = s.devices.series.reduce((a, d) => a + (d.ios || 0), 0);
-              const android = s.devices.series.reduce((a, d) => a + (d.android || 0), 0);
-              return (
-                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-                  <span style={{ fontFamily: F, fontSize: "2.2rem", fontWeight: 800, color: "var(--adm-text)", lineHeight: 1 }}>{tot.toLocaleString("es-CL")}</span>
-                  <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)" }}>
-                    instalaciones en {days} días
-                    <span style={{ color: "var(--adm-text3)" }}> · iOS {ios.toLocaleString("es-CL")} · Android {android.toLocaleString("es-CL")}</span>
-                  </span>
-                </div>
-              );
-            })()}
             <DevicesChart series={s.devices.series} />
           </div>
 
@@ -306,14 +292,21 @@ function DevicesChart({ series }: { series: { date: string; ios: number; android
   const dm = (ymd: string) => { const [, m, d] = ymd.split("-"); return `${Number(d)}/${Number(m)}`; };
   const idxs = n <= 1 ? [0] : Array.from(new Set([0, Math.round(n * 0.25), Math.round(n * 0.5), Math.round(n * 0.75), n - 1].map((i) => Math.min(n - 1, Math.max(0, i)))));
   const empty = series.every((d) => d.total === 0);
+  // El número sobre cada barra: se muestra si hay instalaciones y las barras no
+  // están demasiado juntas (en rangos muy densos se amontonaría; ahí queda el tooltip).
+  const showLabels = n <= 62;
+  const BAR_SCALE = 0.84; // deja aire arriba para el número del día más alto
   return (
     <div>
       <div style={{ display: "flex", alignItems: "flex-end", gap, height: 120 }}>
         {series.map((d, i) => {
-          const iosH = (d.ios / max) * 100;
-          const andH = (d.android / max) * 100;
+          const iosH = (d.ios / max) * 100 * BAR_SCALE;
+          const andH = (d.android / max) * 100 * BAR_SCALE;
           return (
-            <div key={i} title={`${dm(d.date)}: ${d.total} (iOS ${d.ios} · Android ${d.android})`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", minWidth: 2 }}>
+            <div key={i} title={`${dm(d.date)}: ${d.total} (iOS ${d.ios} · Android ${d.android})`} style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", minWidth: 2 }}>
+              {showLabels && d.total > 0 && (
+                <span style={{ position: "absolute", bottom: `${iosH + andH}%`, left: "50%", transform: "translate(-50%, -2px)", fontFamily: FB, fontSize: n > 40 ? "0.52rem" : "0.6rem", fontWeight: 700, color: "var(--adm-text2)", lineHeight: 1, whiteSpace: "nowrap", pointerEvents: "none" }}>{d.total}</span>
+              )}
               <div style={{ height: `${iosH}%`, background: BRAND, borderRadius: "3px 3px 0 0" }} />
               <div style={{ height: `${andH}%`, background: "#22c55e", borderRadius: iosH > 0 ? 0 : "3px 3px 0 0" }} />
             </div>
