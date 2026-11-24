@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import type { PricingConfig, PricePlan } from "@/lib/pricing";
+import type { PricingConfig, PricePlan, PricingCategory } from "@/lib/pricing";
 
 // Paleta (independiente del tema oscuro del admin). Nunca usar #FFF/white/rgb(255
 // en backgrounds inline: una regla global del admin los fuerza a oscuro.
@@ -315,12 +315,19 @@ export default function PresentacionPage() {
   // Al cambiar de slide, vuelve el scroll arriba.
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [idx]);
 
-  type Slide = { type: "cover" } | { type: "intro" } | { type: "feature"; f: Feature } | { type: "panorama" } | { type: "plan"; plan: PricePlan; i: number; total: number } | { type: "addons" } | { type: "costos" } | { type: "cierre" };
+  type Slide = { type: "cover" } | { type: "intro" } | { type: "feature"; f: Feature } | { type: "panorama"; items: PricePlan[] } | { type: "plan"; plan: PricePlan; i: number; total: number } | { type: "addons"; items: PricePlan[] } | { type: "category"; cat: PricingCategory; items: PricePlan[] } | { type: "costos" } | { type: "cierre" };
+  // Agrupa planes/add-ons por sección (igual que la vista de admin): 2 por defecto + categorías custom.
+  const customCats = cfg?.categories || [];
+  const validSectionIds = new Set<string>(["__plans", "__addons", ...customCats.map((c) => c.id)]);
+  const itemSectionId = (p: PricePlan, pool: "plans" | "addons") => (p.categoryId && validSectionIds.has(p.categoryId)) ? p.categoryId : (pool === "plans" ? "__plans" : "__addons");
+  const allItems = cfg ? [...cfg.plans.map((p) => ({ p, pool: "plans" as const })), ...cfg.addons.map((p) => ({ p, pool: "addons" as const }))] : [];
+  const itemsIn = (sid: string) => allItems.filter((x) => itemSectionId(x.p, x.pool) === sid).map((x) => x.p);
   const slides: Slide[] = cfg ? [
     { type: "cover" }, { type: "intro" },
     ...FEATURES.map((f): Slide => ({ type: "feature", f })),
-    { type: "panorama" },
-    ...(cfg.addons.length ? [{ type: "addons" } as Slide] : []),
+    ...(itemsIn("__plans").length ? [{ type: "panorama", items: itemsIn("__plans") } as Slide] : []),
+    ...(itemsIn("__addons").length ? [{ type: "addons", items: itemsIn("__addons") } as Slide] : []),
+    ...customCats.filter((c) => itemsIn(c.id).length).map((c): Slide => ({ type: "category", cat: c, items: itemsIn(c.id) })),
     ...(cfg.extras.length || cfg.implementation.length ? [{ type: "costos" } as Slide] : []),
   ] : [];
 
@@ -413,10 +420,10 @@ export default function PresentacionPage() {
     if (slide.type === "panorama") return (
       <div style={{ ...wrap, gap: "clamp(12px,1.8vh,22px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow(cfg.headings?.plansTitle || "Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
-          {cfg.plans.map((p, i) => {
-            const hi = p.recommended === true || (!cfg.plans.some((pp) => pp.recommended) && /premium/i.test(p.name) && !/futuro/i.test(p.name));
-            const prev = i > 0 ? cfg.plans[i - 1] : null;
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : `repeat(${Math.min(slide.items.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
+          {slide.items.map((p, i) => {
+            const hi = p.recommended === true || (!slide.items.some((pp) => pp.recommended) && /premium/i.test(p.name) && !/futuro/i.test(p.name));
+            const prev = i > 0 ? slide.items[i - 1] : null;
             const prevSet = prev ? new Set(prev.features.map((x) => x.trim().toLowerCase())) : null;
             const shown = prevSet ? p.features.filter((f) => !prevSet.has(f.trim().toLowerCase())) : p.features;
             const tInk = hi ? CREAM : INK, tSub = hi ? "#CFC6B4" : INKSOFT, line = hi ? "#4A4236" : CARDB;
@@ -504,7 +511,7 @@ export default function PresentacionPage() {
       <div style={{ ...wrap, gap: "clamp(24px,3.5vh,40px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow(cfg.headings?.addonsTitle || "Paquetes y add-ons")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Súmale fidelización y carta digital</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(360px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
-          {cfg.addons.map((p, i) => (
+          {slide.items.map((p, i) => (
             <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,36px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,20px)", boxShadow: CARDSHADOW }}>
               <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px" }}>{i === 0 ? <SceneLoyalty /> : <SceneQr />}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
@@ -512,6 +519,31 @@ export default function PresentacionPage() {
                 <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{p.priceFrom ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.45em", fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
               </div>
               {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-6px 0 0" }}>{p.subtitle.trim()}</p> : null}
+              <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
+                {p.features.map((f) => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.95rem,1.2vw,1.25rem)" }}>✓</span>
+                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.9rem,1.15vw,1.3rem)", color: INK, margin: 0 }}>{f}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    if (slide.type === "category") return (
+      <div style={{ ...wrap, gap: "clamp(24px,3.5vh,40px)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow(slide.cat.title || "Categoría")}{slide.cat.subtitle ? <h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>{slide.cat.subtitle}</h2> : null}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: "clamp(16px,2vw,28px)", alignItems: "stretch" }}>
+          {slide.items.map((p) => (
+            <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(22px,2.2vw,34px)", display: "flex", flexDirection: "column", gap: "clamp(12px,1.4vw,18px)", boxShadow: CARDSHADOW }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.3rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
+                <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{p.priceFrom ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.45em", fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
+              </div>
+              {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-4px 0 0" }}>{p.subtitle.trim()}</p> : null}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
                 {p.features.map((f) => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
