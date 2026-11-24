@@ -3383,6 +3383,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             channels: mergeByKey(valid.flatMap(r => r.channels), 'name', ['sales', 'orders']),
             products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.qty - a.qty),
             byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
+            paymentMethods: mergeByKey(valid.flatMap(r => r.paymentMethods ?? []), 'method', ['count', 'amount']).map(x => ({ ...x, label: x.label || valid.flatMap(r => r.paymentMethods ?? []).find((m: any) => m.method === x.method)?.label || x.method })),
             monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
             byDay: mergeByKey(valid.flatMap(r => r.byDay ?? []), 'ymd', ['sales', 'orders']).sort((a: any, b: any) => a.ymd.localeCompare(b.ymd)),
             byMonth: mergeByKey(valid.flatMap(r => r.byMonth ?? []), 'ym', ['sales', 'orders']).sort((a: any, b: any) => a.ym.localeCompare(b.ym)),
@@ -3948,7 +3949,9 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             <SectionLabel>Desglose</SectionLabel>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'stretch' }}>
               <ChannelBreakdown channels={data.channels} total={data.productSales} tipsTotal={data.tipsTotal} tipsStats={data.tipsStats} />
-              <OrderTypePie byType={data.byType} />
+              {data.paymentMethods && data.paymentMethods.length > 0
+                ? <PaymentMethodsSection methods={data.paymentMethods} total={data.productSales} />
+                : <OrderTypePie byType={data.byType} />}
             </div>
 
             {/* Ventas por origen por día */}
