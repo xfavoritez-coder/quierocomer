@@ -3954,9 +3954,6 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             <SectionLabel>Desglose</SectionLabel>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'stretch' }}>
               <ChannelBreakdown channels={data.channels} total={data.productSales} tipsTotal={data.tipsTotal} tipsStats={data.tipsStats} />
-              {data.paymentMethods && data.paymentMethods.length > 0
-                ? <PaymentMethodsSection methods={data.paymentMethods} total={data.productSales} />
-                : <OrderTypePie byType={data.byType} />}
             </div>
 
             {/* Ventas por origen por día */}
