@@ -60,7 +60,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ord
     ok: true,
     enabled: true,
     status,
-    courier: courier ? { lat: courier.lat, lng: courier.lng, name: courier.name, label: dhStatusLabelEs(track?.public_status_code) || courier.label } : null,
+    courier: courier ? { lat: courier.lat, lng: courier.lng, name: courier.name, label: dhStatusLabelEs(track?.public_status_code) || courier.label, vehicle: courier.vehicle, provider: courier.provider, pin: courier.pin } : null,
     customer: custFromDh || customer,
     live: true,
   });

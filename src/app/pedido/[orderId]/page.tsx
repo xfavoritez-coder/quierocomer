@@ -13,7 +13,7 @@ interface TrackingInfo {
   enabled: boolean;
   live: boolean;
   status: string;
-  courier: { lat: number | null; lng: number | null; name: string | null; label: string | null } | null;
+  courier: { lat: number | null; lng: number | null; name: string | null; label: string | null; vehicle?: string | null; provider?: string | null; pin?: string | null } | null;
   customer: { lat: number; lng: number } | null;
 }
 
@@ -598,12 +598,17 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           const hasCustomerLoc = tracking?.customer?.lat != null && tracking?.customer?.lng != null;
           if (!(order.orderType === "DELIVERY" && order.status === "IN_DELIVERY" && tracking?.enabled && (hasCourierLoc || hasCustomerLoc))) return null;
           const courierName = tracking?.courier?.name;
-          const title = hasCourierLoc
-            ? (courierName || "Tu repartidor va en camino")
-            : (courierName ? `${courierName} va en camino` : "Tu pedido va en camino");
-          const sub = hasCourierLoc
-            ? (tracking?.courier?.label || "Ubicación en tiempo real")
-            : (tracking?.courier?.label || "En camino a tu dirección");
+          const prov = (tracking?.courier?.provider || "").toLowerCase();
+          const provLabel = prov === "pedidosya" ? "PedidosYa" : prov === "uber" ? "Uber" : (tracking?.courier?.provider || "");
+          const vehicle = tracking?.courier?.vehicle || "";
+          const title = courierName
+            ? (hasCourierLoc ? `${courierName} va en camino` : `${courierName} va en camino`)
+            : (hasCourierLoc ? "Tu repartidor va en camino" : "Tu pedido va en camino");
+          // Subtítulo: "PedidosYa · Bicicleta", o el estado si no hay datos del repartidor.
+          const subParts = [provLabel, vehicle].filter(Boolean);
+          const sub = subParts.length
+            ? subParts.join(" · ")
+            : (tracking?.courier?.label || (hasCourierLoc ? "Ubicación en tiempo real" : "En camino a tu dirección"));
           return (
             <div style={{ ...cardStyle, padding: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 10px" }}>
@@ -619,6 +624,35 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
                 store={null}
                 dark={(order.colorMode ?? "LIGHT") === "DARK"}
               />
+            </div>
+          );
+        })()}
+
+        {/* PIN de entrega — el cliente se lo da al repartidor para confirmar la entrega.
+            Lo trae deliveryhandroll (PedidosYa/Uber). Se muestra mientras el pedido está
+            activo (no entregado/cancelado) y hay un PIN asignado. */}
+        {(() => {
+          const pin = tracking?.courier?.pin;
+          if (!pin) return null;
+          if (!(order.orderType === "DELIVERY" && order.status !== "DONE" && order.status !== "CANCELLED")) return null;
+          const dark = (order.colorMode ?? "LIGHT") === "DARK";
+          return (
+            <div style={{
+              ...cardStyle,
+              textAlign: "center",
+              padding: "16px 14px",
+              background: dark ? "rgba(250,204,21,0.08)" : "#FFFBEB",
+              border: `1px solid ${dark ? "rgba(250,204,21,0.35)" : "#FDE68A"}`,
+            }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: dark ? "#FCD34D" : "#B45309", margin: 0 }}>
+                🔑 PIN de entrega
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 38, fontWeight: 900, letterSpacing: "0.14em", color: dark ? "#FDE047" : "#B45309", margin: "4px 0", lineHeight: 1 }}>
+                {pin}
+              </p>
+              <p style={{ fontSize: 12.5, color: theme.text2, margin: 0 }}>
+                Dáselo al repartidor para confirmar la entrega de tu pedido.
+              </p>
             </div>
           );
         })()}

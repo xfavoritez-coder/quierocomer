@@ -10,7 +10,12 @@ import { parseEcommerceConfig } from "./config";
 export interface DhDelivery {
   public_status_code?: string; // received|preparing|ready|on_the_way|completed|cancelled
   public_status_label?: string;
-  assigned_to?: string; // repartidor asignado
+  assigned_to?: string; // repartidor asignado (genérico: "PedidosYa"/"Uber" o nombre propio)
+  courier_name?: string; // nombre REAL del repartidor del agregador (p. ej. "Albany")
+  courier_provider?: string; // 'pedidosya' | 'uber' | ''
+  courier_vehicle?: string; // p. ej. "Bicicleta"
+  courier_location_source?: string | null; // 'own' | 'uber' | 'pedidosya' | null
+  delivery_pin?: string; // PIN que el cliente entrega al repartidor para confirmar
   last_lat?: number | null; // ubicación EN VIVO del repartidor
   last_lng?: number | null;
   customer_lat?: number | null;
@@ -101,16 +106,26 @@ function num(v: unknown): number | null {
 /** Info del repartidor normalizada para persistir en OnlineOrder.courier / mostrar al cliente.
  *  Devuelve null si aún NO hay repartidor real (sin nombre asignado y sin ubicación válida);
  *  así no se muestra "Repartidor asignado" cuando DH solo reporta el estado de preparación. */
-export function dhCourier(d: DhDelivery | null): { lat: number | null; lng: number | null; name: string | null; label: string | null } | null {
+export function dhCourier(d: DhDelivery | null): {
+  lat: number | null; lng: number | null; name: string | null; label: string | null;
+  vehicle: string | null; provider: string | null; pin: string | null;
+} | null {
   if (!d) return null;
   let lat = num(d.last_lat);
   let lng = num(d.last_lng);
   // (0,0) o valores inválidos = todavía sin ubicación real del repartidor.
   if (!(lat != null && lng != null && (Math.abs(lat) > 0.01 || Math.abs(lng) > 0.01))) { lat = null; lng = null; }
-  const name = typeof d.assigned_to === "string" && d.assigned_to.trim() ? d.assigned_to.trim() : null;
+  // Preferimos el nombre REAL del repartidor del agregador (courier_name) sobre el
+  // genérico assigned_to ("PedidosYa"/"Uber"); caemos a assigned_to si no hay.
+  const realName = typeof d.courier_name === "string" && d.courier_name.trim() ? d.courier_name.trim() : null;
+  const assigned = typeof d.assigned_to === "string" && d.assigned_to.trim() ? d.assigned_to.trim() : null;
+  const name = realName || assigned;
+  const vehicle = typeof d.courier_vehicle === "string" && d.courier_vehicle.trim() ? d.courier_vehicle.trim() : null;
+  const provider = typeof d.courier_provider === "string" && d.courier_provider.trim() ? d.courier_provider.trim() : null;
+  const pin = typeof d.delivery_pin === "string" && d.delivery_pin.trim() ? d.delivery_pin.trim() : null;
   const label = typeof d.public_status_label === "string" ? d.public_status_label : null;
-  if (lat == null && lng == null && !name) return null; // sin repartidor todavía
-  return { lat, lng, name, label };
+  if (lat == null && lng == null && !name && !pin) return null; // sin repartidor todavía
+  return { lat, lng, name, label, vehicle, provider, pin };
 }
 
 /** Coordenada válida: no nula y no el (0,0) que DH devuelve cuando aún no hay ubicación real. */
@@ -125,7 +140,7 @@ function validCoord(lat: number | null, lng: number | null): boolean {
  */
 export function dhCourierRecord(
   track: DhDelivery | null,
-  courier: { lat: number | null; lng: number | null; name: string | null; label: string | null },
+  courier: { lat: number | null; lng: number | null; name: string | null; label: string | null; vehicle?: string | null; provider?: string | null; pin?: string | null },
   prev: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
@@ -134,6 +149,9 @@ export function dhCourierRecord(
     status: track?.public_status_code ?? null,
     statusLabel: dhStatusLabelEs(track?.public_status_code) || courier.label,
     courierName: courier.name,
+    courierVehicle: courier.vehicle ?? null,
+    courierProvider: courier.provider ?? null,
+    deliveryPin: courier.pin ?? null,
     location: validCoord(courier.lat, courier.lng) ? { lat: courier.lat, lng: courier.lng } : null,
     lat: courier.lat,
     lng: courier.lng,
