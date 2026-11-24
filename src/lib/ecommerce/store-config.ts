@@ -102,7 +102,7 @@ const DEFAULT_RECOVERY: RecoveryConfig = {
   enabled: false,
   firstBuyer: { enabled: true, daysAfter: 7 },
   atRisk: { enabled: true },
-  abandonmentSurvey: { enabled: true, daysInactive: 45 },
+  abandonmentSurvey: { enabled: true, daysInactive: 30 },
   recoveryIncentive: { enabled: true, daysInactive: 60, couponPercent: 15 },
   maxEmailsPerMonth: 2,
   cooldownDays: 3,
