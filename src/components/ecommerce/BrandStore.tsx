@@ -70,21 +70,18 @@ export default function BrandStore({ brand, representative, basePath, initialPro
     let saved: string | null = null;
     try { saved = localStorage.getItem(PERSIST_KEY); } catch {}
 
-    // Link con ?sucursal=<slug> (p. ej. el email del cupón de recuperación, que solo
-    // vale en esa sucursal): manda sobre la sucursal recordada en este navegador.
+    // Link con ?coupon= (email de recuperación): el cupón vale en cualquier sucursal de
+    // la marca, así que se respeta la sucursal que el cliente ya usa. ?sucursal=<slug>
+    // solo se usa si este navegador no tiene una sucursal guardada.
     const pendingCoupon = capturePendingCouponFromUrl();
-    let forcedBranch: BrandBranch | undefined;
-    try {
-      const wanted = new URLSearchParams(window.location.search).get("sucursal");
-      forcedBranch = wanted ? brand.branches.find((b) => b.slug === wanted) : undefined;
-    } catch {}
-    if (forcedBranch) {
-      saved = forcedBranch.slug;
-      const label = forcedBranch.branchName || forcedBranch.name;
-      setTimeout(() => toast.success(
-        pendingCoupon ? `Tu cupón ${pendingCoupon} es válido en la sucursal ${label}` : `Estás pidiendo en la sucursal ${label}`,
-        { description: pendingCoupon ? "Te dejamos en esa sucursal; el descuento se aplica al pagar." : undefined, duration: 7000 },
-      ), 600);
+    if (!saved) {
+      try {
+        const wanted = new URLSearchParams(window.location.search).get("sucursal");
+        if (wanted && brand.branches.some((b) => b.slug === wanted)) saved = wanted;
+      } catch {}
+    }
+    if (pendingCoupon) {
+      setTimeout(() => toast.success(`Tu cupón ${pendingCoupon} está listo`, { description: "Se aplica automáticamente al pagar, en cualquier sucursal.", duration: 7000 }), 600);
     }
 
     // Marca de una sola sucursal: no tiene sentido pedir que elijan — se liga sola

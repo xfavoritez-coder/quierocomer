@@ -314,6 +314,8 @@ async function attributeConversions(restaurantId: string): Promise<number> {
 
   if (!pending.length) return 0;
 
+  // El cliente puede volver (y usar el cupón) en cualquier sucursal de la marca.
+  const brandIds = await resolveBrandIds(restaurantId);
   let converted = 0;
   for (const e of pending) {
     if (!e.sentAt) continue;
@@ -322,7 +324,7 @@ async function attributeConversions(restaurantId: string): Promise<number> {
     // Buscar pedido posterior al envío
     const order = await prisma.posOrder.findFirst({
       where: {
-        restaurantId,
+        restaurantId: { in: brandIds },
         posStatus: { not: "canceled" },
         customerEmail: { equals: email, mode: "insensitive" },
         createdAt: { gt: e.sentAt },
