@@ -20,8 +20,6 @@ function nextCronRunDate(now: Date = new Date()): Date {
 
 interface RecoveryData {
   kpis: {
-    totalClients: number; withEmail: number
-    atRisk: number; churned: number
     contacted: number; opened: number; responded: number; recovered: number
     recoveryRate: number; recoveredRevenue: number
     couponsSent: number; couponsOpened: number; couponsUsed: number
@@ -32,10 +30,15 @@ interface RecoveryData {
   surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
-  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string; daysLeft?: number; minDays?: number }[]
-  queueTotal?: number; pendingSurvey?: number; pendingCoupon?: number
-  recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
   recoveredClients?: { name: string | null; email: string; phone: string | null; orderId: string; orderTotal: number; orderDate: string; branchName: string | null; usedCoupon: boolean; items: { name: string; qty: number; price: number }[] }[]
+}
+
+/** Datos pesados (cola, envíos recientes) — se cargan lazy después de los KPIs. */
+interface QueueData {
+  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string; daysLeft?: number; minDays?: number }[]
+  queueTotal: number; pendingSurvey: number; pendingCoupon: number
+  recentSends: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
+  atRisk: number; churned: number
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -46,6 +49,7 @@ const REASON_LABELS: Record<string, string> = {
 
 export default function RecuperacionSection({ restaurantId, onSelectClient }: { restaurantId: string; allBranches?: { id: string }[]; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
   const [data, setData] = useState<RecoveryData | null>(null)
+  const [queueData, setQueueData] = useState<QueueData | null>(null)
   const [loading, setLoading] = useState(true)
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [couponPercent, setCouponPercent] = useState(15)
@@ -66,6 +70,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const loadData = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true)
     try {
+      // Fase 1: KPIs rápidos (solo enrollments, sin segmentación de clientes)
       const [d, s, imp] = await Promise.all([
         fetch(`/api/panel/ecommerce/recovery?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
@@ -77,6 +82,11 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
     } finally {
       if (!opts?.silent) setLoading(false)
     }
+    // Fase 2: datos pesados (cola, segmentación) — en background
+    fetch(`/api/panel/ecommerce/recovery?restaurantId=${restaurantId}&section=queue`)
+      .then(r => r.ok ? r.json() : null)
+      .then(q => { if (q) setQueueData(q) })
+      .catch(() => {})
   }, [restaurantId])
 
   useEffect(() => { loadData() }, [loadData])
@@ -144,7 +154,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   if (!data) return <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F }}>No se pudo cargar.</div>
 
   const k = data.kpis
-  const pendingTotal = data.queueTotal ?? data.queue.length
+  const pendingTotal = queueData?.queueTotal ?? 0
   const daysToContactAll = Math.max(1, Math.ceil(pendingTotal / DAILY_SEND_CAP))
   const nextRun = nextCronRunDate()
   const nextRunDay = nextRun.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', day: '2-digit', month: 'short' })
@@ -237,7 +247,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       </div>
 
       {/* ── Resumen (embudo + estado de clientes) ── */}
-      <RecoverySummary k={k} queueCount={data.queueTotal ?? data.queue.length} pendingSurvey={data.pendingSurvey ?? 0} pendingCoupon={data.pendingCoupon ?? 0} couponRecipients={data.couponRecipients ?? []} recoveredClients={data.recoveredClients ?? []} onSelectClient={onSelectClient} />
+      <RecoverySummary k={k} queueCount={queueData?.queueTotal ?? 0} pendingSurvey={queueData?.pendingSurvey ?? 0} pendingCoupon={queueData?.pendingCoupon ?? 0} atRisk={queueData?.atRisk ?? 0} churned={queueData?.churned ?? 0} couponRecipients={data.couponRecipients ?? []} recoveredClients={data.recoveredClients ?? []} onSelectClient={onSelectClient} />
 
       {/* ── Motivos de abandono (barras) ── */}
       {Object.keys(data.reasons).length > 0 && (
@@ -326,13 +336,13 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       )}
 
       {/* ── Cola de próximos envíos ── */}
-      {data.queue.length > 0 && (
+      {(queueData?.queue?.length ?? 0) > 0 && (
         <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
           <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 4 }}>
             Pendientes de contactar
           </div>
           <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
-            {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes pendientes. Se contacta a quienes llevan 30+ días sin pedir (o 2,5× su frecuencia habitual). Primero reciben la encuesta, y 3 días después el cupón de descuento.
+            {(queueData?.queueTotal ?? 0).toLocaleString('es-CL')} clientes pendientes. Se contacta a quienes llevan 30+ días sin pedir (o 2,5× su frecuencia habitual). Primero reciben la encuesta, y 3 días después el cupón de descuento.
           </div>
           {/* Indicador de ritmo: el cron envía hasta ~480/día, no los 50 que se listan. */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12, padding: '9px 11px', borderRadius: 10, background: 'var(--amber-tint-2)', border: '1px solid var(--amber-tint)' }}>
@@ -364,7 +374,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                 </tr>
               </thead>
               <tbody>
-                {data.queue.slice(queuePage * QUEUE_PAGE, (queuePage + 1) * QUEUE_PAGE).map((c, idx) => {
+                {(queueData?.queue ?? []).slice(queuePage * QUEUE_PAGE, (queuePage + 1) * QUEUE_PAGE).map((c, idx) => {
                   const i = queuePage * QUEUE_PAGE + idx
                   const daysLeft = c.daysLeft ?? 0
                   const sendDate = new Date(Date.now() + Math.max(1, daysLeft) * 86400000)
@@ -397,9 +407,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               </tbody>
             </table>
           </div>
-          {data.queue.length > QUEUE_PAGE && (
+          {(queueData?.queue?.length ?? 0) > QUEUE_PAGE && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 10 }}>
-              {Array.from({ length: Math.ceil(data.queue.length / QUEUE_PAGE) }, (_, i) => (
+              {Array.from({ length: Math.ceil((queueData?.queue?.length ?? 0) / QUEUE_PAGE) }, (_, i) => (
                 <button key={i} onClick={() => setQueuePage(i)} style={{
                   width: 28, height: 28, borderRadius: 6, fontFamily: M, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
                   border: queuePage === i ? '1.5px solid var(--ink)' : '1px solid var(--line)',
@@ -412,14 +422,14 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
         </div>
       )}
 
-      {data.queue.length === 0 && k.contacted > 0 && (
+      {queueData && (queueData.queue?.length ?? 0) === 0 && k.contacted > 0 && (
         <div style={{ padding: '14px 18px', borderRadius: 12, border: '1px dashed var(--line)', fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-3)' }}>
           Todos los clientes perdidos ya han sido contactados. Cuando nuevos clientes cumplan el umbral de inactividad, aparecerán aquí.
         </div>
       )}
 
       {/* ── Últimos envíos ── */}
-      {(data.recentSends?.length ?? 0) > 0 && <RecentSends sends={data.recentSends!} onSelectClient={onSelectClient} />}
+      {(queueData?.recentSends?.length ?? 0) > 0 && <RecentSends sends={queueData!.recentSends} onSelectClient={onSelectClient} />}
 
       {/* ── Estado vacío ── */}
       {k.contacted === 0 && (
@@ -455,11 +465,13 @@ function StatGroup({ title, color, icon, stats, children }: { title: string; col
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, gap: 8 }}>
         {stats.map((st, i) => (
-          <div key={st.label} onClick={st.onClick} style={{ minWidth: 0, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? '1px solid var(--line)' : 'none', cursor: st.onClick ? 'pointer' : undefined, borderRadius: st.onClick ? 8 : undefined, transition: 'background .15s' }}
+          <div key={st.label} onClick={st.onClick} style={{ minWidth: 0, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? '1px solid var(--line)' : 'none', cursor: st.onClick ? 'pointer' : undefined, borderRadius: st.onClick ? 8 : undefined, padding: st.onClick ? '4px 6px' : undefined, transition: 'background .15s' }}
             onMouseEnter={st.onClick ? (e) => { (e.currentTarget as HTMLElement).style.background = 'var(--sunk)' } : undefined}
             onMouseLeave={st.onClick ? (e) => { (e.currentTarget as HTMLElement).style.background = '' } : undefined}>
-            <div style={{ fontFamily: F, fontSize: '1.3rem', fontWeight: 900, color: st.color ?? 'var(--ink)', lineHeight: 1.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.value}{st.onClick && <span style={{ fontSize: '0.7rem', marginLeft: 4, opacity: 0.5 }}>{'>'}</span>}</div>
-            <div style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, lineHeight: 1.25 }}>{st.label}</div>
+            <div style={{ fontFamily: F, fontSize: '1.3rem', fontWeight: 900, color: st.color ?? 'var(--ink)', lineHeight: 1.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.value}</div>
+            <div style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 600, color: st.onClick ? (st.color ?? 'var(--ink-2)') : 'var(--ink-3)', marginTop: 4, lineHeight: 1.25, textDecoration: st.onClick ? 'underline' : undefined, textDecorationStyle: st.onClick ? 'dotted' as const : undefined, textUnderlineOffset: st.onClick ? '2px' : undefined }}>
+              {st.label}{st.onClick ? ' ↗' : ''}
+            </div>
             {st.hint && <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 500, color: 'var(--ink-4)', marginTop: 2 }}>{st.hint}</div>}
           </div>
         ))}
@@ -471,8 +483,8 @@ function StatGroup({ title, color, icon, stats, children }: { title: string; col
 
 const ic = (d: React.ReactNode) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 
-function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, couponRecipients, recoveredClients, onSelectClient }: {
-  k: RecoveryData['kpis']; queueCount: number; pendingSurvey: number; pendingCoupon: number
+function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, atRisk, churned, couponRecipients, recoveredClients, onSelectClient }: {
+  k: RecoveryData['kpis']; queueCount: number; pendingSurvey: number; pendingCoupon: number; atRisk: number; churned: number
   couponRecipients: NonNullable<RecoveryData['couponRecipients']>
   recoveredClients: NonNullable<RecoveryData['recoveredClients']>
   onSelectClient?: (client: { email: string; name: string; phone: string }) => void
@@ -486,52 +498,48 @@ function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, couponRe
       <StatGroup title="Clientes" color="#ef4444"
         icon={ic(<><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>)}
         stats={[
-          { label: 'En riesgo', value: fmt(k.atRisk), color: '#d97706', hint: 'bajando frecuencia' },
-          { label: 'Perdidos', value: fmt(k.churned), color: '#dc2626', hint: 'inactivos' },
-          { label: 'Pend. encuesta', value: fmt(pendingSurvey), hint: 'esperan umbral' },
-          { label: 'Pend. cupón', value: fmt(pendingCoupon), color: '#16a34a', hint: 'esperan 3 días' },
+          { label: 'En riesgo', value: atRisk ? fmt(atRisk) : '…', color: '#d97706', hint: 'bajando frecuencia' },
+          { label: 'Perdidos', value: churned ? fmt(churned) : '…', color: '#dc2626', hint: 'inactivos' },
+          { label: 'Pend. encuesta', value: pendingSurvey || queueCount ? fmt(pendingSurvey) : '…', hint: 'esperan umbral' },
+          { label: 'Pend. cupón', value: pendingCoupon || queueCount ? fmt(pendingCoupon) : '…', color: '#16a34a', hint: 'esperan 3 días' },
         ]} />
 
       <StatGroup title="Encuestas" color="#3b82f6"
         icon={ic(<><path d="M4 4h16v16H4z"/><path d="m4 6 8 7 8-7"/></>)}
         stats={[
           { label: 'Enviadas', value: fmt(surveysSent) },
-          { label: 'Abiertas', value: fmt(surveysOpened), hint: `${pct(surveysOpened, surveysSent)}%` },
+          { label: 'Interactuaron', value: fmt(surveysOpened), hint: `${pct(surveysOpened, surveysSent)}%` },
           { label: 'Respondieron', value: fmt(k.responded), hint: `${pct(k.responded, surveysSent)}%` },
         ]} />
 
       <StatGroup title="Cupones" color="#f59e0b"
         icon={ic(<><path d="M3 9a3 3 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a3 3 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M13 5v14" strokeDasharray="2 2"/></>)}
         stats={[
-          { label: 'Enviados', value: fmt(k.couponsSent) },
-          { label: 'Abiertos', value: fmt(k.couponsOpened), hint: k.couponsSent ? `${pct(k.couponsOpened, k.couponsSent)}%` : undefined },
+          { label: 'Enviados', value: fmt(k.couponsSent), onClick: k.couponsSent > 0 ? () => setShowCoupons(v => !v) : undefined },
+          { label: 'Interactuaron', value: fmt(k.couponsOpened), hint: k.couponsSent ? `${pct(k.couponsOpened, k.couponsSent)}%` : undefined },
           { label: 'Usados', value: fmt(k.couponsUsed), color: k.couponsUsed > 0 ? '#16a34a' : undefined, hint: k.couponsSent ? `${pct(k.couponsUsed, k.couponsSent)}%` : undefined },
         ]}>
-        {couponRecipients.length > 0 && (
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
-            <button type="button" onClick={() => setShowCoupons(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-2)' }}>
-              {showCoupons ? '▾' : '▸'} Ver a quién se envió
-            </button>
-            {showCoupons && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
-                {couponRecipients.map(c => (
-                  <div key={c.email + c.sentAt} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
-                      <div style={{ fontSize: '0.64rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {new Date(c.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}{c.code ? ` · ${c.code}` : ''}
-                      </div>
+        {showCoupons && couponRecipients.length > 0 && (
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, maxHeight: 320, overflowY: 'auto' }}>
+            <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink-2)', marginBottom: 6 }}>Cupones enviados</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {couponRecipients.map(c => (
+                <div key={c.email + c.sentAt} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                    <div style={{ fontSize: '0.64rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {new Date(c.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}{c.code ? ` · ${c.code}` : ''}
                     </div>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, flexShrink: 0,
-                      background: c.used ? '#f0fdf4' : c.opened ? '#f5f3ff' : 'var(--surface)',
-                      color: c.used ? '#16a34a' : c.opened ? '#7c3aed' : 'var(--ink-3)' }}>
-                      {c.used ? 'Usado' : c.opened ? 'Abierto' : 'Enviado'}
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, flexShrink: 0,
+                    background: c.used ? '#f0fdf4' : c.opened ? '#f5f3ff' : 'var(--surface)',
+                    color: c.used ? '#16a34a' : c.opened ? '#7c3aed' : 'var(--ink-3)' }}>
+                    {c.used ? 'Usado' : c.opened ? 'Interactuó' : 'Enviado'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </StatGroup>
@@ -593,7 +601,7 @@ const CLIENT_STATUS: Record<string, { label: string; bg: string; fg: string }> =
   new: { label: 'Nuevo', bg: 'var(--sunk)', fg: 'var(--ink-3)' },
 }
 
-function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryData['recentSends']>; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
+function RecentSends({ sends, onSelectClient }: { sends: QueueData['recentSends']; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
   const [range, setRange] = useState<'today' | 'week'>('today')
   const [shown, setShown] = useState(10)
   const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
