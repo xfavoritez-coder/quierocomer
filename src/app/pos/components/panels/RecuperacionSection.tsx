@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 const F = 'var(--sans)'
 const M = 'var(--mono)'
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
+// Tope práctico de envíos por ejecución diaria del cron (presupuesto de 240s con
+// ~500ms entre correos). Solo para estimar el ritmo en el panel; el cron no usa la
+// tabla de 50 que se muestra abajo, re-segmenta todo y envía hasta este tope.
+const DAILY_SEND_CAP = 480
 
 interface RecoveryData {
   kpis: {
@@ -140,6 +144,8 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   if (!data) return <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F }}>No se pudo cargar.</div>
 
   const k = data.kpis
+  const pendingTotal = data.queueTotal ?? data.queue.length
+  const daysToContactAll = Math.max(1, Math.ceil(pendingTotal / DAILY_SEND_CAP))
 
   // Respuestas filtradas
   const allResp = data.surveyResponses
@@ -327,6 +333,20 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
           </div>
           <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
             {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes cumplen hoy las reglas de envío y recibirán un email en la próxima ejecución diaria{(data.queueTotal ?? 0) > data.queue.length ? ` (se muestran los ${data.queue.length} de mayor riesgo)` : ''}. Solo se contacta a clientes perdidos que llevan al menos 45 días sin pedir (o 2,5× su frecuencia).{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
+          </div>
+          {/* Indicador de ritmo: el cron envía hasta ~480/día, no los 50 que se listan. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12, padding: '9px 11px', borderRadius: 10, background: 'var(--amber-tint-2)', border: '1px solid var(--amber-tint)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--amber-tint)', fontFamily: F, fontSize: '0.74rem', fontWeight: 800, color: 'var(--amber-press)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+              ~{DAILY_SEND_CAP} correos/día
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--line)', fontFamily: F, fontSize: '0.74rem', fontWeight: 800, color: 'var(--ink-2)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              ~{daysToContactAll.toLocaleString('es-CL')} {daysToContactAll === 1 ? 'día' : 'días'} para contactarlos a todos
+            </span>
+            <span style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)', flex: '1 1 160px', minWidth: 0 }}>
+              Es el tope del envío diario (una ejecución al día). La tabla de abajo es solo una muestra de los 50 de mayor riesgo, no el total que se envía.
+            </span>
           </div>
           <style>{`.rec-queue-row:hover{background:var(--sunk) !important}`}</style>
           <div style={{ overflowX: 'auto' }}>
