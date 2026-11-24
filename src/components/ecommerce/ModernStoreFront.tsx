@@ -1745,7 +1745,11 @@ function BranchCard({ name, address, phone, whatsapp, instagram, googleMapsUrl, 
           {logoUrl && (
             <img src={logoUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100" />
           )}
-          <h3 className="text-lg font-bold text-gray-900">{name}</h3>
+          {slug ? (
+            <a href={`/ecommerce/${slug}/local`} className="text-lg font-bold text-gray-900 hover:underline">{name}</a>
+          ) : (
+            <h3 className="text-lg font-bold text-gray-900">{name}</h3>
+          )}
           {open ? (
             <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Abierto</span>
           ) : (
