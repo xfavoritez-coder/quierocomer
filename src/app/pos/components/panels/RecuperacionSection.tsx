@@ -216,7 +216,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               )}
               <button onClick={onPickFile} disabled={importBusy} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 8,
-                border: 'none', background: 'var(--ink)', color: '#fff', fontFamily: F, fontSize: '0.76rem', fontWeight: 700,
+                border: '1.5px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: F, fontSize: '0.76rem', fontWeight: 700,
                 cursor: importBusy ? 'default' : 'pointer', opacity: importBusy ? 0.5 : 1, whiteSpace: 'nowrap',
               }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V5M8 9l4-4 4 4M5 19h14"/></svg>
