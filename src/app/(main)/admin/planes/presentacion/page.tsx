@@ -296,6 +296,29 @@ const FEATURES: Feature[] = [
   { id: "datos", scope: "Incluido en todos los planes", title: "Cupones, encuestas y reportes", desc: "Crea descuentos y promociones para atraer clientes, pídeles su opinión automáticamente, y mira cuánto vendes, tus productos top y tus mejores clientes. Creces con datos, no con corazonadas.", scene: "chart" },
 ];
 
+// Icono identificador por add-on según su nombre (emoji en una placa, consistente y sin romper layout).
+function AddonIcon({ name }: { name: string }) {
+  const n = (name || "").toLowerCase();
+  if (/loyal|fideliz|wallet|membres|punto|sello/.test(n)) return <SceneLoyalty />;
+  if (/qr|carta/.test(n)) return <SceneQr />;
+  const emoji =
+    /delivery|apps/.test(n) ? "🛵" :
+    /kds|pantalla|cocina/.test(n) ? "🖥️" :
+    /repartidor|moto|rider|driver/.test(n) ? "🏍️" :
+    /mesa/.test(n) ? "🍽️" :
+    /combo|total|pack|completo|todo/.test(n) ? "📦" :
+    /pos|caja/.test(n) ? "🧾" :
+    /bodega|inventario|stock|receta/.test(n) ? "📦" :
+    /web|tienda|online|ecommerce|sitio/.test(n) ? "🛒" :
+    /banc|concilia|contab|gasto|arqueo/.test(n) ? "🏦" :
+    /report|estad|dato|anal|gráfic|grafic/.test(n) ? "📊" :
+    /cupon|promo|descuento/.test(n) ? "🏷️" :
+    /multicaja|multi|sucursal/.test(n) ? "🏪" :
+    /cliente|proveedor/.test(n) ? "🤝" :
+    "✨";
+  return <div style={{ width: "clamp(72px,7vw,104px)", height: "clamp(72px,7vw,104px)", borderRadius: 22, background: "linear-gradient(135deg,#F3E9D4,#E6D6B6)", border: "1px solid #E0D4B8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "clamp(34px,3.6vw,52px)", boxShadow: "0 14px 26px -14px rgba(0,0,0,.35)" }}>{emoji}</div>;
+}
+
 export default function PresentacionPage() {
   const { isSuper } = useAdminSession();
   const router = useRouter();
@@ -322,6 +345,38 @@ export default function PresentacionPage() {
   const itemSectionId = (p: PricePlan, pool: "plans" | "addons") => (p.categoryId && validSectionIds.has(p.categoryId)) ? p.categoryId : (pool === "plans" ? "__plans" : "__addons");
   const allItems = cfg ? [...cfg.plans.map((p) => ({ p, pool: "plans" as const })), ...cfg.addons.map((p) => ({ p, pool: "addons" as const }))] : [];
   const itemsIn = (sid: string) => allItems.filter((x) => itemSectionId(x.p, x.pool) === sid).map((x) => x.p);
+  // Precio efectivo: base + add-ons incluidos (con override), precio oferta y add-ons incluidos.
+  const priceInfo = (p: PricePlan) => {
+    const addonsSum = (p.includedAddons || []).reduce((s, id) => s + (p.addonPrices?.[id] ?? (cfg?.addons.find((a) => a.id === id)?.price || 0)), 0);
+    const regular = p.price + addonsSum;
+    const hasOffer = typeof p.offerPrice === "number" && p.offerPrice > 0 && p.offerPrice < regular;
+    const incNames = (p.includedAddons || []).map((id) => cfg?.addons.find((a) => a.id === id)?.name).filter(Boolean) as string[];
+    return { regular, main: hasOffer ? (p.offerPrice as number) : regular, hasOffer, incNames };
+  };
+  const priceLineBig = (p: PricePlan) => {
+    const pi = priceInfo(p);
+    return (
+      <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        {p.priceFrom ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.45em", fontWeight: 600 }}>Desde</span> : null}
+        {pi.hasOffer ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.6em", fontWeight: 500, textDecoration: "line-through" }}>{fmt(pi.regular)}</span> : null}
+        <span>{fmt(pi.main)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></span>
+      </p>
+    );
+  };
+  const includesBlock = (p: PricePlan) => {
+    const { incNames } = priceInfo(p);
+    if (!incNames.length) return null;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "clamp(6px,0.8vw,10px)" }}>
+        <p style={{ fontFamily: SANS, fontSize: "clamp(0.72rem,0.9vw,0.95rem)", color: GOLDT, margin: 0, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Incluye</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "7px 9px" }}>
+          {incNames.map((nm) => (
+            <span key={nm} style={{ fontFamily: SANS, fontSize: "clamp(0.76rem,0.95vw,1.05rem)", fontWeight: 700, color: INK, background: "#FBF2DF", border: "1px solid #E7C98A", borderRadius: 999, padding: "5px 13px" }}>{nm}</span>
+          ))}
+        </div>
+      </div>
+    );
+  };
   const slides: Slide[] = cfg ? [
     { type: "cover" }, { type: "intro" },
     ...FEATURES.map((f): Slide => ({ type: "feature", f })),
@@ -424,11 +479,12 @@ export default function PresentacionPage() {
           {slide.items.map((p) => {
             const hi = p.recommended === true || (!slide.items.some((pp) => pp.recommended) && /premium/i.test(p.name) && !/futuro/i.test(p.name));
             const tInk = hi ? CREAM : INK, tSub = hi ? "#CFC6B4" : INKSOFT, line = hi ? "#4A4236" : CARDB;
+            const pi = priceInfo(p);
             return (
               <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 18, padding: "clamp(16px,1.6vw,26px) clamp(14px,1.4vw,22px)", display: "flex", flexDirection: "column", gap: 8, boxShadow: CARDSHADOW }}>
                 {hi ? eyebrow("Recomendado", true) : <div style={{ height: "clamp(0.8rem,1.1vw,1.05rem)" }} />}
                 <h3 style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.4vw,1.4rem)", fontWeight: 700, color: tInk, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{p.priceFrom ? <span style={{ fontFamily: SANS, fontSize: "0.4em", color: tSub, fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
+                <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{p.priceFrom ? <span style={{ fontFamily: SANS, fontSize: "0.4em", color: tSub, fontWeight: 600 }}>Desde </span> : null}{pi.hasOffer ? <span style={{ fontFamily: SANS, fontSize: "0.5em", color: tSub, fontWeight: 500, textDecoration: "line-through" }}>{fmt(pi.regular)} </span> : null}{fmt(pi.main)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
                 {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.62rem,0.8vw,0.85rem)", color: tSub, margin: 0 }}>{p.subtitle.trim()}</p> : null}
                 <div style={{ height: 1, background: line, margin: "6px 0 2px" }} />
                 {p.features.map((f) => {
@@ -495,14 +551,15 @@ export default function PresentacionPage() {
       <div style={{ ...wrap, gap: "clamp(24px,3.5vh,40px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow(cfg.headings?.addonsTitle || "Paquetes y add-ons")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Súmale fidelización y carta digital</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(360px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
-          {slide.items.map((p, i) => (
+          {slide.items.map((p) => (
             <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,36px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,20px)", boxShadow: CARDSHADOW }}>
-              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px" }}>{i === 0 ? <SceneLoyalty /> : <SceneQr />}</div>
+              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px", minHeight: "clamp(80px,8vw,120px)", alignItems: "center" }}><AddonIcon name={p.name} /></div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                 <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.3rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{p.priceFrom ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.45em", fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
+                {priceLineBig(p)}
               </div>
               {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-6px 0 0" }}>{p.subtitle.trim()}</p> : null}
+              {includesBlock(p)}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
                 {p.features.map((f) => {
                   const fhi = (p.highlightedFeatures || []).some((x) => x.trim().toLowerCase() === f.trim().toLowerCase());
@@ -526,11 +583,13 @@ export default function PresentacionPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: "clamp(16px,2vw,28px)", alignItems: "stretch" }}>
           {slide.items.map((p) => (
             <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(22px,2.2vw,34px)", display: "flex", flexDirection: "column", gap: "clamp(12px,1.4vw,18px)", boxShadow: CARDSHADOW }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 4px", minHeight: "clamp(80px,8vw,120px)", alignItems: "center" }}><AddonIcon name={p.name} /></div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                 <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.3rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{p.priceFrom ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.45em", fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
+                {priceLineBig(p)}
               </div>
               {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-4px 0 0" }}>{p.subtitle.trim()}</p> : null}
+              {includesBlock(p)}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
                 {p.features.map((f) => {
                   const fhi = (p.highlightedFeatures || []).some((x) => x.trim().toLowerCase() === f.trim().toLowerCase());
