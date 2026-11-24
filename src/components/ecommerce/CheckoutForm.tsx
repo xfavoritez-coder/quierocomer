@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { computeDiscount } from "@/lib/ecommerce/coupons";
 import { readPendingCoupon, clearPendingCoupon } from "@/lib/ecommerce/pendingCoupon";
 import { isInApp } from "@/lib/ecommerce/isInApp";
+import { fbAppLogPurchase } from "@/lib/ecommerce/fbAppEvents";
 import { clp } from "@/lib/ecommerce/format";
 import { isValidPhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
 import StoreLink from "./StoreLink";
@@ -217,6 +218,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
         { value: finalTotal, currency: "CLP", ...cartContents(items) },
         orderParam ? `order-${orderParam}` : undefined,
       );
+      fbAppLogPurchase(finalTotal, orderParam || undefined); // evento de app (solo dentro de la app)
       clearCart();
       if (orderParam) window.location.replace(`/pedido/${orderParam}`);
       return;
@@ -453,6 +455,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       setRedirecting(true);
       // Purchase del navegador (dedup con el CAPI del servidor vía eventID = order-<id>).
       fbTrack("Purchase", { value: finalTotal, currency: "CLP", ...cartContents(items) }, `order-${data.orderId}`);
+      fbAppLogPurchase(finalTotal, data.orderId); // evento de app (solo dentro de la app)
       clearCart();
       window.location.href = `/pedido/${data.orderId}`;
     } catch {

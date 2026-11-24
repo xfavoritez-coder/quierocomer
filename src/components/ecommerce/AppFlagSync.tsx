@@ -2,6 +2,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isInApp } from "@/lib/ecommerce/isInApp";
+import { fbAppRequestTracking } from "@/lib/ecommerce/fbAppEvents";
+
+// Pide el permiso ATT de iOS una sola vez por carga (el prompt del sistema solo
+// aparece la primera vez; luego es un no-op instantáneo). Se difiere para no
+// interferir con el montaje del WebView en el primer arranque.
+let attRequested = false;
 
 /**
  * Mantiene la cookie `qc_app` en sincronía con si el storefront corre dentro de
@@ -23,6 +29,15 @@ import { isInApp } from "@/lib/ecommerce/isInApp";
  */
 export default function AppFlagSync({ active }: { active: boolean }) {
   const router = useRouter();
+
+  // Permiso ATT (iOS): diferido y una sola vez, sin tocar el render del WebView.
+  useEffect(() => {
+    if (attRequested || !isInApp()) return;
+    attRequested = true;
+    const t = setTimeout(() => fbAppRequestTracking(), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     const inApp = isInApp();
     if (inApp === active) return; // ya está sincronizado
