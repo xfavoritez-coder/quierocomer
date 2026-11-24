@@ -590,25 +590,39 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
         {/* Avisos push del estado del pedido */}
         {order.status !== "DONE" && <NotifyButton orderId={orderId} accent={theme.accent} textColor={theme.text2} />}
 
-        {/* Mapa en vivo del repartidor (deliveryhandroll) — solo cuando el pedido
-            ya salió a reparto (IN_DELIVERY) y tenemos ubicación del repartidor. */}
-        {order.orderType === "DELIVERY" && order.status === "IN_DELIVERY" && tracking?.enabled && tracking.courier?.lat != null && (
-          <div style={{ ...cardStyle, padding: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 10px" }}>
-              <span style={{ fontSize: 22 }}>🛵</span>
-              <div style={{ minWidth: 0 }}>
-                <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: theme.text, margin: 0 }}>{tracking.courier.name || "Tu repartidor va en camino"}</p>
-                <p style={{ fontSize: 12, color: theme.text2, margin: "2px 0 0" }}>{tracking.courier.label || "Ubicación en tiempo real"}</p>
+        {/* Mapa en vivo del reparto (deliveryhandroll) — cuando el pedido salió a
+            reparto (IN_DELIVERY). Muestra SIEMPRE la casa del cliente; el pin del
+            repartidor (🛵) aparece solo si hay GPS en vivo. Los agregadores externos
+            (PedidosYa/Uber) no comparten ubicación, así que ahí solo se ve la casa. */}
+        {(() => {
+          const hasCourierLoc = tracking?.courier?.lat != null && tracking?.courier?.lng != null;
+          const hasCustomerLoc = tracking?.customer?.lat != null && tracking?.customer?.lng != null;
+          if (!(order.orderType === "DELIVERY" && order.status === "IN_DELIVERY" && tracking?.enabled && (hasCourierLoc || hasCustomerLoc))) return null;
+          const courierName = tracking?.courier?.name;
+          const title = hasCourierLoc
+            ? (courierName || "Tu repartidor va en camino")
+            : (courierName ? `${courierName} va en camino` : "Tu pedido va en camino");
+          const sub = hasCourierLoc
+            ? (tracking?.courier?.label || "Ubicación en tiempo real")
+            : (tracking?.courier?.label || "En camino a tu dirección");
+          return (
+            <div style={{ ...cardStyle, padding: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 10px" }}>
+                <span style={{ fontSize: 22 }}>🛵</span>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: theme.text, margin: 0 }}>{title}</p>
+                  <p style={{ fontSize: 12, color: theme.text2, margin: "2px 0 0" }}>{sub}</p>
+                </div>
               </div>
+              <OrderTrackingMap
+                driver={hasCourierLoc ? { lat: tracking!.courier!.lat!, lng: tracking!.courier!.lng! } : null}
+                customer={tracking?.customer ?? null}
+                store={null}
+                dark={(order.colorMode ?? "LIGHT") === "DARK"}
+              />
             </div>
-            <OrderTrackingMap
-              driver={{ lat: tracking.courier.lat!, lng: tracking.courier.lng! }}
-              customer={tracking.customer}
-              store={null}
-              dark={(order.colorMode ?? "LIGHT") === "DARK"}
-            />
-          </div>
-        )}
+          );
+        })()}
 
         {/* Stepper */}
         <div style={{ ...cardStyle, padding: "20px 12px" }}>
