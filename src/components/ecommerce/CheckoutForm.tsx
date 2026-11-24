@@ -269,7 +269,8 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const timingOk = scheduleMode === "scheduled" ? !!scheduledIso : isOpen;
   // Teléfono: debe ser un celular chileno válido (9 dígitos empezando en 9, o +56 + ese celular).
   const phoneOk = isValidPhoneCL(phone);
-  const isValid = timingOk && deliverySelected && name.trim().length >= 2 && phoneOk && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
+  const nameIsEmail = /@/.test(name.trim());
+  const isValid = timingOk && deliverySelected && name.trim().length >= 2 && !nameIsEmail && phoneOk && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
 
   // Traer las franjas disponibles para programar (según tipo de entrega).
   useEffect(() => {
@@ -527,7 +528,8 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           <Block title="Tus datos" action={deliverySelected ? <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>Editar</button> : undefined}>
             <div className="flex flex-col gap-3">
               <Field label="Nombre">
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+                <input value={name} onChange={(e) => { const v = e.target.value; setName(v); }} placeholder="Tu nombre" className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${/@/.test(name.trim()) ? "border-red-400 bg-red-50 focus:border-red-400" : "border-gray-200 focus:border-gray-400"}`} />
+                {/@/.test(name.trim()) && <p className="text-xs text-red-500 mt-1">Escribe tu nombre, no tu correo. El correo va en el campo de abajo.</p>}
               </Field>
               <Field label="Teléfono *">
                 <div className={`flex items-center rounded-xl border overflow-hidden ${phone.trim() && !phoneOk ? "border-red-400 bg-red-50" : "border-gray-200 focus-within:border-gray-400"}`}>
