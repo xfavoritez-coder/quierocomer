@@ -331,7 +331,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
             Pendientes de contactar
           </div>
           <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
-            {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes perdidos pendientes de contactar. Los marcados con 🟢 se envían en la próxima ejecución diaria; el resto cuando lleguen a su umbral de días sin pedir.{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
+            {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes pendientes. Se contacta a quienes llevan 30+ días sin pedir (o 2,5× su frecuencia habitual). Primero reciben la encuesta, y 3 días después el cupón de descuento.
           </div>
           {/* Indicador de ritmo: el cron envía hasta ~480/día, no los 50 que se listan. */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12, padding: '9px 11px', borderRadius: 10, background: 'var(--amber-tint-2)', border: '1px solid var(--amber-tint)' }}>
