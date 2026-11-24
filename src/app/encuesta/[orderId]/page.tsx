@@ -12,8 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: "Tu opinión nos importa", robots: { index: false } };
 }
 
-export default async function EncuestaPage({ params }: { params: Promise<{ orderId: string }> }) {
+export default async function EncuestaPage({ params, searchParams }: { params: Promise<{ orderId: string }>; searchParams: Promise<{ stars?: string }> }) {
   const { orderId } = await params;
+  const { stars: starsParam } = await searchParams;
+  const preselectedStars = starsParam ? Math.min(5, Math.max(1, parseInt(starsParam) || 0)) : undefined;
   const preview = orderId.startsWith("preview_");
 
   let restaurant: { id: string; name: string; logoUrl: string | null; cartaAccentColor: string | null; ecommerceStoreConfig: unknown } | null = null;
@@ -52,6 +54,7 @@ export default async function EncuestaPage({ params }: { params: Promise<{ order
       thankYou={cfg.survey.thankYou}
       customerName={customerName}
       alreadyAnswered={alreadyAnswered}
+      preselectedStars={preselectedStars}
     />
   );
 }

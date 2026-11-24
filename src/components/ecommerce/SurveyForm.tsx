@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Star, Heart } from "lucide-react";
 
 interface Q { id: string; text: string }
@@ -14,6 +14,7 @@ interface Props {
   thankYou: string;
   customerName: string | null;
   alreadyAnswered: boolean;
+  preselectedStars?: number;
 }
 
 const FB = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -21,11 +22,29 @@ const FB = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 export default function SurveyForm(props: Props) {
   const accent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(props.accent) ? props.accent : "#e63946";
   const firstName = (props.customerName || "").trim().split(/\s+/)[0] || "";
-  const [ratings, setRatings] = useState<Record<string, number>>({});
+  // Si viene ?stars=N, pre-llenar todas las preguntas con ese valor
+  const initialRatings: Record<string, number> = {};
+  if (props.preselectedStars && props.preselectedStars >= 1 && props.preselectedStars <= 5) {
+    for (const q of props.questions) initialRatings[q.id] = props.preselectedStars;
+  }
+  const [ratings, setRatings] = useState<Record<string, number>>(initialRatings);
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(props.alreadyAnswered);
   const [error, setError] = useState<string | null>(null);
+  const autoSaved = useRef(false);
+
+  // Auto-guardar la valoración de estrellas al abrir (si viene de un click en el email)
+  useEffect(() => {
+    if (!props.preselectedStars || autoSaved.current || props.preview || !props.orderId || props.alreadyAnswered) return;
+    autoSaved.current = true;
+    const answers: Record<string, number> = {};
+    for (const q of props.questions) answers[q.id] = props.preselectedStars;
+    fetch("/api/ecommerce/survey/respond", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: props.orderId, answers, comment: null }),
+    }).catch(() => {});
+  }, [props.preselectedStars, props.preview, props.orderId, props.alreadyAnswered, props.questions]);
 
   const allAnswered = useMemo(
     () => props.questions.length > 0 && props.questions.every((q) => ratings[q.id] >= 1),
@@ -69,8 +88,14 @@ export default function SurveyForm(props: Props) {
           <div style={{ textAlign: "center", padding: "24px 8px", color: "#777" }}>Esta encuesta no tiene preguntas activas.</div>
         ) : (
           <>
-            <h1 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px", textAlign: "center" }}>Queremos conocer tu opinión</h1>
-            {firstName && <p style={{ color: "#666", fontSize: 14, lineHeight: 1.5, textAlign: "center", margin: "0 0 22px" }}>Hola {firstName}, cuéntanos cómo estuvo tu pedido.</p>}
+            <h1 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px", textAlign: "center" }}>
+              {props.preselectedStars ? "Tu valoración fue registrada 🙏" : "Queremos conocer tu opinión"}
+            </h1>
+            <p style={{ color: "#666", fontSize: 14, lineHeight: 1.5, textAlign: "center", margin: "0 0 22px" }}>
+              {props.preselectedStars
+                ? "Puedes ajustar las estrellas si quieres y dejarnos un comentario."
+                : firstName ? `Hola ${firstName}, cuéntanos cómo estuvo tu pedido.` : "Cuéntanos cómo estuvo tu pedido."}
+            </p>
 
             {props.preview && (
               <div style={{ background: `${accent}12`, border: `1px solid ${accent}44`, color: "#555", borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 600, textAlign: "center", marginBottom: 18 }}>

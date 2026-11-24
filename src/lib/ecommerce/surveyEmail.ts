@@ -47,7 +47,13 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
 
   const saludo = firstName ? `${esc(firstName)}, ¿cómo estuvo todo?` : `¿Cómo estuvo todo?`;
-  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>. Así sabemos cómo lo estamos haciendo y si hay algo que podamos mejorar para ti.`;
+  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>.`;
+
+  // Estrellas clickeables — cada una lleva a la página con ?stars=N que guarda la valoración al abrir
+  const stars = [1, 2, 3, 4, 5].map(n => {
+    const href = `${args.link}${args.link.includes('?') ? '&' : '?'}stars=${n}`;
+    return `<a href="${esc(href)}" style="text-decoration:none;font-size:32px;padding:4px 6px;" title="${n} estrella${n > 1 ? 's' : ''}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</a>`;
+  }).join('</td></tr><tr><td align="center" style="padding:2px 0;">');
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -59,13 +65,13 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     ${headerLogo}
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;text-align:center;">
-    <div style="font-size:40px;line-height:1;margin-bottom:14px;">⭐</div>
-    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 10px;">${saludo}</h1>
-    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 24px;">${cuerpo}</p>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center">
-      <a href="${esc(args.link)}" style="display:inline-block;background:${accent};color:#fff;font-size:15px;font-weight:800;padding:14px 36px;border-radius:12px;text-decoration:none;">Calificar mi pedido →</a>
-    </td></tr></table>
-    <p style="font-size:12px;color:#ccc;margin:20px 0 0;">Si el botón no funciona: <a href="${esc(args.link)}" style="color:#aaa;">${esc(args.link)}</a></p>
+    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 8px;">${saludo}</h1>
+    <p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 20px;">${cuerpo}</p>
+    <p style="font-size:13px;color:#999;margin:0 0 12px;">Toca una estrella para calificar:</p>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr><td align="center" style="padding:2px 0;">${stars}</td></tr>
+    </table>
+    <p style="font-size:11px;color:#ccc;margin:18px 0 0;">Al tocar una estrella se guarda tu valoración y puedes dejar un comentario.</p>
   </td></tr>
   <tr><td align="center" style="padding:16px 0 0;">
     <span style="font-size:11px;color:#aaa;">Powered by QuieroComer.cl</span>
