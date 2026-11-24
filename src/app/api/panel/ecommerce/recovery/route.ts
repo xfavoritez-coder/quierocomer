@@ -6,6 +6,7 @@ import { getClientSegmentation, type ClientRow } from "@/lib/ecommerce/client-se
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { pickAutomation, surveyMinDays, indexEnrollments } from "@/lib/ecommerce/recovery-eligibility";
 import { readImportedClients, buildImportedChurnedClients } from "@/lib/ecommerce/recoveryImport";
+import { chileDayStart, toChileDateStr } from "@/lib/promoDates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -130,10 +131,18 @@ export async function GET(req: NextRequest) {
     ].sort((a, b) => a.daysLeft - b.daysLeft || b.c.riskScore - a.c.riskScore);
 
     const sevenDaysAgo = Date.now() - 7 * 86400000;
-    const recentSends = enrollments
-      .filter(e => e.sentAt && e.sentAt.getTime() >= sevenDaysAgo)
+    const startOfTodayMs = chileDayStart(toChileDateStr(new Date()))?.getTime() ?? (Date.now() - 86400000);
+    const sentWithin7d = enrollments.filter(e => e.sentAt && e.sentAt.getTime() >= sevenDaysAgo);
+    // Conteos REALES (no limitados por el tope de la lista de abajo), para las
+    // pestañas "Hoy (N)" / "7 días (N)". Antes la UI usaba el largo de la lista
+    // capada → siempre mostraba el tope (200) aunque se enviaran más.
+    const recentTotals = {
+      week: sentWithin7d.length,
+      today: sentWithin7d.filter(e => e.sentAt!.getTime() >= startOfTodayMs).length,
+    };
+    const recentSends = sentWithin7d
       .sort((a, b) => b.sentAt!.getTime() - a.sentAt!.getTime())
-      .slice(0, 200)
+      .slice(0, 1000)
       .map(e => {
         const c = clientByEmail.get(e.customerEmail.toLowerCase());
         return {
@@ -158,6 +167,7 @@ export async function GET(req: NextRequest) {
         status: c.status, riskScore: c.riskScore, nextEmail, daysLeft, minDays,
       })),
       recentSends,
+      recentTotals,
       // Stats de clientes que solo se usan en este endpoint
       atRisk: clients.filter(c => c.status === "at_risk").length,
       churned: churned.length,

@@ -38,6 +38,7 @@ interface QueueData {
   queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string; daysLeft?: number; minDays?: number }[]
   queueTotal: number; pendingSurvey: number; pendingCoupon: number
   recentSends: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
+  recentTotals?: { today: number; week: number }
   atRisk: number; churned: number
 }
 
@@ -429,7 +430,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       )}
 
       {/* ── Últimos envíos ── */}
-      {(queueData?.recentSends?.length ?? 0) > 0 && <RecentSends sends={queueData!.recentSends} onSelectClient={onSelectClient} />}
+      {(queueData?.recentSends?.length ?? 0) > 0 && <RecentSends sends={queueData!.recentSends} totals={queueData!.recentTotals} onSelectClient={onSelectClient} />}
 
       {/* ── Estado vacío ── */}
       {k.contacted === 0 && (
@@ -629,11 +630,15 @@ const CLIENT_STATUS: Record<string, { label: string; bg: string; fg: string }> =
   new: { label: 'Nuevo', bg: 'var(--sunk)', fg: 'var(--ink-3)' },
 }
 
-function RecentSends({ sends, onSelectClient }: { sends: QueueData['recentSends']; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
+function RecentSends({ sends, totals, onSelectClient }: { sends: QueueData['recentSends']; totals?: { today: number; week: number }; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
   const [range, setRange] = useState<'today' | 'week'>('today')
   const [shown, setShown] = useState(10)
   const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
-  const todayCount = sends.filter(s => new Date(s.sentAt) >= startOfToday).length
+  const todayInList = sends.filter(s => new Date(s.sentAt) >= startOfToday).length
+  // Conteos reales del servidor (no limitados por el tope de la lista); si no
+  // vienen, se cae al largo de la lista cargada.
+  const todayCount = totals?.today ?? todayInList
+  const weekCount = totals?.week ?? sends.length
   const list = range === 'today' ? sends.filter(s => new Date(s.sentAt) >= startOfToday) : sends
   return (
     <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
@@ -641,7 +646,7 @@ function RecentSends({ sends, onSelectClient }: { sends: QueueData['recentSends'
         <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Últimos envíos</span>
         <div style={{ display: 'flex', gap: 4 }}>
           <button onClick={() => { setRange('today'); setShown(10) }} style={{ ...pillBtn, ...(range === 'today' ? pillActive : {}) }}>Hoy ({todayCount})</button>
-          <button onClick={() => { setRange('week'); setShown(10) }} style={{ ...pillBtn, ...(range === 'week' ? pillActive : {}) }}>7 días ({sends.length})</button>
+          <button onClick={() => { setRange('week'); setShown(10) }} style={{ ...pillBtn, ...(range === 'week' ? pillActive : {}) }}>7 días ({weekCount})</button>
         </div>
       </div>
       <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
