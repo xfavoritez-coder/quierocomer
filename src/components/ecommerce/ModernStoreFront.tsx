@@ -1118,7 +1118,7 @@ function ModernProductCard({
         <button onClick={soldOut ? undefined : onClickDetails} disabled={soldOut} className="text-left w-full">
           <span className="flex items-center gap-1.5">
             <span className="font-bold text-gray-900 text-[15px] leading-snug line-clamp-2">{product.name}</span>
-            {product.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🥬</span>}
+            {product.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🍃</span>}
             {product.diet === "VEGETARIAN" && <span title="Vegetariano" style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>🌱</span>}
           </span>
           {product.description && (
@@ -1349,7 +1349,7 @@ function SuggestionsCarousel({ suggestions, primaryColor, onOpenProduct, onQuick
                 </div>
                 <span className="flex items-center gap-1 text-[13px] font-semibold text-gray-800 leading-snug min-h-[32px]">
                   <span className="line-clamp-2">{p.name}</span>
-                  {p.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 13, lineHeight: 1, flexShrink: 0 }}>🥬</span>}
+                  {p.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 13, lineHeight: 1, flexShrink: 0 }}>🍃</span>}
                   {p.diet === "VEGETARIAN" && <span title="Vegetariano" style={{ fontSize: 13, lineHeight: 1, flexShrink: 0 }}>🌱</span>}
                 </span>
                 <p className="mt-1 text-[13px] text-gray-500">{clp(p.price)}</p>
