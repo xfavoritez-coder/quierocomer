@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const coupon = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === normalCode);
 
     // Cupones de recuperación (VUELVE-*): viven en RecoveryEnrollment, no en el JSON.
-    // Misma validación que el checkout (sucursal correcta + un solo uso).
+    // Misma validación que el checkout (misma marca + un solo uso).
     if (!coupon && isRecoveryCouponCode(normalCode)) {
       const r = await validateRecoveryCoupon(normalCode, restaurant.id);
       if (!r.ok) return NextResponse.json({ valid: false, error: r.error });

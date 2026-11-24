@@ -50,9 +50,11 @@ export async function validateRecoveryCoupon(rawCode: string, restaurantId: stri
     if (!brandIds.includes(restaurantId)) return { ok: false, error: "Este cupón no es válido en esta tienda" };
   }
 
-  // Un solo uso: se registra en EcommerceCouponUse al confirmar el pedido/pago.
+  // Un solo uso: se registra en EcommerceCouponUse al confirmar el pedido/pago con el
+  // cupón. (Que el cliente haya vuelto a pedir SIN el cupón —status "converted"— no lo
+  // invalida: nunca lo usó.)
   const used = await prisma.ecommerceCouponUse.count({ where: { couponCode: code } });
-  if (used > 0 || enrollment.status === "converted") return { ok: false, error: "Este cupón ya fue utilizado" };
+  if (used > 0) return { ok: false, error: "Este cupón ya fue utilizado" };
 
   const pct = await promisedPercent(enrollment);
 

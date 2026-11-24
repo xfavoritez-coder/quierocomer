@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
     if (couponCode) {
       const found = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === String(couponCode).toUpperCase().trim());
       if (!found && isRecoveryCouponCode(String(couponCode))) {
-        // Cupón de recuperación (VUELVE-*): vive en RecoveryEnrollment, solo vale en su sucursal.
+        // Cupón de recuperación (VUELVE-*): vive en RecoveryEnrollment; vale en cualquier sucursal de la marca.
         const r = await validateRecoveryCoupon(String(couponCode), restaurant.id);
         if (!r.ok) couponError = r.error;
         else {

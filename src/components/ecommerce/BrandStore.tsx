@@ -71,15 +71,8 @@ export default function BrandStore({ brand, representative, basePath, initialPro
     try { saved = localStorage.getItem(PERSIST_KEY); } catch {}
 
     // Link con ?coupon= (email de recuperación): el cupón vale en cualquier sucursal de
-    // la marca, así que se respeta la sucursal que el cliente ya usa. ?sucursal=<slug>
-    // solo se usa si este navegador no tiene una sucursal guardada.
+    // la marca; el cliente elige su sucursal como siempre y el checkout lo aplica solo.
     const pendingCoupon = capturePendingCouponFromUrl();
-    if (!saved) {
-      try {
-        const wanted = new URLSearchParams(window.location.search).get("sucursal");
-        if (wanted && brand.branches.some((b) => b.slug === wanted)) saved = wanted;
-      } catch {}
-    }
     if (pendingCoupon) {
       setTimeout(() => toast.success(`Tu cupón ${pendingCoupon} está listo`, { description: "Se aplica automáticamente al pagar, en cualquier sucursal.", duration: 7000 }), 600);
     }
