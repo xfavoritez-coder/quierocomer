@@ -127,12 +127,19 @@ export async function POST(req: NextRequest) {
       for (const targetId of targets) {
         try {
           await assertOwnsRestaurant(req, targetId);
-          const tDishes = await prisma.dish.findMany({ where: { restaurantId: targetId, deletedAt: null }, select: { id: true, name: true } });
+          // Si hay varios platos con el mismo nombre, preferir el VISIBLE en la tienda
+          // (activo y no oculto de pedidos online); si no, se avisa.
+          const tDishes = await prisma.dish.findMany({ where: { restaurantId: targetId, deletedAt: null }, select: { id: true, name: true, isActive: true, hideFromOrdering: true } });
+          const visible = (d: { isActive: boolean; hideFromOrdering: boolean | null }) => d.isActive && d.hideFromOrdering !== true;
+          tDishes.sort((a, b) => Number(visible(b)) - Number(visible(a)));
           const byName = new Map<string, string>();
+          const hiddenIds = new Set(tDishes.filter((d) => !visible(d)).map((d) => d.id));
           for (const d of tDishes) if (!byName.has(norm(d.name))) byName.set(norm(d.name), d.id);
           const mapId = (id: string) => { const n = srcNameById.get(id); return n ? byName.get(norm(n)) : undefined; };
 
           const missing = srcDishIds.filter((id) => !mapId(id)).map((id) => srcNameById.get(id) || id);
+          // Platos encontrados pero ocultos en la tienda: la oferta no se vería.
+          for (const id of srcDishIds) { const m = mapId(id); if (m && hiddenIds.has(m)) missing.push(`${srcNameById.get(id)} (existe pero está oculto en la tienda)`); }
           const mainDish = src.dishId ? mapId(src.dishId) : null;
           if (src.dishId && !mainDish) { results.push({ restaurantId: targetId, ok: false, missing, error: `No existe el plato "${srcNameById.get(src.dishId) || "?"}" en esta sucursal` }); continue; }
           const dishIds = [...new Set(src.dishIds.map(mapId).filter((x): x is string => !!x))];
