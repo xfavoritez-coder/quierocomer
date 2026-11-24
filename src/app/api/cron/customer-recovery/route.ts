@@ -5,7 +5,6 @@ import { getClientSegmentation, resolveBrandIds, type ClientRow } from "@/lib/ec
 import { pickAutomation, indexEnrollments, type RecoveryAutomation } from "@/lib/ecommerce/recovery-eligibility";
 import { readImportedClients, buildImportedChurnedClients } from "@/lib/ecommerce/recoveryImport";
 import { branchDisplayName } from "@/lib/ecommerce/recoveryCoupon";
-import { storeAbsBase } from "@/lib/ecommerce/surveyEmail";
 import { firstBuyerSubject, firstBuyerHtml, firstBuyerText } from "@/lib/email/recovery/firstBuyerEmail";
 import { atRiskSubject, atRiskHtml, atRiskText } from "@/lib/email/recovery/atRiskEmail";
 import { abandonmentSurveySubject, abandonmentSurveyHtml, abandonmentSurveyText } from "@/lib/email/recovery/abandonmentSurveyEmail";
@@ -15,8 +14,7 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-const MAX_PER_RESTAURANT = 9999;
-const MAX_TOTAL = 9999;
+const MAX_TOTAL = 9999; // tope duro de envíos por corrida (el límite real es el tiempo)
 // Cortar antes del límite de Vercel (maxDuration) para no dejar envíos a medias.
 // Lo que no alcance a enviarse sale en la ejecución del día siguiente.
 const TIME_BUDGET_MS = 240_000;
@@ -59,80 +57,107 @@ export async function GET(req: NextRequest) {
     });
     for (const u of unsubs) if (u.email) unsubscribed.add(u.email.toLowerCase());
 
+    // ── FASE 1: preparar la cola de cada local (segmentar + filtrar, SIN enviar) ──
+    // El envío real se hace round-robin (fase 2) para repartir el cupo diario de forma
+    // justa entre los locales; así ninguno (p. ej. Hand Roll con 14k) acapara el día.
+    type Job = {
+      restaurantId: string; storeName: string; branchName: string; logoUrl: string | null;
+      accent: string; storeUrl: string; client: ClientRow; automation: Automation; rc: RecoveryConfig;
+    };
+    const queues: Job[][] = [];
+    const queuedEmails = new Set<string>(); // un mismo email recibe un solo correo por corrida
+    const since180 = new Date(Date.now() - 180 * 86400000);
+
     for (const rest of eligible) {
-      if (totalSent >= MAX_TOTAL || Date.now() - startMs > TIME_BUDGET_MS) break;
+      if (Date.now() - startMs > TIME_BUDGET_MS) break;
       const cfg = parseStoreConfig(rest.ecommerceStoreConfig);
       const rc = cfg.recovery;
       const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : `${BASE}/ecommerce/${rest.slug}`;
 
       try {
-        // 2. Segmentar clientes (+ importados manuales como perdidos sintéticos)
+        // Segmentar clientes (+ importados manuales como perdidos sintéticos)
         const realClients = await getClientSegmentation(rest.id);
         const existingEmails = new Set(realClients.filter(c => c.email).map(c => c.email.toLowerCase()));
         const importedClients = buildImportedChurnedClients(readImportedClients(rest.ecommerceStoreConfig), existingEmails, rest.id);
         const clients = [...realClients, ...importedClients];
         if (!clients.length) continue;
 
-        // 3. Historial de envíos de TODA la marca (últimos 180 días): así no se repite
-        //    la encuesta desde otra sucursal y el cupón exige una encuesta realmente enviada.
+        // Historial de envíos de TODA la marca (últimos 180 días): así no se repite
+        // la encuesta desde otra sucursal y el cupón exige una encuesta realmente enviada.
         const brandIds = await resolveBrandIds(rest.id);
-        const since180 = new Date(Date.now() - 180 * 86400000);
         const existing = await prisma.recoveryEnrollment.findMany({
           where: { restaurantId: { in: brandIds }, createdAt: { gte: since180 } },
           select: { customerEmail: true, automation: true, sentAt: true, status: true, createdAt: true },
         });
         const idx = indexEnrollments(existing);
 
-        let sentThisRestaurant = 0;
-
+        const jobs: Job[] = [];
         for (const client of clients) {
-          if (sentThisRestaurant >= MAX_PER_RESTAURANT || totalSent >= MAX_TOTAL) break;
-          if (Date.now() - startMs > TIME_BUDGET_MS) break;
           if (!client.email) continue;
           // Cada cliente se contacta desde la sucursal de su ÚLTIMO pedido (el cupón solo
           // vale ahí). Si esa sucursal no tiene recuperación activa, lo toma esta.
           if (client.lastRestaurantId && client.lastRestaurantId !== rest.id && eligibleIds.has(client.lastRestaurantId)) continue;
           const email = client.email.toLowerCase();
-          if (unsubscribed.has(email)) continue;
+          if (unsubscribed.has(email) || queuedEmails.has(email)) continue;
 
           // Cooldown: no enviar si recibió email en los últimos cooldownDays
           const lastEmail = idx.lastSent.get(email);
           if (lastEmail && (Date.now() - lastEmail) < rc.cooldownDays * 86400000) continue;
 
-          // Frecuencia mensual: contar emails enviados en últimos 30 días
+          // Frecuencia mensual: emails enviados en últimos 30 días
           if ((idx.sentLast30.get(email) ?? 0) >= rc.maxEmailsPerMonth) continue;
 
-          // Determinar qué automatización aplicar (prioridad)
+          // Qué automatización aplicar (prioridad: encuesta → cupón)
           const automation = pickAutomation(client, rc, email, idx);
           if (!automation) continue;
 
-          // Crear enrollment y enviar
-          const sent = await enrollAndSend({
-            restaurantId: rest.id, storeName: rest.name, branchName: branchDisplayName(rest), logoUrl: cfg.storeLogoUrl ?? rest.logoUrl,
-            accent: cfg.primaryColor, storeUrl, client, automation, rc,
+          queuedEmails.add(email);
+          jobs.push({
+            restaurantId: rest.id, storeName: rest.name, branchName: branchDisplayName(rest),
+            logoUrl: cfg.storeLogoUrl ?? rest.logoUrl, accent: cfg.primaryColor, storeUrl, client, automation, rc,
           });
-
-          if (sent) {
-            sentThisRestaurant++;
-            totalSent++;
-            const now = Date.now();
-            idx.lastSent.set(email, now);
-            idx.sentLast30.set(email, (idx.sentLast30.get(email) ?? 0) + 1);
-            idx.hasEnrollment.add(`${email}::${automation}`);
-            if (automation === "abandonment_survey") idx.surveySentAt.set(email, now);
-          } else {
-            totalSkipped++;
-          }
-          // Rate limit: 500ms entre envíos para no bloquear Resend (max 2/seg)
-          await new Promise(r => setTimeout(r, 500));
         }
-
-        // 7. Atribución: marcar conversiones
-        const converted = await attributeConversions(rest.id);
-        totalConverted += converted;
-
+        if (jobs.length) queues.push(jobs);
       } catch (e) {
-        errors.push(`${rest.id}: ${(e as Error).message}`);
+        errors.push(`prep ${rest.id}: ${(e as Error).message}`);
+      }
+    }
+
+    // ── FASE 2: enviar round-robin (un correo por local por vuelta) ──
+    // Cada local recibe un turno por ronda hasta vaciar su cola; cuando un local se queda
+    // sin pendientes, su cupo pasa a los demás. Reparto justo + sin desperdiciar capacidad.
+    const cursors = queues.map(() => 0);
+    let remaining = queues.reduce((s, q) => s + q.length, 0);
+    let qi = 0;
+    while (remaining > 0 && totalSent < MAX_TOTAL && Date.now() - startMs <= TIME_BUDGET_MS) {
+      const q = queues[qi];
+      if (cursors[qi] < q.length) {
+        const job = q[cursors[qi]++];
+        remaining--;
+        try {
+          const sent = await enrollAndSend({
+            restaurantId: job.restaurantId, storeName: job.storeName, branchName: job.branchName,
+            logoUrl: job.logoUrl, accent: job.accent, storeUrl: job.storeUrl, client: job.client, automation: job.automation, rc: job.rc,
+          });
+          if (sent) totalSent++; else totalSkipped++;
+        } catch (e) {
+          totalSkipped++;
+          errors.push(`send ${job.restaurantId}: ${(e as Error).message}`);
+        }
+        // Rate limit: 500ms entre envíos para no bloquear Resend (max 2/seg)
+        await new Promise(r => setTimeout(r, 500));
+      }
+      qi = (qi + 1) % queues.length;
+    }
+
+    // ── FASE 3: atribución de conversiones (post-envío, con margen bajo maxDuration) ──
+    const ATTR_DEADLINE_MS = 285_000;
+    for (const rest of eligible) {
+      if (Date.now() - startMs > ATTR_DEADLINE_MS) break;
+      try {
+        totalConverted += await attributeConversions(rest.id);
+      } catch (e) {
+        errors.push(`attr ${rest.id}: ${(e as Error).message}`);
       }
     }
 
