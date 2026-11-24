@@ -176,8 +176,22 @@ export default function AppResumenPage() {
               </span>
             </div>
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>
-              Cada vez que un dispositivo nuevo abre la app por primera vez (datos propios, en vivo — sin el desfase de Play Console / App Store Connect). Total {days}d: <b style={{ color: "var(--adm-text)" }}>{s.devices.new}</b>.
+              Cada vez que un dispositivo nuevo abre la app por primera vez (datos propios, en vivo — sin el desfase de Play Console / App Store Connect).
             </p>
+            {(() => {
+              const tot = s.devices.series.reduce((a, d) => a + (d.total || 0), 0);
+              const ios = s.devices.series.reduce((a, d) => a + (d.ios || 0), 0);
+              const android = s.devices.series.reduce((a, d) => a + (d.android || 0), 0);
+              return (
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+                  <span style={{ fontFamily: F, fontSize: "2.2rem", fontWeight: 800, color: "var(--adm-text)", lineHeight: 1 }}>{tot.toLocaleString("es-CL")}</span>
+                  <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)" }}>
+                    instalaciones en {days} días
+                    <span style={{ color: "var(--adm-text3)" }}> · iOS {ios.toLocaleString("es-CL")} · Android {android.toLocaleString("es-CL")}</span>
+                  </span>
+                </div>
+              );
+            })()}
             <DevicesChart series={s.devices.series} />
           </div>
 
