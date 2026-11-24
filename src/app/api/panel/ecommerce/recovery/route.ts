@@ -195,6 +195,8 @@ export async function GET(req: NextRequest) {
   ].sort((a, b) => a.daysLeft - b.daysLeft || b.c.riskScore - a.c.riskScore);
 
   const queueTotal = allPending.length;
+  const pendingSurvey = allPending.filter(p => p.nextEmail === "abandonment_survey").length;
+  const pendingCoupon = allPending.filter(p => p.nextEmail === "recovery_incentive").length;
   const queue = allPending
     .slice(0, 50)
     .map(({ c, nextEmail, daysLeft, minDays }) => ({
@@ -255,7 +257,7 @@ export async function GET(req: NextRequest) {
     // Cola de próximos envíos: misma regla que el cron diario (customer-recovery),
     // así lo que se ve aquí es exactamente a quién le llegará el próximo email.
     queue,
-    queueTotal,
+    queueTotal, pendingSurvey, pendingCoupon,
     // Envíos de los últimos 7 días con el estado ACTUAL del cliente
     recentSends,
   });

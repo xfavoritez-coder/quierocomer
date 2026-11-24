@@ -33,7 +33,7 @@ interface RecoveryData {
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
   queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string; daysLeft?: number; minDays?: number }[]
-  queueTotal?: number
+  queueTotal?: number; pendingSurvey?: number; pendingCoupon?: number
   recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
 }
 
@@ -236,7 +236,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       </div>
 
       {/* ── Resumen (embudo + estado de clientes) ── */}
-      <RecoverySummary k={k} queueCount={data.queueTotal ?? data.queue.length} couponRecipients={data.couponRecipients ?? []} onSelectClient={onSelectClient} />
+      <RecoverySummary k={k} queueCount={data.queueTotal ?? data.queue.length} pendingSurvey={data.pendingSurvey ?? 0} pendingCoupon={data.pendingCoupon ?? 0} couponRecipients={data.couponRecipients ?? []} onSelectClient={onSelectClient} />
 
       {/* ── Motivos de abandono (barras) ── */}
       {Object.keys(data.reasons).length > 0 && (
@@ -468,8 +468,8 @@ function StatGroup({ title, color, icon, stats, children }: { title: string; col
 
 const ic = (d: React.ReactNode) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 
-function RecoverySummary({ k, queueCount, couponRecipients, onSelectClient }: {
-  k: RecoveryData['kpis']; queueCount: number
+function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, couponRecipients, onSelectClient }: {
+  k: RecoveryData['kpis']; queueCount: number; pendingSurvey: number; pendingCoupon: number
   couponRecipients: NonNullable<RecoveryData['couponRecipients']>
   onSelectClient?: (client: { email: string; name: string; phone: string }) => void
 }) {
@@ -483,7 +483,8 @@ function RecoverySummary({ k, queueCount, couponRecipients, onSelectClient }: {
         stats={[
           { label: 'En riesgo', value: fmt(k.atRisk), color: '#d97706', hint: 'bajando frecuencia' },
           { label: 'Perdidos', value: fmt(k.churned), color: '#dc2626', hint: 'inactivos' },
-          { label: 'Por contactar', value: fmt(queueCount), hint: 'próximo envío' },
+          { label: 'Pend. encuesta', value: fmt(pendingSurvey), hint: 'esperan umbral' },
+          { label: 'Pend. cupón', value: fmt(pendingCoupon), color: '#16a34a', hint: 'esperan 3 días' },
         ]} />
 
       <StatGroup title="Encuestas" color="#3b82f6"
