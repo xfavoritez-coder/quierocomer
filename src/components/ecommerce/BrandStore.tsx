@@ -18,6 +18,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { clp } from "@/lib/ecommerce/format";
+import { capturePendingCouponFromUrl } from "@/lib/ecommerce/pendingCoupon";
 import { formatPlaceAddress, placeAddressParts, type AddressParts } from "@/lib/ecommerce/address";
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -68,6 +69,23 @@ export default function BrandStore({ brand, representative, basePath, initialPro
 
     let saved: string | null = null;
     try { saved = localStorage.getItem(PERSIST_KEY); } catch {}
+
+    // Link con ?sucursal=<slug> (p. ej. el email del cupón de recuperación, que solo
+    // vale en esa sucursal): manda sobre la sucursal recordada en este navegador.
+    const pendingCoupon = capturePendingCouponFromUrl();
+    let forcedBranch: BrandBranch | undefined;
+    try {
+      const wanted = new URLSearchParams(window.location.search).get("sucursal");
+      forcedBranch = wanted ? brand.branches.find((b) => b.slug === wanted) : undefined;
+    } catch {}
+    if (forcedBranch) {
+      saved = forcedBranch.slug;
+      const label = forcedBranch.branchName || forcedBranch.name;
+      setTimeout(() => toast.success(
+        pendingCoupon ? `Tu cupón ${pendingCoupon} es válido en la sucursal ${label}` : `Estás pidiendo en la sucursal ${label}`,
+        { description: pendingCoupon ? "Te dejamos en esa sucursal; el descuento se aplica al pagar." : undefined, duration: 7000 },
+      ), 600);
+    }
 
     // Marca de una sola sucursal: no tiene sentido pedir que elijan — se liga sola
     // y la tienda se comporta como una normal (el selector de entrega es el de esa

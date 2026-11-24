@@ -60,7 +60,9 @@ export async function GET(req: NextRequest) {
       if (totalSent >= MAX_TOTAL || Date.now() - startMs > TIME_BUDGET_MS) break;
       const cfg = parseStoreConfig(rest.ecommerceStoreConfig);
       const rc = cfg.recovery;
-      const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : `${BASE}/ecommerce/${rest.slug}`;
+      // En dominio propio de marca (varias sucursales) la tienda abre la última sucursal
+      // usada en ese navegador: ?sucursal= la fija a la que envía el email (donde vale el cupón).
+      const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}/?sucursal=${encodeURIComponent(rest.slug)}` : `${BASE}/ecommerce/${rest.slug}`;
 
       try {
         // 2. Segmentar clientes

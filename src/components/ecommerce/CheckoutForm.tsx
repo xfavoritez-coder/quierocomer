@@ -6,6 +6,7 @@ import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { computeDiscount } from "@/lib/ecommerce/coupons";
+import { readPendingCoupon, clearPendingCoupon } from "@/lib/ecommerce/pendingCoupon";
 import { isInApp } from "@/lib/ecommerce/isInApp";
 import { clp } from "@/lib/ecommerce/format";
 import { isValidPhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
@@ -335,8 +336,23 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     if (emailOk && !otpSent && !emailVerifiedOk) sendOtp();
   }
 
-  async function applyCoupon() {
-    const code = couponCode.trim();
+  // Cupón que vino por link (?coupon= del email de recuperación): aplicarlo solo,
+  // una vez, cuando ya hay carrito. Si no es válido aquí (p. ej. otra sucursal),
+  // se muestra el motivo en el campo del cupón.
+  const pendingTried = useRef(false);
+  useEffect(() => {
+    if (pendingTried.current || coupon || subtotal <= 0) return;
+    const pending = readPendingCoupon();
+    if (!pending) return;
+    pendingTried.current = true;
+    setCouponCode(pending);
+    setCouponOpen(true);
+    void applyCoupon(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, coupon]);
+
+  async function applyCoupon(codeOverride?: string) {
+    const code = (codeOverride ?? couponCode).trim();
     if (!code || couponBusy) return;
     setCouponBusy(true);
     setCouponMsg(null);
@@ -354,6 +370,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           maxDiscountAmount: c.maxDiscountAmount, discountIncludesDelivery: c.discountIncludesDelivery === true,
         });
         setCouponMsg(null);
+        clearPendingCoupon();
         trackCouponAttempt(tenant.id, code, true);
       } else {
         setCoupon(null);
@@ -732,7 +749,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
                           <input autoFocus value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-mono uppercase outline-none focus:border-gray-400" />
-                          <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-3 rounded-lg text-white font-bold text-xs transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
+                          <button onClick={() => applyCoupon()} disabled={couponBusy || !couponCode.trim()} className="px-3 rounded-lg text-white font-bold text-xs transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
                         </div>
                         {couponMsg && <p className="text-xs text-red-500">{couponMsg}</p>}
                       </div>

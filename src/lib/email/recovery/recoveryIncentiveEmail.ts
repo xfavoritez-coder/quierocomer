@@ -89,5 +89,5 @@ export function recoveryIncentiveHtml(args: Args): string {
 
 export function recoveryIncentiveText(args: Args): string {
   const name = firstName(args.customerName);
-  return `${name ? `${name}, t` : "T"}enemos un ${args.couponPercent}% de descuento para tu próximo pedido en ${args.storeName}.\n\nCódigo: ${args.couponCode}${args.branchName ? `\nVálido solo en la sucursal ${args.branchName}. Un solo uso.` : ""}\n\nUsalo aquí: ${args.storeUrl}?coupon=${args.couponCode}`;
+  return `${name ? `${name}, t` : "T"}enemos un ${args.couponPercent}% de descuento para tu próximo pedido en ${args.storeName}.\n\nCódigo: ${args.couponCode}${args.branchName ? `\nVálido solo en la sucursal ${args.branchName}. Un solo uso.` : ""}\n\nUsalo aquí: ${args.storeUrl}${args.storeUrl.includes("?") ? "&" : "?"}coupon=${encodeURIComponent(args.couponCode)}`;
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { capturePendingCouponFromUrl } from "@/lib/ecommerce/pendingCoupon";
 import { Toaster, toast } from "sonner";
 import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock, Motorbike, Lock, UtensilsCrossed } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
@@ -77,6 +78,8 @@ function isDarkHex(hex?: string): boolean {
 
 export default function StoreFront({ tenant, categories, products, basePath, brandControls, siblings, initialProductSlug }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
+  // ?coupon=CODE (link del email de recuperación): el checkout lo aplica solo.
+  useEffect(() => { capturePendingCouponFromUrl(); }, []);
   const communeSlug = tenant.commune ? slugify(tenant.commune) : "";
   const brandMode = !!brandControls;
   const hasBranch = brandControls?.hasBranch ?? false;
