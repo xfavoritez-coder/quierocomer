@@ -114,6 +114,7 @@ export interface StoreProduct {
   new_badge: boolean;  // cinta "Nuevo" visible en la tarjeta
   toteat_code: string | null;
   hidden?: boolean; // inactivo/oculto para el cliente (solo en gestión de carta)
+  diet: "OMNIVORE" | "VEGAN" | "VEGETARIAN"; // tipo de dieta del plato
   option_groups: StoreOptionGroup[];
   promo_id?: string | null; // oferta activa hoy sobre este plato (para analytics)
 }
@@ -249,7 +250,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
           price: true, discountPrice: true, appPrice: true, appOnly: true, photos: true, stockCountdown: true, soldOut: true,
-          toteatProductId: true, isHero: true, dailyBadge: true, newBadge: true, isActive: true, hideFromOrdering: true, daysOfWeek: true,
+          toteatProductId: true, isHero: true, dailyBadge: true, newBadge: true, isActive: true, hideFromOrdering: true, daysOfWeek: true, dishDiet: true,
           modifierTemplates: {
             select: {
               groups: {
@@ -364,6 +365,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         // Oculto para el cliente: categoría inactiva, plato inactivo u oculto de
         // "Pedidos online". Solo se puebla con includeHidden (gestión de carta).
         hidden: !cat.isActive || d.isActive === false || d.hideFromOrdering === true,
+        diet: (d.dishDiet as StoreProduct["diet"]) || "OMNIVORE",
         option_groups: optionGroups,
         promo_id: activePromo?.id ?? null,
       });

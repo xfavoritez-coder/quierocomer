@@ -597,7 +597,11 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
-        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</h4>
+        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
+          {product.name}
+          {product.diet === "VEGAN" && <span title="Vegano" style={{ fontSize: 15, flexShrink: 0 }}>🌱</span>}
+          {product.diet === "VEGETARIAN" && <span title="Vegetariano" style={{ fontSize: 15, flexShrink: 0 }}>🥬</span>}
+        </h4>
         {product.description && <p style={{ margin: "0 0 8px", color: "var(--carta-text2)", fontSize: 13, lineHeight: 1.42, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{product.description}</p>}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {soldOut ? <span style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "#888" }}>Agotado</span> : (<>
