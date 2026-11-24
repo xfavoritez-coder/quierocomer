@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import CouponDiscountRow from './CouponDiscountRow'
 import DelifastTracking from './DelifastTracking'
 import CustomerOrdersDrawer from './CustomerOrdersDrawer'
 import { deliveryPlatformLabel } from '@/lib/pos'
@@ -24,6 +25,8 @@ export interface PastOrder {
   totalAmount: number
   paidAmount: number
   deliveryFee: number
+  discountAmount?: number | null
+  couponCode?: string | null
   tipAmount?: number | null
   items: unknown
   createdAt: string
@@ -619,6 +622,7 @@ export default function PastOrderDetail({
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
+          <CouponDiscountRow discountAmount={order.discountAmount} couponCode={order.couponCode} />
           {(order.tipAmount ?? 0) > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
               <span>Propina</span>

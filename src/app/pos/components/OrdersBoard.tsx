@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import CouponDiscountRow from './CouponDiscountRow'
 import { setRestaurantId, setUserId } from '@/lib/pos'
 import { usePosCash } from '@/lib/pos/cashApi'
 import type { PaymentMethod } from '@/lib/pos'
@@ -53,6 +54,8 @@ interface PosOrderLite {
   tipAmount: number
   changeAmount: number
   deliveryFee: number
+  discountAmount?: number | null
+  couponCode?: string | null  // cupón usado (enriquecido desde el pedido online)
   vendorName?: string | null
   items: unknown
   createdAt: string
@@ -1202,6 +1205,7 @@ export function OrderDetailPanel({
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
+          <CouponDiscountRow discountAmount={order.discountAmount} couponCode={order.couponCode} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
             <span>Total</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

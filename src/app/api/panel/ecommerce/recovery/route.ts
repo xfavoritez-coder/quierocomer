@@ -51,22 +51,35 @@ export async function GET(req: NextRequest) {
     take: 5000,
   });
 
+  // Usos reales de los cupones de recuperación (EcommerceCouponUse se registra al
+  // confirmar el pedido/pago con el cupón). Así "Cupones usados" y "Recuperados" se
+  // reflejan al instante, sin esperar la atribución del cron diario.
+  const couponCodes = enrollments.filter(e => e.automation === "recovery_incentive" && e.couponCode).map(e => e.couponCode!);
+  const couponUses = couponCodes.length
+    ? await prisma.ecommerceCouponUse.findMany({ where: { couponCode: { in: couponCodes } }, select: { couponCode: true, orderId: true } })
+    : [];
+  const useByCode = new Map(couponUses.map(u => [u.couponCode, u]));
+  const couponUsed = (e: { couponCode: string | null }) => !!e.couponCode && useByCode.has(e.couponCode);
+
   // KPIs
   const sent = enrollments.filter(e => e.sentAt);
-  const converted = enrollments.filter(e => e.status === "converted");
+  const converted = enrollments.filter(e => e.status === "converted" || couponUsed(e));
   const opened = enrollments.filter(e => e.openedAt || e.clickedAt || e.surveyAnsweredAt || e.status === "opened" || e.status === "clicked" || e.status === "converted");
 
   // Ingresos recuperados
+  // - Con cupón usado: el pedido online pagado con el cupón.
+  // - Sin cupón (volvió por su cuenta): el PosOrder atribuido por el cron.
   let recoveredRevenue = 0;
   if (converted.length > 0) {
-    const orderIds = converted.map(e => e.convertedOrderId).filter(Boolean) as string[];
-    if (orderIds.length > 0) {
-      const orders = await prisma.posOrder.findMany({
-        where: { id: { in: orderIds } },
-        select: { totalAmount: true, deliveryFee: true, tipAmount: true },
-      });
-      recoveredRevenue = orders.reduce((s, o) => s + Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)), 0);
-    }
+    const onlineIds = converted.filter(couponUsed).map(e => useByCode.get(e.couponCode!)?.orderId).filter(Boolean) as string[];
+    const posIds = converted.filter(e => !couponUsed(e)).map(e => e.convertedOrderId).filter(Boolean) as string[];
+    const [onlineOrders, posOrders] = await Promise.all([
+      onlineIds.length ? prisma.onlineOrder.findMany({ where: { id: { in: onlineIds } }, select: { total: true, deliveryFee: true } }) : [],
+      posIds.length ? prisma.posOrder.findMany({ where: { id: { in: posIds } }, select: { totalAmount: true, deliveryFee: true, tipAmount: true } }) : [],
+    ]);
+    recoveredRevenue =
+      onlineOrders.reduce((s, o) => s + Math.max(0, (o.total || 0) - (o.deliveryFee || 0)), 0) +
+      posOrders.reduce((s, o) => s + Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)), 0);
   }
 
   // Razones de abandono
@@ -195,14 +208,14 @@ export async function GET(req: NextRequest) {
       // Cupones
       couponsSent: enrollments.filter(e => e.automation === "recovery_incentive" && e.sentAt).length,
       couponsOpened: enrollments.filter(e => e.automation === "recovery_incentive" && (e.openedAt || e.clickedAt)).length,
-      couponsUsed: enrollments.filter(e => e.automation === "recovery_incentive" && e.status === "converted").length,
+      couponsUsed: enrollments.filter(e => e.automation === "recovery_incentive" && couponUsed(e)).length,
     },
     reasons,
     surveyResponses,
     couponRecipients: enrollments
       .filter(e => e.automation === "recovery_incentive" && e.sentAt)
       .slice(0, 20)
-      .map(e => ({ name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null, code: e.couponCode || null, sentAt: e.sentAt!.toISOString(), opened: !!(e.openedAt || e.clickedAt), used: e.status === "converted" })),
+      .map(e => ({ name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null, code: e.couponCode || null, sentAt: e.sentAt!.toISOString(), opened: !!(e.openedAt || e.clickedAt), used: couponUsed(e) })),
     byAutomation,
     recent,
     // Cola de próximos envíos: misma regla que el cron diario (customer-recovery),

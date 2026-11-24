@@ -164,21 +164,27 @@ export async function GET(req: NextRequest) {
     : orders;
   const nums = await dailyOrderNumbers(restaurantId, visible.map((o) => ({ id: o.id, createdAt: o.createdAt })));
 
-  // Enriquecer customerEmail desde OnlineOrder para pedidos sin email (pedidos anteriores al fix).
-  const withoutEmail = visible.filter((o) => !o.customerEmail && o.externalId.startsWith("oo-"));
+  // Enriquecer desde el OnlineOrder de origen: customerEmail (pedidos sin email,
+  // anteriores al fix) y el código del cupón usado (el PosOrder solo guarda el monto).
+  const needOnline = visible.filter((o) => o.externalId.startsWith("oo-") && (!o.customerEmail || (o.discountAmount || 0) > 0));
   const emailMap = new Map<string, string>();
-  if (withoutEmail.length > 0) {
-    const ooIds = withoutEmail.map((o) => o.externalId.slice(3));
+  const couponMap = new Map<string, string>();
+  if (needOnline.length > 0) {
+    const ooIds = needOnline.map((o) => o.externalId.slice(3));
     const oos = await prisma.onlineOrder.findMany({
       where: { id: { in: ooIds } },
-      select: { id: true, customerEmail: true },
+      select: { id: true, customerEmail: true, couponCode: true },
     });
-    for (const oo of oos) if (oo.customerEmail) emailMap.set(oo.id, oo.customerEmail);
+    for (const oo of oos) {
+      if (oo.customerEmail) emailMap.set(oo.id, oo.customerEmail);
+      if (oo.couponCode) couponMap.set(oo.id, oo.couponCode);
+    }
   }
 
   const ordersOut = visible.map((o) => ({
     ...o,
     customerEmail: o.customerEmail || emailMap.get(o.externalId.slice(3)) || "",
+    couponCode: couponMap.get(o.externalId.slice(3)) ?? null,
     dailyNumber: nums[o.id] ?? null,
     driverTime, pickupTime, deliveryTime,
   }));

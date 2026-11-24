@@ -24,6 +24,14 @@ export async function registerCouponUse(order: {
         customerPhone: (order.customerPhone ?? "").trim(),
       },
     });
+    // Cupón de recuperación (VUELVE-*): el cliente volvió usando el cupón → marcarlo
+    // como recuperado ya (no esperar la atribución del cron diario).
+    if (order.couponCode.toUpperCase().startsWith("VUELVE-")) {
+      await prisma.recoveryEnrollment.updateMany({
+        where: { couponCode: order.couponCode.toUpperCase(), automation: "recovery_incentive", convertedAt: null },
+        data: { status: "converted", convertedAt: new Date() },
+      });
+    }
   } catch {
     /* best-effort: los límites de uso no deben bloquear la confirmación del pago */
   }
