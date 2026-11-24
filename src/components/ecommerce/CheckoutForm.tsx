@@ -779,8 +779,8 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                     if (couponOpen) return (
                       <div ref={couponRef} className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <input autoFocus value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón"
-                            ref={(el) => { if (el) setTimeout(() => { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus(); }, 100); }}
+                          <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón"
+                            ref={(el) => { if (el) requestAnimationFrame(() => { el.focus(); setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300); }); }}
                             className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-mono uppercase outline-none focus:border-gray-400" />
                           <button onClick={() => applyCoupon()} disabled={couponBusy || !couponCode.trim()} className="px-3 rounded-lg text-white font-bold text-xs transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
                         </div>
