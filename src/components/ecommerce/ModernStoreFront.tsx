@@ -2,7 +2,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { capturePendingCouponFromUrl } from "@/lib/ecommerce/pendingCoupon";
 import { Toaster, toast } from "sonner";
-import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, User, Clock, Motorbike, Lock, UtensilsCrossed } from "lucide-react";
+import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, User, Clock, Motorbike, Lock, UtensilsCrossed, Phone, MessageCircle } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -64,20 +64,31 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
 
   const [activeCat, setActiveCat] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<"carta" | "locales">(() => {
-    try { return window.location.pathname.endsWith("/locales") ? "locales" : "carta"; } catch { return "carta"; }
+  type ViewMode = "carta" | "locales" | "branch-detail";
+  const [activeView, setActiveView] = useState<ViewMode>(() => {
+    try {
+      if (window.location.pathname.endsWith("/locales")) return "locales";
+      if (window.location.pathname.endsWith("/local")) return "branch-detail";
+      return "carta";
+    } catch { return "carta"; }
   });
   // Sync URL with view
   useEffect(() => {
     try {
-      const base = window.location.pathname.replace(/\/locales$/, "") || "/";
-      const target = activeView === "locales" ? `${base === "/" ? "" : base}/locales` : (base || "/");
+      const base = window.location.pathname.replace(/\/(locales|local)$/, "") || "/";
+      const target = activeView === "locales" ? `${base === "/" ? "" : base}/locales`
+        : activeView === "branch-detail" ? `${base === "/" ? "" : base}/local`
+        : (base || "/");
       if (window.location.pathname !== target) window.history.pushState(null, "", target);
     } catch {}
   }, [activeView]);
   // Handle browser back/forward
   useEffect(() => {
-    const onPop = () => { setActiveView(window.location.pathname.endsWith("/locales") ? "locales" : "carta"); };
+    const onPop = () => {
+      if (window.location.pathname.endsWith("/locales")) setActiveView("locales");
+      else if (window.location.pathname.endsWith("/local")) setActiveView("branch-detail");
+      else setActiveView("carta");
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
@@ -943,6 +954,11 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
       {/* ── Locales view ────── */}
       {activeView === "locales" && (
         <LocalesViewContent tenant={tenant} siblings={siblings ?? []} primaryColor={primaryColor} onViewHours={() => setHoursModalOpen(true)} />
+      )}
+
+      {/* ── Branch detail view ────── */}
+      {activeView === "branch-detail" && (
+        <BranchDetailView tenant={tenant} primaryColor={primaryColor} storeUrl={storeBase} onGoToMenu={() => { setActiveView("carta"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
       )}
 
       {/* ── Footer ────── */}
@@ -1903,6 +1919,130 @@ function HoursModal({ weeklyHours, primaryColor, branchName, onClose }: { weekly
 
         <div className="h-4" />
       </div>
+    </div>
+  );
+}
+
+// ── Branch Detail View (ficha de sucursal dentro del storefront) ──────────
+const DAY_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+function BranchDetailView({ tenant, primaryColor, storeUrl, onGoToMenu }: {
+  tenant: StoreTenant; primaryColor: string; storeUrl: string; onGoToMenu: () => void;
+}) {
+  const mapsUrl = tenant.googleMapsUrl || (tenant.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tenant.address)}` : null);
+  const today = (() => { try { return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay(); } catch { return -1; } })();
+
+  return (
+    <div className="px-4 py-6 max-w-xl mx-auto">
+      {/* CTA */}
+      <button onClick={onGoToMenu} className="w-full text-white font-extrabold text-[15px] py-3.5 rounded-xl mb-6 shadow-md active:scale-[0.98] transition" style={{ background: primaryColor }}>
+        Ver carta y pedir online →
+      </button>
+
+      <div className="flex flex-col gap-4">
+        {/* Estado */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <div className="flex items-center gap-3">
+            <span className={`w-3 h-3 rounded-full ${tenant.openStatus.open ? "bg-green-500" : "bg-red-500"}`} />
+            <span className="text-[15px] font-bold" style={{ color: tenant.openStatus.open ? "#16a34a" : "#dc2626" }}>
+              {tenant.openStatus.open ? "Abierto ahora" : tenant.openStatus.opensAt ? `Cerrado · abre a las ${tenant.openStatus.opensAt}` : "Cerrado"}
+            </span>
+          </div>
+        </div>
+
+        {/* Modalidades */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <h3 className="text-[13px] font-bold text-gray-900 mb-3">Formas de pedir</h3>
+          <div className="flex flex-col gap-2.5">
+            {tenant.deliveryEnabled && (
+              <div className="flex items-center gap-3">
+                <Motorbike className="w-4 h-4 text-gray-400 shrink-0" />
+                <div>
+                  <span className="text-[13px] font-semibold text-gray-800">Delivery</span>
+                  {tenant.waitTimeDelivery && <span className="text-[12px] text-gray-400 ml-1.5">{tenant.waitTimeDelivery} min</span>}
+                  {tenant.minOrderDelivery > 0 && <span className="text-[12px] text-gray-400 ml-1.5">· mín. ${tenant.minOrderDelivery.toLocaleString("es-CL")}</span>}
+                </div>
+              </div>
+            )}
+            {tenant.pickupEnabled && (
+              <div className="flex items-center gap-3">
+                <Store className="w-4 h-4 text-gray-400 shrink-0" />
+                <div>
+                  <span className="text-[13px] font-semibold text-gray-800">Retiro en local</span>
+                  {tenant.waitTimePickup && <span className="text-[12px] text-gray-400 ml-1.5">{tenant.waitTimePickup} min</span>}
+                </div>
+              </div>
+            )}
+            {tenant.showTableMenu && (
+              <div className="flex items-center gap-3">
+                <UtensilsCrossed className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="text-[13px] font-semibold text-gray-800">Pedido en mesa</span>
+              </div>
+            )}
+          </div>
+          {tenant.paymentMethods.length > 0 && (
+            <p className="text-[11px] text-gray-400 mt-3">Medios de pago: {tenant.paymentMethods.join(", ")}</p>
+          )}
+        </div>
+
+        {/* Dirección */}
+        {tenant.address && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <h3 className="text-[13px] font-bold text-gray-900 mb-2">Dirección</h3>
+            <p className="text-[13px] text-gray-600 leading-relaxed">{tenant.address}</p>
+            {mapsUrl && (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 text-[12px] font-semibold" style={{ color: primaryColor }}>
+                <MapPin className="w-3.5 h-3.5" /> Ver en Google Maps
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Horarios */}
+        {tenant.weeklyHours && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <h3 className="text-[13px] font-bold text-gray-900 mb-3">Horarios</h3>
+            <div className="flex flex-col gap-1">
+              {tenant.weeklyHours.map((d, i) => (
+                <div key={i} className={`flex justify-between text-[13px] py-1 px-2 rounded-md ${i === today ? "font-bold" : ""}`} style={i === today ? { background: `${primaryColor}10`, color: primaryColor } : { color: d.open ? "#374151" : "#d1d5db" }}>
+                  <span>{DAY_NAMES[i]}{i === today ? " (hoy)" : ""}</span>
+                  <span>{d.open ? `${d.from} – ${d.to}` : "Cerrado"}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contacto */}
+        {(tenant.whatsapp || tenant.phone || tenant.instagram) && (
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <h3 className="text-[13px] font-bold text-gray-900 mb-3">Contacto</h3>
+            <div className="flex flex-col gap-2.5">
+              {tenant.whatsapp && (
+                <a href={`https://wa.me/${tenant.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[13px] text-gray-700 no-underline">
+                  <MessageCircle className="w-4 h-4 text-gray-400 shrink-0" /> WhatsApp: {tenant.whatsapp}
+                </a>
+              )}
+              {tenant.phone && tenant.phone !== tenant.whatsapp && (
+                <a href={`tel:${tenant.phone}`} className="flex items-center gap-3 text-[13px] text-gray-700 no-underline">
+                  <Phone className="w-4 h-4 text-gray-400 shrink-0" /> {tenant.phone}
+                </a>
+              )}
+              {tenant.instagram && (
+                <a href={`https://www.instagram.com/${tenant.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[13px] text-gray-700 no-underline">
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                  @{tenant.instagram.replace(/^@/, "")}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CTA bottom */}
+      <button onClick={onGoToMenu} className="w-full text-white font-extrabold text-[15px] py-3.5 rounded-xl mt-6 shadow-md active:scale-[0.98] transition" style={{ background: primaryColor }}>
+        Pedir ahora →
+      </button>
     </div>
   );
 }

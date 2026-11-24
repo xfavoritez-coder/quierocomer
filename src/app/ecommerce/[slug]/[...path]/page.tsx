@@ -115,13 +115,23 @@ export default async function EcommerceProductPage({ params }: { params: Promise
 
   // ── Dominio de MARCA (ej. kojo.cl) ──────────────────────────────────
   if (slug.includes(".")) {
-    // Ruta /ecommerce/{branchSlug}/local en dominio de marca → ficha de sucursal
+    // Ruta /ecommerce/{branchSlug}/local en dominio de marca → storefront de la sucursal con vista ficha
     if (path.length >= 2 && path[path.length - 1] === "local") {
       const branchSlug = path[path.length - 2];
-      const branchData = await getEcommerceStorefrontBaseCached(branchSlug);
+      const branchData = await getEcommerceStorefront(branchSlug, { fromApp });
       if (branchData) {
-        const { default: BranchDetail } = await import("@/components/ecommerce/BranchDetail");
-        return <BranchDetail tenant={branchData.tenant} categories={branchData.categories} products={branchData.products} />;
+        const basePath = `/ecommerce/${branchSlug}`;
+        const theme = branchData.tenant.theme;
+        return (
+          <>
+            <StoreJsonLd tenant={branchData.tenant} categories={branchData.categories} products={branchData.products} />
+            {theme === "impact"
+              ? <ImpactStoreFront tenant={branchData.tenant} categories={branchData.categories} products={branchData.products} basePath={basePath} />
+              : theme === "base"
+              ? <StoreFront tenant={branchData.tenant} categories={branchData.categories} products={branchData.products} basePath={basePath} />
+              : <ModernStoreFront tenant={branchData.tenant} categories={branchData.categories} products={branchData.products} basePath={basePath} />}
+          </>
+        );
       }
     }
 
