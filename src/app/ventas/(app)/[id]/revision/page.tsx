@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 type Dish = { id: string; name: string; price: number; photo: string | null };
 type Data = {
-  restaurant: { name: string; logoUrl: string | null; bannerUrl: string | null; accentColor: string | null; suggestedColor: string | null } | null;
+  restaurant: { name: string; logoUrl: string | null; bannerUrl: string | null; accentColor: string | null; colorMode: "LIGHT" | "DARK"; suggestedColor: string | null } | null;
   categories: { id: string; name: string; dishes: Dish[] }[];
 };
 
@@ -18,6 +18,7 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
   const [edits, setEdits] = useState<Record<string, { name: string; price: number }>>({});
   const [banner, setBanner] = useState<string | null>(null);
   const [color, setColor] = useState<string>("#DE7C00");
+  const [mode, setMode] = useState<"LIGHT" | "DARK">("LIGHT");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -27,6 +28,7 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
       setData(d);
       setBanner(d.restaurant?.bannerUrl ?? null);
       setColor(d.restaurant?.accentColor || d.restaurant?.suggestedColor || "#DE7C00");
+      setMode(d.restaurant?.colorMode === "DARK" ? "DARK" : "LIGHT");
     });
   }, [id]);
 
@@ -41,7 +43,7 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
     setSaving(true); setError(null);
     const all = (data?.categories ?? []).flatMap((c) => c.dishes);
     const changed = all.filter((d) => edits[d.id] && (edits[d.id].name !== d.name || edits[d.id].price !== d.price)).map((d) => ({ id: d.id, ...edits[d.id] }));
-    const r = await fetch(`/api/ventas/leads/${id}/menu`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishes: changed, bannerUrl: banner, accentColor: color }) });
+    const r = await fetch(`/api/ventas/leads/${id}/menu`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishes: changed, bannerUrl: banner, accentColor: color, colorMode: mode }) });
     const d = await r.json().catch(() => ({}));
     setSaving(false);
     if (!r.ok) { setError(d.error || "No se pudo guardar"); return; }
@@ -66,7 +68,15 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <div className="ventas-card" style={section}>
-        <div style={{ fontWeight: 800 }}>Color principal {suggested && <span style={{ fontWeight: 500, color: "var(--ink-3)", fontSize: 13 }}>· sugerido desde el logo</span>}</div>
+        <div style={{ fontWeight: 800 }}>Colores de la carta</div>
+        <Preview name={data.restaurant.name} logo={data.restaurant.logoUrl} banner={banner} color={color} dark={mode === "DARK"} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-3)" }}>Fondo</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {(["LIGHT", "DARK"] as const).map((m) => (
+            <button key={m} type="button" onClick={() => setMode(m)} style={{ flex: 1, padding: "11px 14px", borderRadius: 12, cursor: "pointer", font: "inherit", fontWeight: 700, fontSize: 14, background: m === "DARK" ? "#111" : "#fff", color: m === "DARK" ? "#fff" : "#111", border: mode === m ? "3px solid var(--amber)" : "1px solid var(--line)" }}>{m === "DARK" ? "Oscuro" : "Claro"}</button>
+          ))}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-3)" }}>Color principal {suggested && <span style={{ fontWeight: 500 }}>· el primero viene del logo</span>}</div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           {swatches.map((c) => (
             <button key={c} type="button" aria-label={c} onClick={() => setColor(c)} style={{ width: 38, height: 38, borderRadius: 11, background: c, cursor: "pointer", border: color.toUpperCase() === c.toUpperCase() ? "3px solid var(--ink)" : "2px solid #fff", boxShadow: "0 0 0 1px var(--line)" }} />
@@ -120,6 +130,37 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
       {error && <p style={{ color: "#dc2626", margin: 0 }}>{error}</p>}
       <div style={{ position: "sticky", bottom: 0, padding: "12px 0", background: "linear-gradient(transparent, var(--bg) 30%)" }}>
         <button className="ventas-btn" onClick={save} disabled={saving} style={{ width: "100%", fontSize: 17, padding: "15px 24px" }}>{saving ? "Guardando…" : "Listo, ver su local →"}</button>
+      </div>
+    </div>
+  );
+}
+
+/** Vista previa de cómo se verá la carta con el fondo y el color elegidos. */
+function Preview({ name, logo, banner, color, dark }: { name: string; logo: string | null; banner: string | null; color: string; dark: boolean }) {
+  const n = parseInt(color.slice(1), 16);
+  const fg = (((n >> 16) & 255) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 165 ? "#111" : "#fff";
+  const bg = dark ? "#0e0e0e" : "#fff", ink = dark ? "#f5f5f5" : "#111", sub = dark ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.5)", card = dark ? "#1a1a1a" : "#f4f4f4";
+  return (
+    <div style={{ width: 240, maxWidth: "100%", margin: "0 auto", borderRadius: 28, padding: 8, background: "#111", boxShadow: "0 20px 40px -20px rgba(0,0,0,.4)" }}>
+      <div style={{ borderRadius: 22, overflow: "hidden", background: bg, transition: "background .3s" }}>
+        <div style={{ height: 84, background: banner ? `center/cover url(${banner})` : color, position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {logo && <img src={logo} alt="" style={{ position: "absolute", left: 12, bottom: -20, width: 44, height: 44, borderRadius: 12, objectFit: "contain", background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,.2)" }} />}
+        </div>
+        <div style={{ padding: "26px 12px 14px", color: ink }}>
+          <div style={{ fontWeight: 800, fontSize: 15 }}>{name}</div>
+          <div style={{ display: "flex", gap: 6, margin: "10px 0" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 99, background: color, color: fg }}>Destacados</span>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 99, background: card, color: sub }}>Bebidas</span>
+          </div>
+          {[0, 1].map((i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", borderRadius: 12, background: card, marginTop: 6 }}>
+              <div><div style={{ width: 80 - i * 20, height: 8, borderRadius: 4, background: ink, opacity: .8 }} /><div style={{ width: 50, height: 6, borderRadius: 4, background: sub, marginTop: 5 }} /></div>
+              <span style={{ fontSize: 11, fontWeight: 800, color }}>$9.900</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 10, textAlign: "center", fontSize: 12, fontWeight: 800, padding: "9px", borderRadius: 12, background: color, color: fg }}>Llamar al garzón</div>
+        </div>
       </div>
     </div>
   );

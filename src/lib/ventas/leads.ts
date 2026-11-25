@@ -15,7 +15,7 @@ export async function getSellerLead(seller: CurrentSeller, leadId: string) {
 /** Local demo generado para el lead. Solo se devuelve si es demo (isDemo): nunca un local real. */
 export async function getLeadDemoRestaurant(generatedSlug: string | null) {
   if (!generatedSlug) return null;
-  const r = await prisma.restaurant.findUnique({ where: { slug: generatedSlug }, select: { id: true, slug: true, name: true, logoUrl: true, bannerUrl: true, cartaAccentColor: true, isDemo: true } });
+  const r = await prisma.restaurant.findUnique({ where: { slug: generatedSlug }, select: { id: true, slug: true, name: true, logoUrl: true, bannerUrl: true, cartaAccentColor: true, cartaColorMode: true, isDemo: true } });
   return r?.isDemo ? r : null;
 }
 

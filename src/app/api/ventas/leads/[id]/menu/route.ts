@@ -29,9 +29,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const r = await prisma.dish.updateMany({ where: { id: String(d.id), restaurantId: restaurant.id }, data: { name, price } });
     changed += r.count;
   }
-  const data: { bannerUrl?: string | null; cartaAccentColor?: string | null } = {};
+  const data: { bannerUrl?: string | null; cartaAccentColor?: string | null; cartaColorMode?: "LIGHT" | "DARK" } = {};
   if (typeof b.bannerUrl === "string" || b.bannerUrl === null) data.bannerUrl = b.bannerUrl ? String(b.bannerUrl).slice(0, 1000) : null;
   if (typeof b.accentColor === "string" && /^#[0-9a-fA-F]{6}$/.test(b.accentColor)) data.cartaAccentColor = b.accentColor.toUpperCase();
+  if (b.colorMode === "LIGHT" || b.colorMode === "DARK") data.cartaColorMode = b.colorMode;
   if (Object.keys(data).length) await prisma.restaurant.update({ where: { id: restaurant.id }, data });
 
   revalidateTag(`qr-restaurant-${restaurant.slug}`, { expire: 0 } as never);

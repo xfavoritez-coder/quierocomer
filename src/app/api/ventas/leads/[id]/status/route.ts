@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     : [];
   const dishCount = categories.reduce((n, c) => n + c.dishes.length, 0);
   const full = req.nextUrl.searchParams.get("full") === "1";
-  const suggestedColor = full && restaurant && !restaurant.cartaAccentColor ? await suggestColorFromLogo(restaurant.logoUrl) : null;
+  const suggestedColor = full && restaurant ? await suggestColorFromLogo(restaurant.logoUrl) : null;
 
   return NextResponse.json({
     status: lead.cartaStatus, // PENDING | PROCESSING | READY | DELIVERED | FAILED
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     source: lead.captureSource,
     localName: lead.localName,
     preview: lead.preview,
-    restaurant: restaurant ? { slug: restaurant.slug, name: restaurant.name, logoUrl: restaurant.logoUrl, bannerUrl: restaurant.bannerUrl, accentColor: restaurant.cartaAccentColor, suggestedColor } : null,
+    restaurant: restaurant ? { slug: restaurant.slug, name: restaurant.name, logoUrl: restaurant.logoUrl, bannerUrl: restaurant.bannerUrl, accentColor: restaurant.cartaAccentColor, colorMode: restaurant.cartaColorMode, suggestedColor } : null,
     dishCount,
     categories: categories.map((c) => ({ id: c.id, name: c.name, dishes: c.dishes.map((d) => ({ id: d.id, name: d.name, price: d.price, photo: d.photos?.[0] ?? null })) })),
   });

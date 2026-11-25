@@ -49,7 +49,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link href={`/ventas/${id}/demo`} className="ventas-btn">▶ Abrir demo</Link>
-          {restaurant?.isDemo && <Link href={`/ventas/${id}/revision`} className="ventas-btn ghost">Revisar carta</Link>}
+          {restaurant?.isDemo && <Link href={`/ventas/${id}/revision`} className="ventas-btn ghost">🎨 Colores y carta</Link>}
           {restaurant && <a href={`/qr/${restaurant.slug}`} target="_blank" rel="noreferrer" className="ventas-btn ghost">Ver su carta QR ↗</a>}
         </div>
       </div>
