@@ -606,6 +606,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     let slug = slugify(cleanedName);
     if (!slug) slug = `local-${Date.now().toString(36)}`;
+    // Local capturado en terreno (/ventas): SIEMPRE un local demo nuevo con slug propio.
+    // Nunca se reutiliza un local existente: no se pisa la demo de otro lead ni se
+    // engancha la demo de un vendedor a un restaurante real con el mismo nombre.
+    if (lead.sellerId) {
+      const base = slug;
+      for (let n = 2; await prisma.restaurant.findUnique({ where: { slug }, select: { id: true } }); n++) slug = `${base}-${n}`;
+    }
     const existingRest = await prisma.restaurant.findUnique({ where: { slug } });
 
     // If restaurant already exists with this slug

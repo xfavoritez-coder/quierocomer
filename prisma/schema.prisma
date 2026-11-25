@@ -1965,6 +1965,18 @@ model Lead {
   crmNotes           Json[]            @default([])
   crmStatus          String            @default("nuevo")
   crmStatusHistory   Json[]            @default([])
+  // ── Venta en terreno (/ventas) ──
+  sellerId           String? // vendedor que capturó el local (null = lead web de /subircarta)
+  captureSource      String? // photo | link | none (solo leads de terreno)
+  cuisine            String?
+  commune            String?
+  interestModules    String[]          @default([]) // carta_qr, loyalty, ecommerce, pos
+  recommendedPlan    String?
+  lostReason         String?
+  expiresAt          DateTime? // el local demo vence sin actividad
+  seller             Seller?           @relation(fields: [sellerId], references: [id])
+  leadEvents         LeadEvent[]
+  registration       LeadRegistration?
   detectedProvider   MenuProvider?     @relation(fields: [detectedProviderId], references: [id])
   whatsappMessages   WhatsAppMessage[]
 
@@ -1973,6 +1985,60 @@ model Lead {
   @@index([cartaStatus])
   @@index([generatedSlug])
   @@index([generatedSlug], map: "idx_lead_generatedslug")
+  @@index([sellerId])
+}
+
+// ── QuieroComer Ventas (/ventas): equipo de venta en terreno ──
+// Login sin contraseña: enlace de un solo uso enviado por correo.
+model Seller {
+  id                  String     @id @default(cuid())
+  email               String     @unique
+  name                String
+  role                SellerRole @default(SELLER)
+  active              Boolean    @default(true)
+  loginTokenHash      String?
+  loginTokenExpiresAt DateTime?
+  lastLoginAt         DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  leads               Lead[]
+}
+
+enum SellerRole {
+  ADMIN
+  SELLER
+}
+
+// Registro del dueño (/alta/[token]): enlace único por lead, vence en 14 días y guarda el avance.
+// Se guarda solo el hash del token. Al completarse, el local demo se promueve a local real.
+model LeadRegistration {
+  id          String    @id @default(cuid())
+  leadId      String    @unique
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  sentTo      String? // correo al que se envió el enlace
+  formData    Json? // avance guardado del formulario
+  completedAt DateTime?
+  remindedAt  DateTime? // recordatorio de las 48 h
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+// Historial de un lead de venta: captura, demo, capítulos vistos, links abiertos, etc.
+model LeadEvent {
+  id         String   @id @default(cuid())
+  leadId     String
+  type       String // captured, demo_started, chapter_viewed, link_opened, waiter_called, test_order, email_sent, status_changed, note
+  chapter    String?
+  durationMs Int?
+  payload    Json?
+  actor      String // seller | owner | system
+  sellerId   String?
+  createdAt  DateTime @default(now())
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
 }
 
 model WhatsAppMessage {

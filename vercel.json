@@ -59,6 +59,10 @@
     {
       "path": "/api/cron/customer-recovery",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/ventas-recordatorios",
+      "schedule": "15 * * * *"
     }
   ]
 }
