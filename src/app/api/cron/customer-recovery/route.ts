@@ -122,36 +122,45 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ── FASE 2: enviar round-robin (un correo por local por vuelta) ──
-    // Prioridad: cupones primero (clientes que ya respondieron la encuesta),
-    // luego encuestas. Así los cupones no se atrasan cuando hay miles de encuestas pendientes.
-    for (const q of queues) q.sort((a, b) => {
-      const aPrio = a.automation === "recovery_incentive" ? 0 : 1;
-      const bPrio = b.automation === "recovery_incentive" ? 0 : 1;
-      return aPrio - bPrio;
-    });
+    // ── FASE 2: enviar con cupo dividido (cupones + encuestas) ──
+    // Cupo dividido: máx 400 cupones + máx 600 encuestas = 1000 total.
+    // Así ninguno de los dos bloquea al otro. Cupones van primero dentro de su cupo.
+    const MAX_COUPONS = 400;
+    const MAX_SURVEYS = 600;
+    // Separar jobs en 2 colas planas (round-robin ya mezclado por local)
+    const couponJobs: typeof queues[0] = [];
+    const surveyJobs: typeof queues[0] = [];
     const cursors = queues.map(() => 0);
-    let remaining = queues.reduce((s, q) => s + q.length, 0);
-    let qi = 0;
-    while (remaining > 0 && totalSent < MAX_TOTAL && Date.now() - startMs <= TIME_BUDGET_MS) {
-      const q = queues[qi];
-      if (cursors[qi] < q.length) {
-        const job = q[cursors[qi]++];
-        remaining--;
-        try {
-          const sent = await enrollAndSend({
-            restaurantId: job.restaurantId, storeName: job.storeName, branchName: job.branchName,
-            logoUrl: job.logoUrl, accent: job.accent, storeUrl: job.storeUrl, client: job.client, automation: job.automation, rc: job.rc,
-          });
-          if (sent) totalSent++; else totalSkipped++;
-        } catch (e) {
-          totalSkipped++;
-          errors.push(`send ${job.restaurantId}: ${(e as Error).message}`);
+    // Flatten round-robin: un job por local por vuelta
+    let anyLeft = true;
+    while (anyLeft) {
+      anyLeft = false;
+      for (let i = 0; i < queues.length; i++) {
+        if (cursors[i] < queues[i].length) {
+          const job = queues[i][cursors[i]++];
+          if (job.automation === "recovery_incentive") couponJobs.push(job);
+          else surveyJobs.push(job);
+          anyLeft = true;
         }
-        // Rate limit: 300ms entre envíos (~3/seg, dentro del límite de Resend)
-        await new Promise(r => setTimeout(r, 300));
       }
-      qi = (qi + 1) % queues.length;
+    }
+    // Enviar: primero cupones (hasta MAX_COUPONS), luego encuestas (hasta MAX_SURVEYS)
+    const sendQueue = [...couponJobs.slice(0, MAX_COUPONS), ...surveyJobs.slice(0, MAX_SURVEYS)];
+    let si = 0;
+    while (si < sendQueue.length && totalSent < MAX_TOTAL && Date.now() - startMs <= TIME_BUDGET_MS) {
+      const job = sendQueue[si++];
+      try {
+        const sent = await enrollAndSend({
+          restaurantId: job.restaurantId, storeName: job.storeName, branchName: job.branchName,
+          logoUrl: job.logoUrl, accent: job.accent, storeUrl: job.storeUrl, client: job.client, automation: job.automation, rc: job.rc,
+        });
+        if (sent) totalSent++; else totalSkipped++;
+      } catch (e) {
+        totalSkipped++;
+        errors.push(`send ${job.restaurantId}: ${(e as Error).message}`);
+      }
+      // Rate limit: 300ms entre envíos (~3/seg, dentro del límite de Resend)
+      await new Promise(r => setTimeout(r, 300));
     }
 
     // ── FASE 3: atribución de conversiones (post-envío, con margen bajo maxDuration) ──
