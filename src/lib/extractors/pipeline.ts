@@ -446,9 +446,25 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
         const influye = await isInfluyeApp(cartaUrl).catch(() => false)
         if (influye) return extractInfluyeApp(cartaUrl)
       }
+      // Sitios Justo con dominio propio (ej: veganmobile.cl): si la detección por HTML
+      // falló (timeout) o el dominio quedó como proveedor desconocido, se reconocen aquí.
+      if (!["Fudo", "Mercat", "Gourmedia"].includes(providerName || "") && await isJustoSite(cartaUrl)) {
+        console.log(`[Pipeline] ${cartaUrl} es un sitio Justo (detectado por HTML) → extractor Justo`)
+        const justoResult = await extractJusto(cartaUrl).catch(() => null)
+        if (justoResult && justoResult.dishes.length >= 3) return justoResult
+      }
       // Generic scraper: Jina AI + Claude. Works with any provider.
       return extractWithScraper(cartaUrl, providerName, extractionConfig);
   }
+}
+
+/** ¿La página es de Justo? Busca sus recursos (getjusto.com) en el HTML. */
+async function isJustoSite(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "QuieroComer-Bot/1.0" }, redirect: "follow", signal: AbortSignal.timeout(12000) })
+    if (!res.ok) return false
+    return /getjusto\.com|orioneat/i.test(await res.text())
+  } catch { return false }
 }
 
 /**
