@@ -50,6 +50,8 @@ const LEGACY_COOKIES: Record<SessionKind, string[]> = {
 };
 
 const IS_PROD = process.env.NODE_ENV === "production";
+/** Prefijo para que una firma de sesión nunca sea intercambiable con otros tokens firmados. */
+const SESSION_SIG_PREFIX = "qc-session-v1:";
 const DEV_FALLBACK_SECRET = "qc-dev-only-session-secret-NO-USAR-EN-PRODUCCION";
 let warnedMissingSecret = false;
 
@@ -78,6 +80,18 @@ function sign(data: string, secret: string): Buffer {
   return crypto.createHmac("sha256", secret).update(data).digest();
 }
 
+/**
+ * Secreto para otros tokens (auto-login, magic link). Usa la variable propia si
+ * existe; si no, en producción lo deriva de SESSION_SECRET (nunca un valor fijo
+ * escrito en el código, que cualquiera podría leer). null = no se puede firmar.
+ */
+export function secretFor(envValue: string | undefined, label: string, devFallback: string): string | null {
+  if (envValue) return envValue;
+  if (!IS_PROD) return devFallback;
+  const base = getSecret();
+  return base ? crypto.createHmac("sha256", base).update(`derived:${label}`).digest("hex") : null;
+}
+
 /** HMAC-SHA256 con SESSION_SECRET (para otros tokens firmados). null si no hay secreto. */
 export function signWithSessionSecret(data: string): Buffer | null {
   const secret = getSecret();
@@ -100,7 +114,7 @@ export function encodeSession(payload: SessionPayload): string {
   const secret = getSecret();
   if (!secret) throw new Error("SESSION_SECRET no configurado");
   const body = b64url(JSON.stringify(payload));
-  return `${body}.${b64url(sign(body, secret))}`;
+  return `${body}.${b64url(sign(SESSION_SIG_PREFIX + body, secret))}`;
 }
 
 /** Verifica firma (tiempo constante), estructura y expiración. */
@@ -120,7 +134,7 @@ export function decodeSession(token: string | undefined | null, kind: SessionKin
   } catch {
     return null;
   }
-  const expected = sign(body, secret);
+  const expected = sign(SESSION_SIG_PREFIX + body, secret);
   if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return null;
 
   let p: SessionPayload;

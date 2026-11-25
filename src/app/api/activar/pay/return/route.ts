@@ -5,7 +5,8 @@ import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS, type PlanKey } from "
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
-import { buildPanelEntryUrl, createPanelEntryToken } from "@/lib/panelEntryLink";
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
+import { setSessionCookie } from "@/lib/session";
 function r303(url: string) { return NextResponse.redirect(url, 303); }
 
 /**
@@ -44,7 +45,7 @@ async function handleReturn(req: NextRequest) {
   // Buscar restaurant por token
   const restaurant = await prisma.restaurant.findFirst({
     where: { flowRegisterToken: token },
-    include: { owner: { select: { email: true, name: true } } },
+    include: { owner: { select: { id: true, role: true, status: true, email: true, name: true } } },
   });
 
   if (!restaurant) {
@@ -113,11 +114,18 @@ async function handleReturn(req: NextRequest) {
     });
   }
 
-  // Pago recién verificado: la página de éxito recibe un enlace firmado al panel
-  // (antes el botón entraba como dueño solo con el slug).
-  const entryK = restaurant.slug ? createPanelEntryToken(restaurant.slug, 1) : null;
-  const kParam = entryK ? `&k=${encodeURIComponent(entryK)}` : "";
-  return r303(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}${kParam}`);
+  // Pago recién verificado (y solo la primera vez, ver idempotencia arriba):
+  // se deja al comprador con sesión de dueño para que "Ir a mi panel" funcione.
+  // Va en cookie httpOnly, no en la URL (no queda en historial ni en píxeles).
+  const res = r303(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
+  if (restaurant.owner && restaurant.owner.status !== "SUSPENDED") {
+    try {
+      setSessionCookie(res, { kind: "panel", id: restaurant.owner.id, role: restaurant.owner.role }, 60 * 60 * 24 * 7);
+    } catch (e) {
+      console.error("[activar/pay/return] no se pudo crear la sesión:", e);
+    }
+  }
+  return res;
 }
 
 export async function GET(req: NextRequest) { return handleReturn(req); }

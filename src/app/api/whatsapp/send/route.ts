@@ -4,7 +4,7 @@
 // Ver WHATSAPP_CRM_PLAN.md.
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { sendText } from "@/lib/whatsapp/client";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<{ ok: boolean; memberId?: string }> {
   const panelId = getPanelId(req);
   if (!panelId) return { ok: false };
-  if (panelId === "demo") return { ok: true };
+  if (panelId === "demo") return { ok: await demoSessionCanAccess(req, restaurantId) };
   if (panelId.startsWith("tm_")) {
     const memberId = panelId.slice(3);
     return { ok: await teamMemberCanAccess(memberId, restaurantId), memberId };

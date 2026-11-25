@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
-import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
+import { buildAutoLoginUrl, verifyAutoLoginSig } from "@/lib/email/autoLoginUrl";
 import { sendWhatsApp, buildLoyaltyTrialMessage } from "@/lib/whatsapp";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 40; // 40 days
 const IS_PROD = process.env.NODE_ENV === "production";
-const SECRET = process.env.AUTO_LOGIN_SECRET || "qc-auto-login-secret-2026";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
 /**
@@ -34,13 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Verify HMAC signature
-  const expected = crypto
-    .createHmac("sha256", SECRET)
-    .update(`${oid}:${t}`)
-    .digest("hex")
-    .slice(0, 16);
-
-  if (sig !== expected) {
+  if (!verifyAutoLoginSig(oid, t, sig)) {
     return NextResponse.redirect(new URL("/panel/login?error=invalid_link", req.url));
   }
 

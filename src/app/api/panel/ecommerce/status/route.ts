@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { getPanelId } from "@/lib/session";
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   if (panelId.startsWith("tm_")) {
     allowed = await teamMemberCanAccess(panelId.slice(3), restaurantId);
   } else if (panelId === "demo") {
-    allowed = true;
+    allowed = await demoSessionCanAccess(req, restaurantId);
   } else {
     const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
     allowed = r?.ownerId === panelId;
