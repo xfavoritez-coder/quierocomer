@@ -128,10 +128,6 @@ export async function GET(req: NextRequest) {
     const MAX_COUPONS = 500;
     // Indexar quiénes respondieron la encuesta (para priorizar cupones)
     const respondedEmails = new Set<string>();
-    for (const q of queues) for (const job of q) {
-      // Los enrollments ya cargados tienen surveyReason si respondieron
-    }
-    // Recorrer los existing enrollments de cada local para saber quién respondió
     for (const rest of eligible) {
       try {
         const brandIds = await resolveBrandIds(rest.id);
