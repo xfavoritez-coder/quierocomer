@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
         const brandIds = await resolveBrandIds(rest.id);
         const existing = await prisma.recoveryEnrollment.findMany({
           where: { restaurantId: { in: brandIds }, createdAt: { gte: since180 } },
-          select: { customerEmail: true, automation: true, sentAt: true, status: true, createdAt: true },
+          select: { customerEmail: true, automation: true, sentAt: true, status: true, createdAt: true, surveyReason: true },
         });
         const idx = indexEnrollments(existing);
 
@@ -123,15 +123,30 @@ export async function GET(req: NextRequest) {
     }
 
     // ── FASE 2: enviar con cupo dividido (cupones + encuestas) ──
-    // Cupo dividido: máx 400 cupones + máx 600 encuestas = 1000 total.
-    // Así ninguno de los dos bloquea al otro. Cupones van primero dentro de su cupo.
-    const MAX_COUPONS = 400;
-    const MAX_SURVEYS = 600;
-    // Separar jobs en 2 colas planas (round-robin ya mezclado por local)
+    // Máx 500 cupones + resto encuestas = 1000 total.
+    // Cupones priorizan clientes que RESPONDIERON la encuesta (más engaged).
+    const MAX_COUPONS = 500;
+    // Indexar quiénes respondieron la encuesta (para priorizar cupones)
+    const respondedEmails = new Set<string>();
+    for (const q of queues) for (const job of q) {
+      // Los enrollments ya cargados tienen surveyReason si respondieron
+    }
+    // Recorrer los existing enrollments de cada local para saber quién respondió
+    for (const rest of eligible) {
+      try {
+        const brandIds = await resolveBrandIds(rest.id);
+        const answered = await prisma.recoveryEnrollment.findMany({
+          where: { restaurantId: { in: brandIds }, automation: "abandonment_survey", surveyReason: { not: null } },
+          select: { customerEmail: true },
+        });
+        for (const a of answered) respondedEmails.add(a.customerEmail.toLowerCase());
+      } catch {}
+    }
+
+    // Separar jobs en 2 colas planas (round-robin mezclado por local)
     const couponJobs: typeof queues[0] = [];
     const surveyJobs: typeof queues[0] = [];
     const cursors = queues.map(() => 0);
-    // Flatten round-robin: un job por local por vuelta
     let anyLeft = true;
     while (anyLeft) {
       anyLeft = false;
@@ -144,8 +159,16 @@ export async function GET(req: NextRequest) {
         }
       }
     }
-    // Enviar: primero cupones (hasta MAX_COUPONS), luego encuestas (hasta MAX_SURVEYS)
-    const sendQueue = [...couponJobs.slice(0, MAX_COUPONS), ...surveyJobs.slice(0, MAX_SURVEYS)];
+    // Cupones: primero los que respondieron la encuesta, luego el resto
+    couponJobs.sort((a, b) => {
+      const aR = respondedEmails.has(a.client.email.toLowerCase()) ? 0 : 1;
+      const bR = respondedEmails.has(b.client.email.toLowerCase()) ? 0 : 1;
+      return aR - bR;
+    });
+    // Enviar: cupones (hasta MAX_COUPONS) + encuestas (lo que quede del cupo)
+    const couponsToSend = couponJobs.slice(0, MAX_COUPONS);
+    const surveysToSend = surveyJobs.slice(0, MAX_TOTAL - couponsToSend.length);
+    const sendQueue = [...couponsToSend, ...surveysToSend];
     let si = 0;
     while (si < sendQueue.length && totalSent < MAX_TOTAL && Date.now() - startMs <= TIME_BUDGET_MS) {
       const job = sendQueue[si++];
