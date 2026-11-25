@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { FLOW_PLANS, planFromFlowId, grossOf, type PlanKey } from "@/lib/billing/plans-config";
+import { getPanelId } from "@/lib/session";
 
 /**
  * GET /api/billing/payments?restaurantId=...
@@ -9,7 +10,7 @@ import { FLOW_PLANS, planFromFlowId, grossOf, type PlanKey } from "@/lib/billing
  * Fuente: emailLog (plan_activated / plan_renewed) + panelActivity (payment_received).
  */
 export async function GET(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");

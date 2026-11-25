@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { getPanelId } from "@/lib/session";
 
 /**
  * PATCH /api/panel/ordering-mode
@@ -8,7 +9,7 @@ import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
  * Simple auth: panel_id cookie must match the restaurant's ownerId.
  */
 export async function PATCH(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string; orderingMode?: string };

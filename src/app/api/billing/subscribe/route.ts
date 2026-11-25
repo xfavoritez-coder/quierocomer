@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS } from "@/lib/billing/plans-config";
+import { getPanelId } from "@/lib/session";
 
 /**
  * POST /api/billing/subscribe
@@ -11,7 +12,7 @@ import { FLOW_PLANS } from "@/lib/billing/plans-config";
  * El customerId interno de Flow se obtiene luego via getByRegisterToken en subscribe-return.
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string; plan?: keyof typeof FLOW_PLANS };

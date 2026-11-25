@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
@@ -167,7 +168,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const token = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
   // Si viene un redirect explícito (ej. desde email de expiración), respetarlo siempre
@@ -176,9 +176,7 @@ export async function GET(req: NextRequest) {
     : welcomeCookie ? "/bienvenida" : "/panel";
 
   const response = NextResponse.redirect(new URL(destination, req.url));
-  response.cookies.set("panel_token", token, { ...base, httpOnly: true });
-  response.cookies.set("panel_role", owner.role, { ...base, httpOnly: true });
-  response.cookies.set("panel_id", oid, { ...base, httpOnly: true });
+  setSessionCookie(response, { kind: "panel", id: owner.id, role: owner.role }, COOKIE_MAX_AGE);
   response.cookies.set("panel_ev", "1", { ...base, httpOnly: true });
   response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
 

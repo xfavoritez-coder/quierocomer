@@ -13,8 +13,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/adminAuth";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { webpayRefund, webpaySettingsFor, webpayAllowsPartialRefund } from "@/lib/payments/webpay";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,9 +23,9 @@ export const maxDuration = 30;
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   if (isSuperAdmin(req)) return true;
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
-  if (panelId === "demo") return true;
+  if (panelId === "demo") return demoSessionCanAccess(req, restaurantId);
   if (panelId.startsWith("tm_")) return teamMemberCanAccess(panelId.slice(3), restaurantId);
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
   return r?.ownerId === panelId;

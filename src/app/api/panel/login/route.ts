@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 import { logActivity } from "@/lib/admin/logActivity";
 import { revalidatePath } from "next/cache";
@@ -11,15 +11,12 @@ const IS_PROD = process.env.NODE_ENV === "production";
 
 function setPanelCookies(
   response: NextResponse,
-  token: string,
   role: string,
   id: string,
   emailVerificado?: boolean,
 ) {
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
-  response.cookies.set("panel_token", token, { ...base, httpOnly: true });
-  response.cookies.set("panel_role", role, { ...base, httpOnly: true });
-  response.cookies.set("panel_id", id, { ...base, httpOnly: true });
+  setSessionCookie(response, { kind: "panel", id, role }, COOKIE_MAX_AGE);
   response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
   if (emailVerificado) {
     response.cookies.set("panel_ev", "1", { ...base, httpOnly: true });
@@ -59,9 +56,8 @@ export async function POST(req: NextRequest) {
         });
         if (memberAlt?.passwordHash && await bcrypt.compare(password, memberAlt.passwordHash)) {
           await prisma.teamMember.update({ where: { id: memberAlt.id }, data: { lastLoginAt: new Date() } });
-          const token = crypto.randomUUID();
           const response = NextResponse.json({ ok: true, role: memberAlt.role, name: memberAlt.name, restaurants: [memberAlt.restaurant], mustChangePassword: false });
-          setPanelCookies(response, token, memberAlt.role, `tm_${memberAlt.id}`, true);
+          setPanelCookies(response, memberAlt.role, `tm_${memberAlt.id}`, true);
           return response;
         }
         return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
@@ -80,8 +76,6 @@ export async function POST(req: NextRequest) {
           data: { panelVisitedAt: new Date() },
         }).then(() => { slugs.forEach(s => { revalidatePath(`/qr/${s}`); revalidatePath(`/${s}`); }); }).catch(() => {});
       }
-
-      const token = crypto.randomUUID();
       const response = NextResponse.json({
         ok: true,
         role: owner.role,
@@ -90,7 +84,7 @@ export async function POST(req: NextRequest) {
         mustChangePassword: owner.mustChangePassword,
         emailVerificado: owner.emailVerificado ?? true,
       });
-      setPanelCookies(response, token, owner.role, owner.id, true);
+      setPanelCookies(response, owner.role, owner.id, true);
       if (owner.restaurants[0]) logActivity(owner.restaurants[0].id, "panel_login", { email: owner.email, ip }, owner.id, req);
       return response;
     }
@@ -112,8 +106,6 @@ export async function POST(req: NextRequest) {
     if (member.status === "PENDING") return NextResponse.json({ error: "Cuenta pendiente de activación. Revisa tu email." }, { status: 403 });
 
     await prisma.teamMember.update({ where: { id: member.id }, data: { lastLoginAt: new Date() } });
-
-    const token = crypto.randomUUID();
     const response = NextResponse.json({
       ok: true,
       role: member.role,
@@ -121,7 +113,7 @@ export async function POST(req: NextRequest) {
       restaurants: [member.restaurant],
       mustChangePassword: false,
     });
-    setPanelCookies(response, token, member.role, `tm_${member.id}`, true);
+    setPanelCookies(response, member.role, `tm_${member.id}`, true);
     return response;
   } catch (error) {
     console.error("Panel login error:", error);

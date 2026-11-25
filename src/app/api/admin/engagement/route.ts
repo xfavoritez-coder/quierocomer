@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readAdminSession } from "@/lib/session";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -9,8 +10,7 @@ import { prisma } from "@/lib/prisma";
  * Usado en el dashboard de admin para monitoreo rápido.
  */
 export async function GET(req: NextRequest) {
-  const adminId = req.cookies.get("admin_id")?.value;
-  if (!adminId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (readAdminSession(req)?.role !== "SUPERADMIN") return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   // Valoraciones por restaurante (agrupado)
   const reviewsRaw = await prisma.privateReview.groupBy({

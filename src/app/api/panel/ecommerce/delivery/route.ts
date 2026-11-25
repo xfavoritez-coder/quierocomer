@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseDeliveryZones, parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { uberSettingsFor, uberConfigured } from "@/lib/ecommerce/uberDirect";
 import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
+import { getPanelId } from "@/lib/session";
 
 /** Verifica que el panel logueado sea dueño (o miembro) del restaurante. */
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
-  if (panelId === "demo") return true;
+  if (panelId === "demo") return demoSessionCanAccess(req, restaurantId);
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }

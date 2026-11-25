@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { TRIAL_DAYS } from "@/lib/billing/plans-central";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
+import { getPanelId } from "@/lib/session";
 
 /**
  * Activates a 7-day Premium trial directly — no payment required.
  * Available to all FREE plan restaurants, even if they've trialed before.
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string };

@@ -9,12 +9,13 @@ import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { sendText } from "@/lib/whatsapp/client";
 import { recordOutbound } from "@/lib/whatsapp/store";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<{ ok: boolean; memberId?: string }> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return { ok: false };
   if (panelId === "demo") return { ok: true };
   if (panelId.startsWith("tm_")) {

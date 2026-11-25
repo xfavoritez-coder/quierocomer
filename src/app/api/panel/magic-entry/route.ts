@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { verifyPanelMagicToken } from "@/lib/magicLink";
-import crypto from "crypto";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 días
@@ -38,13 +38,10 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const panelToken = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
   const response = NextResponse.redirect(new URL(redirectTo, "https://quierocomer.com"));
-  response.cookies.set("panel_token", panelToken, { ...base, httpOnly: true });
-  response.cookies.set("panel_role", owner.role, { ...base, httpOnly: true });
-  response.cookies.set("panel_id", owner.id, { ...base, httpOnly: true });
+  setSessionCookie(response, { kind: "panel", id: owner.id, role: owner.role }, COOKIE_MAX_AGE);
   response.cookies.set("panel_ev", "1", { ...base, httpOnly: true });
   response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
 

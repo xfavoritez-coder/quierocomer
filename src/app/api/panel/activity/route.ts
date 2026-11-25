@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logActivity } from "@/lib/admin/logActivity";
+import { getPanelId } from "@/lib/session";
 
 /**
  * POST /api/panel/activity
@@ -9,7 +10,7 @@ import { logActivity } from "@/lib/admin/logActivity";
  * Fire-and-forget — always returns 200.
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ ok: true });
 
   try {

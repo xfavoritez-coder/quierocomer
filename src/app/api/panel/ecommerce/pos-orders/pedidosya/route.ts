@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { pyaSettingsFor, pyaCreateShipping, pyaCancelShipping } from "@/lib/ecommerce/pedidosya";
 import { chargeWallet, refundWallet } from "@/lib/ecommerce/deliveryWallet";
 import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
-  if (panelId === "demo") return true;
+  if (panelId === "demo") return demoSessionCanAccess(req, restaurantId);
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }

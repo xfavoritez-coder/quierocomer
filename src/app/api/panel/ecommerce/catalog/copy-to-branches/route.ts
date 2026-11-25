@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
@@ -22,7 +23,7 @@ const DISH_FIELDS = [
  * marca (mismo brandSlug) y mismo dueño. Catálogo por sucursal (opción A).
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const body = await req.json().catch(() => null);

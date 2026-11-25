@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { prisma, runInTx } from "@/lib/prisma";
 import { ensureOwnBodega } from "@/lib/bodega/provision";
 import { aplicarEfecto } from "@/lib/bodega/movimientos";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
-  if (panelId === "demo") return true;
+  if (panelId === "demo") return demoSessionCanAccess(req, restaurantId);
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }

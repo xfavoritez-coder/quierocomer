@@ -4,11 +4,12 @@ import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { normalizePhoneCL } from "@/lib/ecommerce/phoneCL";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);

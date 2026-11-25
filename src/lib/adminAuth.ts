@@ -1,32 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { readAdminSession, readPanelSession } from "@/lib/session";
 
 /**
- * Checks admin auth via cookie-based auth.
- * Accepts both admin_* cookies (superadmin) and panel_* cookies (owner panel).
+ * Checks admin auth via sesión firmada (ver src/lib/session.ts).
+ * Acepta la sesión de superadmin (/admin) o la del panel de dueño.
  * Returns null if authenticated, or a 401 response.
  */
 export function checkAdminAuth(req: NextRequest): NextResponse | null {
-  const adminToken = req.cookies.get("admin_token")?.value;
-  const adminId = req.cookies.get("admin_id")?.value;
-  if (adminToken && adminId) return null;
-
-  // Also accept panel cookies for shared API routes
-  const panelToken = req.cookies.get("panel_token")?.value;
-  const panelId = req.cookies.get("panel_id")?.value;
-  if (panelToken && panelId) return null;
-
+  if (readAdminSession(req) || readPanelSession(req)) return null;
   return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 }
 
-/** Get admin role from cookies (checks admin_* first, then panel_*) */
+/** Rol verificado (sesión admin primero, luego panel). */
 export function getAdminRole(req: NextRequest): string | null {
-  return req.cookies.get("admin_role")?.value || req.cookies.get("panel_role")?.value || null;
+  return readAdminSession(req)?.role || readPanelSession(req)?.role || null;
 }
 
-/** Get admin ID from cookies (checks admin_* first, then panel_*) */
+/** ID verificado (sesión admin primero, luego panel). */
 export function getAdminId(req: NextRequest): string | null {
-  return req.cookies.get("admin_id")?.value || req.cookies.get("panel_id")?.value || null;
+  return readAdminSession(req)?.id || readPanelSession(req)?.id || null;
 }
 
 /** Returns true if the current user is SUPERADMIN */
@@ -44,6 +37,14 @@ export async function getOwnedRestaurantIds(req: NextRequest): Promise<string[] 
 
   const rawId = getAdminId(req);
   if (!rawId) return [];
+
+  // Sesión demo: solo el local demo de la sesión firmada.
+  if (rawId === "demo") {
+    const slug = readPanelSession(req)?.demoSlug;
+    if (!slug) return [];
+    const r = await prisma.restaurant.findFirst({ where: { slug, isDemo: true }, select: { id: true } });
+    return r ? [r.id] : [];
+  }
 
   // Team member: panel_id is prefixed with "tm_"
   if (rawId.startsWith("tm_")) {

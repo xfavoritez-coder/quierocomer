@@ -5,6 +5,7 @@ import { sendWhatsApp, buildLoyaltyTrialMessage } from "@/lib/whatsapp";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 import bcrypt from "bcryptjs";
+import { getPanelId } from "@/lib/session";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
@@ -14,7 +15,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
  * Envía email con credenciales + WhatsApp con link de acceso directo.
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string };

@@ -6,6 +6,7 @@ import {
   formatRut,
   missingBillingFields,
 } from "@/lib/billing/plans-config";
+import { getPanelId } from "@/lib/session";
 
 /**
  * GET  /api/billing/billing-info?restaurantId=...
@@ -29,7 +30,7 @@ const FIELDS = [
 type BillingField = (typeof FIELDS)[number];
 
 async function getOwnerRestaurant(req: NextRequest, restaurantId: string) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return { error: "No autorizado", status: 401 as const };
   const owner = await prisma.restaurantOwner.findUnique({
     where: { id: panelId },

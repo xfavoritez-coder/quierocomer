@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { emitBoletaForPosOrder } from "@/lib/sharkpos/emit-sale";
-import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { teamMemberCanAccess, demoSessionCanAccess } from "@/lib/ecommerce/panelAuth";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
@@ -12,6 +12,7 @@ import { getPlatformSetting } from "@/lib/platformSettings";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { markUberOrderReady, denyUberOrder, cancelUberOrder, acceptUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
 import { uberPrepMinutes } from "@/lib/ubereats/ingest";
+import { getPanelId } from "@/lib/session";
 
 // Auto-reparación del espejo: espeja al Centro cualquier OnlineOrder activo
 // reciente que no tenga su PosOrder (p. ej. si el espejo falló transitoriamente
@@ -44,9 +45,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
-  if (panelId === "demo") return true;
+  if (panelId === "demo") return demoSessionCanAccess(req, restaurantId);
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }
@@ -271,7 +272,7 @@ export async function PATCH(req: NextRequest) {
       ? (order.rawPayload as Record<string, unknown>) : {};
     // Auditoría del cobro: método(s), montos, instante, quién lo registró (panel_id) y
     // el origen de la confirmación. Se guarda en rawPayload (sin tocar el schema).
-    const by = req.cookies.get("panel_id")?.value || "caja";
+    const by = getPanelId(req) || "caja";
     // Factura: si el cajero pidió factura, se guardan los datos de receptor para que
     // emit-sale emita factura (33) en vez de boleta (39). RUT consumidor final no sirve.
     let posFactura: Record<string, string> | undefined;
@@ -332,7 +333,7 @@ export async function PATCH(req: NextRequest) {
 
     const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload)) ? (order.rawPayload as Record<string, unknown>) : {};
     const prevRounds = Array.isArray(prevRaw.rounds) ? (prevRaw.rounds as unknown[]) : [];
-    const by = req.cookies.get("panel_id")?.value || "pos";
+    const by = getPanelId(req) || "pos";
     const rawPayload = { ...prevRaw, rounds: [...prevRounds, { at: new Date().toISOString(), by, items: roundItems }] };
 
     const updated = await prisma.posOrder.update({

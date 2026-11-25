@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getPanelId } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
 
 export async function POST(req: Request) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("panel_token")?.value;
-  const panelId = cookieStore.get("panel_id")?.value;
-  if (!token || !panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const panelId = getPanelId(cookieStore);
+  if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const owner = await prisma.restaurantOwner.findUnique({
     where: { id: panelId },

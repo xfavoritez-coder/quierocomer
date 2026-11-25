@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { getPanelId } from "@/lib/session";
 
 /**
  * GET /api/panel/ecommerce/status?restaurantId=...
@@ -10,7 +11,7 @@ import { parseStoreConfig } from "@/lib/ecommerce/store-config";
  * están configuradas (solo booleans, nunca secretos).
  */
 export async function GET(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");

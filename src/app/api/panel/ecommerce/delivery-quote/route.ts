@@ -6,11 +6,12 @@ import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
 import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
 import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);

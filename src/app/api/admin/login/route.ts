@@ -1,22 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
-const IS_PROD = process.env.NODE_ENV === "production";
 
-function setCookies(
-  response: NextResponse,
-  token: string,
-  role: string,
-  id: string,
-) {
-  const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
-  response.cookies.set("admin_token", token, { ...base, httpOnly: true });
-  response.cookies.set("admin_role", role, { ...base, httpOnly: true });
-  response.cookies.set("admin_id", id, { ...base, httpOnly: true });
+function setCookies(response: NextResponse, role: string, id: string) {
+  setSessionCookie(response, { kind: "admin", id, role }, COOKIE_MAX_AGE);
 }
 
 export async function POST(req: NextRequest) {
@@ -38,14 +29,13 @@ export async function POST(req: NextRequest) {
 
     // 1. Check superadmin (env vars) first
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const token = crypto.randomUUID();
       const response = NextResponse.json({
         ok: true,
         role: "SUPERADMIN",
         name: "Super Admin",
         restaurantIds: [],
       });
-      setCookies(response, token, "SUPERADMIN", "superadmin");
+      setCookies(response, "SUPERADMIN", "superadmin");
       return response;
     }
 

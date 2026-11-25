@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
 const COOKIE_MAX_AGE = 60 * 60 * 4; // 4 hours for demo sessions
@@ -50,8 +50,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Create demo session token — encode slug for ownerless demo sessions
-  const token = `demo_${crypto.randomUUID()}`;
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
   // Track panel visit in Lead funnel + invalidar cache ISR del QR
@@ -63,11 +61,13 @@ export async function GET(req: NextRequest) {
   const nextPage = req.nextUrl.searchParams.get("next");
   const redirectTo = nextPage ? `/panel/${nextPage}` : "/panel";
   const response = NextResponse.redirect(new URL(redirectTo, req.url));
-  response.cookies.set("panel_token", token, { ...base, httpOnly: true });
-  response.cookies.set("panel_role", ownerRole, { ...base, httpOnly: true });
-  response.cookies.set("panel_id", ownerId, { ...base, httpOnly: true });
+  // Sesión firmada. Para la demo sin dueño (id "demo") el slug va dentro de la firma.
+  setSessionCookie(
+    response,
+    { kind: "panel", id: ownerId, role: ownerRole, demoSlug: ownerId === "demo" ? slug : undefined, demo: true },
+    COOKIE_MAX_AGE,
+  );
   response.cookies.set("panel_demo", restaurant.isDemo ? "1" : "0", { ...base, httpOnly: false });
-  response.cookies.set("panel_demo_slug", slug, { ...base, httpOnly: true });
 
   return response;
 }

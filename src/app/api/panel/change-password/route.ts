@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { getPanelId } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get("panel_token")?.value;
-  const panelId = req.cookies.get("panel_id")?.value;
-  if (!token || !panelId) {
+  const panelId = getPanelId(req);
+  if (!panelId) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

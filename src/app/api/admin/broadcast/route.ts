@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readAdminSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsApp } from "@/lib/whatsapp";
 
@@ -53,9 +54,7 @@ export async function POST(req: NextRequest) {
   // Auth
   const seedSecret = process.env.SEED_SECRET;
   const queryKey = req.nextUrl.searchParams.get("key");
-  const adminToken = req.cookies.get("admin_token")?.value;
-  const adminId = req.cookies.get("admin_id")?.value;
-  const hasAdminAuth = !!(adminToken && adminId);
+  const hasAdminAuth = readAdminSession(req)?.role === "SUPERADMIN";
   const hasSeedAuth = !!(seedSecret && queryKey === seedSecret);
   if (!hasAdminAuth && !hasSeedAuth) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

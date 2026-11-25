@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { getPanelId } from "@/lib/session";
 
 export async function PATCH(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string; reviewMode?: string; googleReviewUrl?: string | null; reviewReward?: string | null };

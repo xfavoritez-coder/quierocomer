@@ -1,5 +1,17 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPanelId, readPanelSession } from "@/lib/session";
+
+/**
+ * Sesión demo sin dueño (panel_id "demo"): solo puede tocar SU local demo
+ * (el slug va dentro de la sesión firmada). Antes devolvía true para cualquier local.
+ */
+export async function demoSessionCanAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
+  const s = readPanelSession(req);
+  if (!s || s.id !== "demo" || !s.demoSlug || !restaurantId) return false;
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true, isDemo: true } });
+  return !!r && r.isDemo && r.slug === s.demoSlug;
+}
 
 /**
  * ¿El miembro de equipo `memberId` puede acceder al restaurante `restaurantId`?
@@ -30,11 +42,11 @@ export async function teamMemberCanAccess(memberId: string, restaurantId: string
   return !!sibling;
 }
 
-/** Verifica que el panel_id (cookie) sea dueño o miembro (multi-sucursal) del restaurante. */
+/** Verifica que el panel_id (sesión firmada) sea dueño o miembro (multi-sucursal) del restaurante. */
 export async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
-  if (panelId === "demo") return true;
+  if (panelId === "demo") return demoSessionCanAccess(req, restaurantId);
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }

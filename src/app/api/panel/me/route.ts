@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { readPanelSession } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get("panel_token")?.value;
-  const panelId = req.cookies.get("panel_id")?.value;
-  if (!token || !panelId) {
+  const session = readPanelSession(req);
+  const panelId = session?.id;
+  if (!session || !panelId) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   try {
     // Virtual demo session (no real owner)
-    if (token.startsWith("demo_") && panelId === "demo") {
-      const demoSlug = req.cookies.get("panel_demo_slug")?.value;
+    if (panelId === "demo") {
+      const demoSlug = session.demoSlug;
       if (!demoSlug) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
       const restaurant = await prisma.restaurant.findFirst({
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Demo tokens don't require ACTIVE status check
-    if (!token.startsWith("demo_") && owner.status !== "ACTIVE") {
+    if (!session.demo && owner.status !== "ACTIVE") {
       return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
     }
 

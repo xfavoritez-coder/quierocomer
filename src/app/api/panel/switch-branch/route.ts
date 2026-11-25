@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPanelId, setSessionCookie } from "@/lib/session";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 40; // 40 días
-const IS_PROD = process.env.NODE_ENV === "production";
 
 /**
  * POST /api/panel/switch-branch  { restaurantId }
@@ -12,7 +12,7 @@ const IS_PROD = process.env.NODE_ENV === "production";
  * sigue funcionando sin cambios. Para dueños no hace nada (ya acceden a todos).
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
@@ -41,8 +41,6 @@ export async function POST(req: NextRequest) {
   if (!target) return NextResponse.json({ error: "No tienes acceso a esa sucursal" }, { status: 403 });
 
   const res = NextResponse.json({ ok: true, memberId: target.id });
-  const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
-  res.cookies.set("panel_id", `tm_${target.id}`, { ...base, httpOnly: true });
-  res.cookies.set("panel_role", target.role, { ...base, httpOnly: true });
+  setSessionCookie(res, { kind: "panel", id: `tm_${target.id}`, role: target.role }, COOKIE_MAX_AGE);
   return res;
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPanelId } from "@/lib/session";
 
 /**
  * POST /api/billing/cancel
@@ -9,7 +10,7 @@ import { prisma } from "@/lib/prisma";
  * pagado (currentPeriodEnd), después baja a FREE automáticamente (vía cron).
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string };

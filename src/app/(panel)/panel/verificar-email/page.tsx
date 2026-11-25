@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
+import { getPanelId } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import VerificarEmailClient from "./VerificarEmailClient";
 
 export default async function VerificarEmailPage() {
   const cookieStore = await cookies();
-  const ownerId = cookieStore.get("panel_id")?.value;
+  const ownerId = getPanelId(cookieStore);
 
   if (!ownerId || ownerId.startsWith("tm_")) {
     redirect("/panel/login");

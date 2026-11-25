@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { normalizePhone } from "@/lib/normalizePhone";
+import { getPanelId } from "@/lib/session";
 
 function getAuth(req: NextRequest) {
-  const token = req.cookies.get("panel_token")?.value;
-  const panelId = req.cookies.get("panel_id")?.value;
-  if (!token || !panelId) return null;
+  const panelId = getPanelId(req);
+  if (!panelId) return null;
   return panelId;
 }
 

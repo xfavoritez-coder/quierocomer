@@ -4,9 +4,10 @@ import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { sendSurveyEmail, storeAbsBase } from "@/lib/ecommerce/surveyEmail";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { getPanelId } from "@/lib/session";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);

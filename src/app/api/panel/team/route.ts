@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { getPanelId } from "@/lib/session";
 
 // GET /api/admin/team?restaurantId=xxx — list owner + team members
 export async function GET(req: NextRequest) {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
 // Resuelve el ownerId de la sesión actual (dueño directo o team member ADMIN).
 async function resolveOwnerId(req: NextRequest): Promise<string | null> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId || panelId === "demo") return null;
   if (panelId.startsWith("tm_")) {
     const m = await prisma.teamMember.findUnique({

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { getPanelId } from "@/lib/session";
 
 // GET — list reviews for a restaurant
 export async function GET(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
 
 // PATCH — mark review(s) as read
 export async function PATCH(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { id?: string; restaurantId?: string; markAllRead?: boolean };

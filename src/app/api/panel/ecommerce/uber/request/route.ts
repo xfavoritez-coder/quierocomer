@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { uberSettingsFor, uberCreateDelivery, type CreateDeliveryParams } from "@/lib/ecommerce/uberDirect";
+import { getPanelId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return false;
   if (panelId.startsWith("tm_")) {
     return teamMemberCanAccess(panelId.slice(3), restaurantId);

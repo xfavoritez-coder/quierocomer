@@ -9,6 +9,7 @@ import {
   missingBillingFields,
 } from "@/lib/billing/plans-config";
 import { effectivePlan } from "@/lib/billing/plans-central";
+import { getPanelId } from "@/lib/session";
 
 /**
  * GET /api/billing/status?restaurantId=...
@@ -16,7 +17,7 @@ import { effectivePlan } from "@/lib/billing/plans-central";
  * Devuelve el estado de billing del restaurant para mostrar en el panel.
  */
 export async function GET(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");

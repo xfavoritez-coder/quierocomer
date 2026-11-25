@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
 import { grossOf } from "@/lib/billing/plans-config";
 import { LOYALTY_PLAN_NET } from "@/lib/billing/plans-central";
+import { getPanelId } from "@/lib/session";
 
 /**
  * POST /api/billing/loyalty/start
  * Inicia un pago Flow para activar/renovar el módulo Loyalty.
  */
 export async function POST(req: NextRequest) {
-  const panelId = req.cookies.get("panel_id")?.value;
+  const panelId = getPanelId(req);
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   let body: { restaurantId?: string };

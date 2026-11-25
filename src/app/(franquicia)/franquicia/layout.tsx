@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { readAdminSession, readPanelSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Toaster } from "sonner";
@@ -8,9 +9,11 @@ export const metadata = { title: "Franquicias · QuieroComer" };
 
 export default async function FranquiciaLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const panelToken = cookieStore.get("panel_token")?.value;
-  const panelId = cookieStore.get("panel_id")?.value;
-  if (!panelToken || !panelId) redirect("/panel/login");
+  // Solo superadmin (sesión admin firmada) o sesión de panel verificada.
+  // TODO: restringir a quienes realmente gestionan franquicias.
+  const admin = readAdminSession(cookieStore);
+  const panel = readPanelSession(cookieStore);
+  if (admin?.role !== "SUPERADMIN" && !panel) redirect("/panel/login");
 
   const marcas = await prisma.franMarca.findMany({
     where: { activa: true },

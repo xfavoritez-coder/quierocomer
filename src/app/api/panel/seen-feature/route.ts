@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPanelId } from "@/lib/session";
 
 const VALID = new Set(["loyalty", "valoraciones", "ordering", "administracion"]);
 
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get("panel_token")?.value;
-  const panelId = req.cookies.get("panel_id")?.value;
-  if (!token || !panelId) return NextResponse.json({ ok: false }, { status: 401 });
+  const panelId = getPanelId(req);
+  if (!panelId) return NextResponse.json({ ok: false }, { status: 401 });
 
   try {
     const { feature } = await req.json();
