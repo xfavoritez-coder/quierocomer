@@ -14,10 +14,9 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-const MAX_TOTAL = 9999; // tope duro de envíos por corrida (el límite real es el tiempo)
+const MAX_TOTAL = 1000; // tope duro de envíos por corrida
 // Cortar antes del límite de Vercel (maxDuration) para no dejar envíos a medias.
-// Lo que no alcance a enviarse sale en la ejecución del día siguiente.
-const TIME_BUDGET_MS = 240_000;
+const TIME_BUDGET_MS = 270_000;
 
 type Automation = RecoveryAutomation;
 
@@ -124,8 +123,13 @@ export async function GET(req: NextRequest) {
     }
 
     // ── FASE 2: enviar round-robin (un correo por local por vuelta) ──
-    // Cada local recibe un turno por ronda hasta vaciar su cola; cuando un local se queda
-    // sin pendientes, su cupo pasa a los demás. Reparto justo + sin desperdiciar capacidad.
+    // Prioridad: cupones primero (clientes que ya respondieron la encuesta),
+    // luego encuestas. Así los cupones no se atrasan cuando hay miles de encuestas pendientes.
+    for (const q of queues) q.sort((a, b) => {
+      const aPrio = a.automation === "recovery_incentive" ? 0 : 1;
+      const bPrio = b.automation === "recovery_incentive" ? 0 : 1;
+      return aPrio - bPrio;
+    });
     const cursors = queues.map(() => 0);
     let remaining = queues.reduce((s, q) => s + q.length, 0);
     let qi = 0;
@@ -144,8 +148,8 @@ export async function GET(req: NextRequest) {
           totalSkipped++;
           errors.push(`send ${job.restaurantId}: ${(e as Error).message}`);
         }
-        // Rate limit: 500ms entre envíos para no bloquear Resend (max 2/seg)
-        await new Promise(r => setTimeout(r, 500));
+        // Rate limit: 300ms entre envíos (~3/seg, dentro del límite de Resend)
+        await new Promise(r => setTimeout(r, 300));
       }
       qi = (qi + 1) % queues.length;
     }

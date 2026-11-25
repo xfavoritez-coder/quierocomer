@@ -7,7 +7,7 @@ const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 // Tope práctico de envíos por ejecución diaria del cron (presupuesto de 240s con
 // ~500ms entre correos). Solo para estimar el ritmo en el panel; el cron no usa la
 // tabla de 50 que se muestra abajo, re-segmenta todo y envía hasta este tope.
-const DAILY_SEND_CAP = 480
+const DAILY_SEND_CAP = 1000
 // El cron de recuperación corre a las 14:00 UTC (≈11:00 Chile en horario de verano).
 const CRON_HOUR_UTC = 14
 /** Próxima corrida del cron: hoy a las 14:00 UTC si aún no pasó, si no mañana. */
