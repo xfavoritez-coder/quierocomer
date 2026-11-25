@@ -78,6 +78,23 @@ function sign(data: string, secret: string): Buffer {
   return crypto.createHmac("sha256", secret).update(data).digest();
 }
 
+/** HMAC-SHA256 con SESSION_SECRET (para otros tokens firmados). null si no hay secreto. */
+export function signWithSessionSecret(data: string): Buffer | null {
+  const secret = getSecret();
+  return secret ? sign(data, secret) : null;
+}
+
+/** Compara en tiempo constante una firma base64url contra la esperada. */
+export function safeEqualB64(givenB64: string, expected: Buffer): boolean {
+  let given: Buffer;
+  try {
+    given = Buffer.from(givenB64, "base64url");
+  } catch {
+    return false;
+  }
+  return given.length === expected.length && crypto.timingSafeEqual(given, expected);
+}
+
 /** Serializa y firma una sesión. Lanza error si no hay secreto en producción. */
 export function encodeSession(payload: SessionPayload): string {
   const secret = getSecret();

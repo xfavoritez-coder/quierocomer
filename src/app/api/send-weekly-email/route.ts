@@ -5,6 +5,7 @@ import { buildWeeklyEmailHtml } from "@/lib/email/weeklyEmailHtml";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
 import { chileHourOf } from "@/lib/toteat/timezone";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 export const maxDuration = 30;
 
 async function generateSingleInsight(restaurantId: string, restaurantName: string): Promise<{ title: string; body: string } | null> {
@@ -141,7 +142,7 @@ export async function GET(req: NextRequest) {
       topViewed,
       leastViewed,
       visitsByHour,
-      panelUrl: `https://quierocomer.com/api/panel/demo-auth?slug=${restaurant.slug}`,
+      panelUrl: buildPanelEntryUrl("https://quierocomer.com", restaurant.slug),
       slug: restaurant.slug,
       isDemo: true,
       insight: demoInsight,

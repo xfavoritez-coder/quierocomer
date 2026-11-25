@@ -9,6 +9,8 @@ interface Props {
   restaurant: { name: string; slug: string; logoUrl: string | null };
   plan: string;
   stillProcessing: boolean;
+  /** Firma del enlace al panel (solo llega tras un pago verificado). */
+  entryKey?: string;
 }
 
 function getInitials(name: string) {
@@ -21,7 +23,7 @@ const STEPS = [
   { icon: "🖨️", title: "Comparte tu QR cuando esté lista", desc: "Descarga gratis e imprime el código QR para las mesas de tu local." },
 ];
 
-export default function ExitoClient({ restaurant, plan, stillProcessing }: Props) {
+export default function ExitoClient({ restaurant, plan, stillProcessing, entryKey }: Props) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
           </div>
 
           {/* CTAs */}
-          <a href={`/api/panel/demo-auth?slug=${restaurant.slug}`} className="exito-cta-primary">
+          <a href={`/api/panel/demo-auth?slug=${encodeURIComponent(restaurant.slug)}${entryKey ? `&k=${encodeURIComponent(entryKey)}` : ""}`} className="exito-cta-primary">
             Ir a mi panel
           </a>
           <a href={`/qr/${restaurant.slug}`} className="exito-cta-secondary">

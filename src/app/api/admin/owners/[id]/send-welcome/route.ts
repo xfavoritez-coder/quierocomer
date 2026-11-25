@@ -5,6 +5,7 @@ import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 import bcrypt from "bcryptjs";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /** Superadmin sends a welcome email with auto-generated password */
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await sendAdminEmail({
       to: owner.email,
       subject: `${firstName}, tu carta digital está lista 🧞`,
-      html: activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant?.name || "tu restaurante", panelLink: restaurant ? `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}` : `${BASE_URL}/panel`, qrLink: qrLink || BASE_URL, credentials: { email: owner.email, password: tempPassword } }),
+      html: activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant?.name || "tu restaurante", panelLink: restaurant ? buildPanelEntryUrl(BASE_URL, restaurant.slug) : `${BASE_URL}/panel`, qrLink: qrLink || BASE_URL, credentials: { email: owner.email, password: tempPassword } }),
       purpose: "activation_welcome",
     });
 

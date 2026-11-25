@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /** Create owner for a freshly-added restaurant (from /agregarlocal) */
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
       await sendAdminEmail({
         to: email.trim().toLowerCase(),
         subject: `${firstName}, tu carta digital está lista`,
-        html: activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant.name, panelLink: `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}`, qrLink, credentials: { email: email.trim().toLowerCase(), password } }),
+        html: activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant.name, panelLink: buildPanelEntryUrl(BASE_URL, restaurant.slug), qrLink, credentials: { email: email.trim().toLowerCase(), password } }),
         purpose: "activation_welcome",
       });
     }

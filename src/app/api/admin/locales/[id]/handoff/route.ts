@@ -7,6 +7,7 @@ import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/r
 import { TRIAL_DAYS } from "@/lib/billing/plans-config";
 import type { RestaurantPlan } from "@prisma/client";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /**
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const emailHtml = activationWelcomeEmailHtml({
       ownerName: name,
       restaurantName: restaurant.name,
-      panelLink: `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}`,
+      panelLink: buildPanelEntryUrl(BASE_URL, restaurant.slug),
       qrLink,
       credentials: { email, password },
       planLabel: isPaidPlan ? `${planLabel} (${TRIAL_DAYS} dias gratis)` : "Gratis",

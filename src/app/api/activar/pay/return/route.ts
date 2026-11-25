@@ -5,6 +5,7 @@ import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS, type PlanKey } from "
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
+import { buildPanelEntryUrl, createPanelEntryToken } from "@/lib/panelEntryLink";
 function r303(url: string) { return NextResponse.redirect(url, 303); }
 
 /**
@@ -87,7 +88,7 @@ async function handleReturn(req: NextRequest) {
   const nextAmount = `$${regularGross.toLocaleString("es-CL")} CLP`;
   const ownerEmail = restaurant.owner?.email;
   const ownerName = restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
-  const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+  const panelLink = buildPanelEntryUrl(baseUrl, restaurant.slug);
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
 
   if (ownerEmail) {
@@ -112,7 +113,11 @@ async function handleReturn(req: NextRequest) {
     });
   }
 
-  return r303(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
+  // Pago recién verificado: la página de éxito recibe un enlace firmado al panel
+  // (antes el botón entraba como dueño solo con el slug).
+  const entryK = restaurant.slug ? createPanelEntryToken(restaurant.slug, 1) : null;
+  const kParam = entryK ? `&k=${encodeURIComponent(entryK)}` : "";
+  return r303(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}${kParam}`);
 }
 
 export async function GET(req: NextRequest) { return handleReturn(req); }

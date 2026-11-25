@@ -6,6 +6,7 @@ import { buildTrialWeek1Html, buildTrialWeek2Html } from "@/app/api/preview-emai
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
 import { chileHourOf } from "@/lib/toteat/timezone";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 export const maxDuration = 300;
 
 /**
@@ -168,7 +169,7 @@ async function _weeklyEmailImpl(req: NextRequest) {
           topViewed,
           leastViewed,
           visitsByHour,
-          panelUrl: `https://quierocomer.com/api/panel/demo-auth?slug=${r.slug}`,
+          panelUrl: buildPanelEntryUrl("https://quierocomer.com", r.slug),
           slug: r.slug,
           isDemo: true,
           insight: demoInsight,

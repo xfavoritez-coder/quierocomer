@@ -6,6 +6,7 @@ import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/r
 import { sendWhatsApp } from "@/lib/whatsapp";
 import bcrypt from "bcryptjs";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 // WA Templates with exact approved texts
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
   const owner = restaurant.owner;
   const firstName = owner.name.split(" ")[0];
   const qrLink = `${BASE_URL}/qr/${restaurant.slug}`;
-  const panelLink = `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}`;
+  const panelLink = buildPanelEntryUrl(BASE_URL, restaurant.slug);
 
   if (channel === "email") {
     let html: string;

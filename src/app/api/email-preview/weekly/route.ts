@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildWeeklyEmailHtml } from "@/lib/email/weeklyEmailHtml";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug") || "alas-papas";
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
     topViewed,
     leastViewed,
     visitsByHour,
-    panelUrl: `https://quierocomer.com/api/panel/demo-auth?slug=${restaurant.slug}`,
+    panelUrl: buildPanelEntryUrl("https://quierocomer.com", restaurant.slug),
     slug: restaurant.slug,
     isDemo: true,
     insight: demoInsight,

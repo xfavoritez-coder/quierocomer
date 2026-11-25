@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendAdminEmail, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 /**
  * POST /api/activar/free
  * Body: { restaurantId }
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
   const ownerEmail = restaurant.owner?.email;
   const ownerName = restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-  const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+  const panelLink = buildPanelEntryUrl(baseUrl, restaurant.slug);
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
 
   // Send welcome email to owner with credentials

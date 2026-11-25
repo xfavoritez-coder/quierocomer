@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { setSessionCookie } from "@/lib/session";
+import { getPanelId, readAdminSession, setSessionCookie } from "@/lib/session";
+import { verifyPanelEntryToken } from "@/lib/panelEntryLink";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -7,25 +8,20 @@ const COOKIE_MAX_AGE = 60 * 60 * 4; // 4 hours for demo sessions
 const IS_PROD = process.env.NODE_ENV === "production";
 
 /**
- * GET /api/panel/demo-auth?slug=xxx
- * Auto-authenticates into the panel for demo restaurants (no login needed).
- * Works with or without an owner assigned.
- * Sets cookies and redirects to /panel.
+ * GET /api/panel/demo-auth?slug=xxx[&k=<firma>][&ot=<ownerViewToken>][&next=...]
+ *
+ * Entrada al panel desde la carta/correos.
+ *  - Local SIN dueño → sesión demo limitada a ese local.
+ *  - Local CON dueño → sesión del dueño SOLO si se demuestra que el enlace es
+ *    legítimo: firma `k` válida (buildPanelEntryUrl), `ot` de un solo uso que
+ *    coincide, o quien entra es superadmin. Conocer el slug ya no basta.
+ *  - Local CON dueño sin prueba: si sigue siendo demo → sesión demo limitada a
+ *    ese local (nunca la del dueño); si no → al login.
  */
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
   if (!slug) return NextResponse.redirect(new URL("/panel/login", req.url));
 
-  // If an owner token is present, consume it now (owner is entering the panel)
-  const ot = req.nextUrl.searchParams.get("ot");
-  if (ot) {
-    prisma.restaurant.updateMany({
-      where: { slug, ownerViewToken: ot, ownerViewTokenUsedAt: null },
-      data: { ownerViewTokenUsedAt: new Date() },
-    }).catch(() => {});
-  }
-
-  // Find restaurant (demo or recently activated)
   const restaurant = await prisma.restaurant.findFirst({
     where: { slug },
     select: { id: true, ownerId: true, isDemo: true },
@@ -35,19 +31,47 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/panel/login", req.url));
   }
 
+  const nextPage = req.nextUrl.searchParams.get("next");
+  const redirectTo = nextPage ? `/panel/${nextPage}` : "/panel";
+
   let ownerId = "demo";
   let ownerRole = "OWNER";
 
-  // If restaurant has a real owner, use their info
   if (restaurant.ownerId) {
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: restaurant.ownerId },
       select: { id: true, role: true, status: true },
     });
-    if (owner) {
+
+    // ¿Ya tiene sesión válida como este dueño? Entra sin tocar nada.
+    if (owner && getPanelId(req) === owner.id) {
+      return NextResponse.redirect(new URL(redirectTo, req.url));
+    }
+
+    let authorized = false;
+    if (owner && owner.status !== "SUSPENDED") {
+      if (verifyPanelEntryToken(slug, req.nextUrl.searchParams.get("k"))) authorized = true;
+      else if (readAdminSession(req)?.role === "SUPERADMIN") authorized = true;
+      else {
+        const ot = req.nextUrl.searchParams.get("ot");
+        if (ot) {
+          // Token de un solo uso: se consume atómicamente al validarlo.
+          const used = await prisma.restaurant.updateMany({
+            where: { id: restaurant.id, ownerViewToken: ot, ownerViewTokenUsedAt: null },
+            data: { ownerViewTokenUsedAt: new Date() },
+          });
+          authorized = used.count === 1;
+        }
+      }
+    }
+
+    if (owner && authorized) {
       ownerId = owner.id;
       ownerRole = owner.role;
+    } else if (!restaurant.isDemo) {
+      return NextResponse.redirect(new URL("/panel/login", req.url));
     }
+    // else: local demo con dueño pero sin prueba → sesión demo limitada (ownerId = "demo").
   }
 
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
@@ -58,8 +82,6 @@ export async function GET(req: NextRequest) {
     data: { panelVisitedAt: new Date() },
   }).then(() => { revalidatePath(`/qr/${slug}`); revalidatePath(`/${slug}`); }).catch(() => {});
 
-  const nextPage = req.nextUrl.searchParams.get("next");
-  const redirectTo = nextPage ? `/panel/${nextPage}` : "/panel";
   const response = NextResponse.redirect(new URL(redirectTo, req.url));
   // Sesión firmada. Para la demo sin dueño (id "demo") el slug va dentro de la firma.
   setSessionCookie(

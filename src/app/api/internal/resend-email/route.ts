@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { cartaReadyEmailHtml } from "@/lib/email/cartaReadyEmailHtml";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 /**
  * POST /api/admin/resend-email
  * Re-send the "carta lista" email to a lead.
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   const openPixel = `${baseUrl}/api/funnel/track/open?lid=${lead.id}`;
   const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(`${baseUrl}/qr/${rest.slug}`)}`;
   const activarUrl = `${baseUrl}/activar/${rest.slug}`;
-  let panelUrl = `${baseUrl}/api/panel/demo-auth?slug=${rest.slug}`;
+  let panelUrl = buildPanelEntryUrl(baseUrl, rest.slug);
   try {
     const owner = await prisma.restaurantOwner.findFirst({
       where: { restaurants: { some: { id: rest.id } }, status: "ACTIVE" },

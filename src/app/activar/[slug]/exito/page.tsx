@@ -6,10 +6,10 @@ import ExitoClient from "./ExitoClient";
 
 export default async function ExitoPage({ params, searchParams }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; k?: string }>;
 }) {
   const { slug } = await params;
-  const { plan } = await searchParams;
+  const { plan, k } = await searchParams;
 
   const restaurant = await prisma.restaurant.findFirst({
     where: { slug },
@@ -23,6 +23,7 @@ export default async function ExitoPage({ params, searchParams }: {
       restaurant={{ name: restaurant.name, slug: restaurant.slug!, logoUrl: restaurant.logoUrl }}
       plan={(plan || restaurant.plan) as string}
       stillProcessing={restaurant.isDemo}
+      entryKey={k}
     />
   );
 }

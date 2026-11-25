@@ -30,6 +30,7 @@ import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo, fetchPlacePhone } from "@/lib/google-places";
 import { capiCartaReady } from "@/lib/fbCapi";
 
+import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -1003,7 +1004,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const { activationWelcomeEmailHtml } = await import("@/app/api/preview-email/activation/route");
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
-        const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+        const panelLink = buildPanelEntryUrl(baseUrl, restaurant.slug);
         const qrLink = `${baseUrl}/${restaurant.slug}`;
         const password = `${restaurant.slug}2026`;
         const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
