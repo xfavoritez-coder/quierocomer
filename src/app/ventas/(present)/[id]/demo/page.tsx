@@ -20,5 +20,7 @@ export default async function VentasDemoPage({ params }: { params: Promise<{ id:
     ensureDemoLoyalty(data.slug, { color: data.color, prize: demoPrize(data)?.name ?? null }),
     ensureDemoStore(data.slug, data.color),
   ]);
-  return <DemoShell data={data} mode="seller" exitHref={`/ventas/${id}`} seller={{ email: lead.email ?? "", whatsapp: lead.whatsapp ?? "", interests: lead.interestModules ?? [] }} />;
+  // Ya registrado: la demo se puede volver a mostrar, pero sin barra de cierre.
+  const closed = ["registrado", "activo"].includes(lead.crmStatus || "");
+  return <DemoShell data={data} mode="seller" exitHref={`/ventas/${id}`} seller={closed ? undefined : { email: lead.email ?? "", whatsapp: lead.whatsapp ?? "", interests: lead.interestModules ?? [] }} />;
 }

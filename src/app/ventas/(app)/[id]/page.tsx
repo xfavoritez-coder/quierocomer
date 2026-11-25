@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSeller } from "@/lib/ventas/session";
-import { getSellerLead, getLeadDemoRestaurant } from "@/lib/ventas/leads";
+import { getSellerLead, getLeadRestaurant } from "@/lib/ventas/leads";
 import { statusInfo } from "@/lib/ventas/status";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
   const seller = (await getCurrentSeller())!;
   const lead = await getSellerLead(seller, id);
   if (!lead) notFound();
-  const restaurant = await getLeadDemoRestaurant(lead.generatedSlug);
+  const restaurant = await getLeadRestaurant(lead);
   const dishCount = restaurant ? await prisma.dish.count({ where: { restaurantId: restaurant.id, deletedAt: null } }) : 0;
   const events = await prisma.leadEvent.findMany({ where: { leadId: id }, orderBy: { createdAt: "desc" }, take: 30, select: { id: true, type: true, chapter: true, createdAt: true } });
   const reg = await prisma.leadRegistration.findUnique({ where: { leadId: id }, select: { sentTo: true, expiresAt: true, completedAt: true, remindedAt: true, createdAt: true } });
@@ -49,7 +49,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link href={`/ventas/${id}/demo`} className="ventas-btn">▶ Abrir demo</Link>
-          {restaurant && <Link href={`/ventas/${id}/revision`} className="ventas-btn ghost">Revisar carta</Link>}
+          {restaurant?.isDemo && <Link href={`/ventas/${id}/revision`} className="ventas-btn ghost">Revisar carta</Link>}
           {restaurant && <a href={`/qr/${restaurant.slug}`} target="_blank" rel="noreferrer" className="ventas-btn ghost">Ver su carta QR ↗</a>}
         </div>
       </div>

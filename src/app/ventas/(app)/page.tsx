@@ -45,7 +45,7 @@ export default async function VentasHomePage() {
           {leads.map((l, i) => {
             const st = statusInfo(l.crmStatus);
             return (
-              <div key={l.id} className="ventas-row" style={{ borderTop: i ? "1px solid var(--line)" : "none" }}>
+              <Link key={l.id} href={`/ventas/${l.id}`} className="ventas-row" style={{ borderTop: i ? "1px solid var(--line)" : "none", color: "inherit", textDecoration: "none" }}>
                 <div className="who">
                   <div style={{ fontWeight: 700, fontSize: 15 }}>{l.localName}</div>
                   <div style={{ fontSize: 13, color: "var(--ink-3)" }}>
@@ -58,7 +58,7 @@ export default async function VentasHomePage() {
                   {st.next && <span>{st.next}{l.crmFollowUpAt ? ` · ${fmt(l.crmFollowUpAt)}` : ""}</span>}
                   <span className="ventas-mono" style={{ marginLeft: 8, whiteSpace: "nowrap" }}>act. {fmt(l.updatedAt)}</span>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

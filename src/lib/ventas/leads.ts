@@ -5,7 +5,7 @@ import type { CurrentSeller } from "@/lib/ventas/session";
 export async function getSellerLead(seller: CurrentSeller, leadId: string) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, sellerId: true, localName: true, captureSource: true, cartaStatus: true, errorLog: true, preview: true, generatedSlug: true, crmStatus: true, cuisine: true, commune: true, ownerName: true, cartaUrl: true, createdAt: true, email: true, whatsapp: true, interestModules: true, recommendedPlan: true },
+    select: { id: true, sellerId: true, localName: true, captureSource: true, cartaStatus: true, errorLog: true, preview: true, generatedSlug: true, crmStatus: true, cuisine: true, commune: true, ownerName: true, cartaUrl: true, createdAt: true, convertedToOwnerId: true, email: true, whatsapp: true, interestModules: true, recommendedPlan: true },
   });
   if (!lead || !lead.sellerId) return null;
   if (seller.role !== "ADMIN" && lead.sellerId !== seller.id) return null;
@@ -17,6 +17,16 @@ export async function getLeadDemoRestaurant(generatedSlug: string | null) {
   if (!generatedSlug) return null;
   const r = await prisma.restaurant.findUnique({ where: { slug: generatedSlug }, select: { id: true, slug: true, name: true, logoUrl: true, bannerUrl: true, cartaAccentColor: true, isDemo: true } });
   return r?.isDemo ? r : null;
+}
+
+/** Local del lead para ficha y demo: el demo, o el local real si el dueño ya se registró
+ *  (solo lectura: la edición de carta y los momentos en vivo siguen siendo solo para demos). */
+export async function getLeadRestaurant(lead: { generatedSlug: string | null; convertedToOwnerId?: string | null }) {
+  if (!lead.generatedSlug) return null;
+  const r = await prisma.restaurant.findUnique({ where: { slug: lead.generatedSlug }, select: { id: true, slug: true, name: true, logoUrl: true, bannerUrl: true, cartaAccentColor: true, isDemo: true, ownerId: true } });
+  if (!r) return null;
+  if (r.isDemo || (lead.convertedToOwnerId && r.ownerId === lead.convertedToOwnerId)) return r;
+  return null;
 }
 
 export async function addLeadEvent(leadId: string, type: string, actor: "seller" | "owner" | "system", sellerId?: string | null, extra?: { chapter?: string; durationMs?: number; payload?: object }) {

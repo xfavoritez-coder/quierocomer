@@ -18,6 +18,7 @@
 .ventas-mono{font-family:var(--mono)}
 .ventas-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px 16px;padding:14px 18px}
 .ventas-row .who{min-width:0}
+a.ventas-row{cursor:pointer;transition:background .15s}a.ventas-row:hover{background:rgba(0,0,0,.03)}
 .ventas-row .when{font-size:12px;color:var(--ink-3);text-align:right}
 @media (max-width:640px){
   .ventas-bar{padding:0 12px;gap:8px}.ventas-brand span.t,.ventas-bar .me{display:none}.ventas-nav a{padding:8px 9px}

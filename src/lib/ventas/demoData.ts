@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { fictionalDemo } from "@/components/ventas/demo/fictional";
 import type { DemoData } from "@/components/ventas/demo/types";
-import { getLeadDemoRestaurant } from "@/lib/ventas/leads";
+import { getLeadRestaurant } from "@/lib/ventas/leads";
 import { getDemoPlans } from "@/lib/ventas/plans";
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /** Datos de la demo de un lead: su local demo si ya está armado; si no, el local ficticio con su nombre. */
-export async function buildDemoData(lead: { id: string; localName: string; generatedSlug: string | null; cuisine: string | null; commune: string | null }): Promise<DemoData> {
-  const [r, { sections: plans, storePlan }] = await Promise.all([getLeadDemoRestaurant(lead.generatedSlug), getDemoPlans()]);
+export async function buildDemoData(lead: { id: string; localName: string; generatedSlug: string | null; cuisine: string | null; commune: string | null; convertedToOwnerId?: string | null }): Promise<DemoData> {
+  const [r, { sections: plans, storePlan }] = await Promise.all([getLeadRestaurant(lead), getDemoPlans()]);
   if (!r) {
     const f = fictionalDemo(lead.localName);
     return { ...f, leadId: lead.id, cuisine: lead.cuisine ?? f.cuisine, commune: lead.commune ?? f.commune, plans, storePlan };
