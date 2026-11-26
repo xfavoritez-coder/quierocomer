@@ -40,7 +40,8 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
         body: JSON.stringify({ result, email, whatsapp, followUpAt: followUp ? `${followUp}T12:00:00-03:00` : "", lostReason, lostDetail, planId }),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setError(d.error || "No se pudo guardar"); return; }
+      // Si falla, se muestra el panel de esa acción con el error (Registrar ahora va directo, sin panel).
+      if (!r.ok) { setError(d.error || "No se pudo guardar"); setMode(result); return; }
       if (result === "register_now") {
         if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
         window.location.href = d.registerUrl;
@@ -49,7 +50,7 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
       if (result === "accepted") setDone({ title: "Enlace de registro enviado", sub: `Le enviamos el enlace a ${email}.`, registerUrl: d.registerUrl });
       if (result === "thinking") setDone({ title: "Seguimiento agendado", sub: `Te recordamos el ${new Date(`${followUp}T12:00:00-03:00`).toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" })}.` });
       if (result === "lost") setDone({ title: "Marcado como perdido", sub: "Te recordaremos reintentar en 90 días." });
-    } catch { setError("Error de conexión"); } finally { setBusy(false); }
+    } catch { setError("Error de conexión"); setMode(result); } finally { setBusy(false); }
   };
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -69,7 +70,7 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
                 <button style={{ ...btn(color), flex: 1 }} onClick={() => setMode("accepted")}><Check size={18} /> Aceptó</button>
                 <button style={{ ...btn(inline ? "#f2f1ee" : "rgba(255,255,255,.1)", inline ? "#111" : "#fff"), flex: 1 }} onClick={() => setMode("thinking")}><Clock size={17} /> Lo quiere pensar</button>
                 <button style={{ ...btn(inline ? "#f2f1ee" : "rgba(255,255,255,.1)", inline ? "#111" : "#fff"), flex: 1 }} onClick={() => setMode("lost")}><X size={17} /> No aceptó</button>
-                <button style={{ ...btn(inline ? "#111" : "#fff", inline ? "#fff" : "#111"), flex: 1 }} onClick={() => setMode("register_now")}><PenLine size={17} /> Registrar ahora</button>
+                <button style={{ ...btn(inline ? "#111" : "#fff", inline ? "#fff" : "#111"), flex: 1 }} onClick={() => submit("register_now")} disabled={busy}><PenLine size={17} /> {busy ? "Abriendo…" : "Registrar ahora"}</button>
                 {!inline && <button aria-label="Ocultar" onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", padding: 6 }}><X size={18} /></button>}
               </motion.div>
             ) : (
