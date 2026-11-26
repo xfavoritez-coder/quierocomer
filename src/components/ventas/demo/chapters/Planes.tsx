@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { Check, Star, ArrowRight, X, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store, MessageCircle } from "lucide-react";
+import { Check, Star, X, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store, MessageCircle } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData, DemoPlan, DemoPlanSection } from "../types";
 import { BrandText, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, clp, lighten, onColor, rgba, useViewport } from "../ui";
@@ -26,7 +26,7 @@ export function planesPages(data: DemoData): Page[] {
 }
 export const planesSteps = (data: DemoData) => planesPages(data).length;
 
-export default function Planes({ data, step, onStart }: ChapterProps) {
+export default function Planes({ data, step }: ChapterProps) {
   const { narrow } = useViewport();
   const c = data.color;
   const pages = planesPages(data);
@@ -42,12 +42,6 @@ export default function Planes({ data, step, onStart }: ChapterProps) {
           <div style={{ fontSize: "clamp(17px, 1.7vw, 22px)", color: "rgba(0,0,0,.5)", marginTop: 16 }}>
             {data.isFictional ? "Cargamos tu carta y lo dejamos funcionando por ti." : "Tu carta ya está cargada. Lo dejamos funcionando por ti."}
           </div>
-        </Reveal>
-        <Reveal step={1} at={1} delay={0.6}>
-          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} onClick={(e) => { e.stopPropagation(); onStart?.(); }}
-            style={{ marginTop: 36, border: "none", cursor: "pointer", font: "inherit", fontSize: "clamp(20px, 2vw, 26px)", fontWeight: 750, letterSpacing: "-.02em", padding: "22px 52px", borderRadius: 99, background: c, color: onColor(c), display: "inline-flex", alignItems: "center", gap: 12, boxShadow: `0 24px 60px -16px ${rgba(c, 0.75)}` }}>
-            Empezar <ArrowRight size={26} />
-          </motion.button>
         </Reveal>
       </Stage>
     );

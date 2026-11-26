@@ -15,9 +15,11 @@ const LOST = [
 const inDays = (n: number) => new Date(Date.now() + n * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
 
 /** Barra fija de cierre (solo el vendedor). Cada acción cambia el estado del lead y registra eventos. */
-export default function CloseBar({ leadId, color, open, onClose, initialEmail, initialWhatsapp, planId, localName }: {
+export default function CloseBar({ leadId, color, open, onClose, initialEmail, initialWhatsapp, planId, localName, inline = false, onDone }: {
   leadId: string; color: string; open: boolean; onClose: () => void;
   initialEmail: string; initialWhatsapp: string; planId: string | null; localName: string;
+  /** En la ficha del local (no flotante, colores claros). */
+  inline?: boolean; onDone?: () => void;
 }) {
   const [mode, setMode] = useState<Result | null>(null);
   const [email, setEmail] = useState(initialEmail);
@@ -57,22 +59,22 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
   return (
     <AnimatePresence>
       {open && (
-        <motion.div key="closebar" onClick={stop} onKeyDown={stop} initial={{ y: 120, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 120, opacity: 0 }} transition={{ duration: 0.5, ease: EASE }}
-          style={{ position: "absolute", left: 0, right: 0, bottom: 24, margin: "0 auto", zIndex: 40, width: "min(760px, calc(100vw - 24px))" }}>
+        <motion.div key="closebar" onClick={stop} onKeyDown={stop} initial={inline ? false : { y: 120, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 120, opacity: 0 }} transition={{ duration: 0.5, ease: EASE }}
+          style={inline ? { position: "relative", width: "100%" } : { position: "absolute", left: 0, right: 0, bottom: 24, margin: "0 auto", zIndex: 40, width: "min(760px, calc(100vw - 24px))" }}>
           <AnimatePresence mode="wait">
             {!mode && !done ? (
               <motion.div key="bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: 10, borderRadius: 22, background: "rgba(17,17,19,.94)", backdropFilter: "blur(20px)", boxShadow: "0 30px 80px -20px rgba(0,0,0,.6)" }}>
-                <span style={{ color: "rgba(255,255,255,.6)", fontSize: 13, fontWeight: 700, padding: "0 8px" }}>Cierre</span>
+                style={inline ? { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 } : { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: 10, borderRadius: 22, background: "rgba(17,17,19,.94)", backdropFilter: "blur(20px)", boxShadow: "0 30px 80px -20px rgba(0,0,0,.6)" }}>
+                {!inline && <span style={{ color: "rgba(255,255,255,.6)", fontSize: 13, fontWeight: 700, padding: "0 8px" }}>Cierre</span>}
                 <button style={{ ...btn(color), flex: 1 }} onClick={() => setMode("accepted")}><Check size={18} /> Aceptó</button>
-                <button style={{ ...btn("rgba(255,255,255,.1)"), flex: 1 }} onClick={() => setMode("thinking")}><Clock size={17} /> Lo quiere pensar</button>
-                <button style={{ ...btn("rgba(255,255,255,.1)"), flex: 1 }} onClick={() => setMode("lost")}><X size={17} /> No aceptó</button>
-                <button style={{ ...btn("#fff", "#111"), flex: 1 }} onClick={() => setMode("register_now")}><PenLine size={17} /> Registrar ahora</button>
-                <button aria-label="Ocultar" onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", padding: 6 }}><X size={18} /></button>
+                <button style={{ ...btn(inline ? "#f2f1ee" : "rgba(255,255,255,.1)", inline ? "#111" : "#fff"), flex: 1 }} onClick={() => setMode("thinking")}><Clock size={17} /> Lo quiere pensar</button>
+                <button style={{ ...btn(inline ? "#f2f1ee" : "rgba(255,255,255,.1)", inline ? "#111" : "#fff"), flex: 1 }} onClick={() => setMode("lost")}><X size={17} /> No aceptó</button>
+                <button style={{ ...btn(inline ? "#111" : "#fff", inline ? "#fff" : "#111"), flex: 1 }} onClick={() => setMode("register_now")}><PenLine size={17} /> Registrar ahora</button>
+                {!inline && <button aria-label="Ocultar" onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", padding: 6 }}><X size={18} /></button>}
               </motion.div>
             ) : (
               <motion.div key={done ? "done" : mode} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}
-                style={{ padding: "22px 24px", borderRadius: 26, background: "#fff", color: "#111", boxShadow: "0 40px 100px -24px rgba(0,0,0,.55)" }}>
+                style={{ padding: inline ? "4px 0" : "22px 24px", borderRadius: 26, background: "#fff", color: "#111", boxShadow: inline ? "none" : "0 40px 100px -24px rgba(0,0,0,.55)" }}>
                 {done ? (
                   <div style={{ display: "grid", gap: 12 }}>
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -85,7 +87,7 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
                         <button style={btn("#f2f2f2", "#111")} onClick={() => { navigator.clipboard?.writeText(done.registerUrl!); setCopied(true); setTimeout(() => setCopied(false), 1500); }}><Copy size={16} /> {copied ? "¡Copiado!" : "Copiar enlace"}</button>
                       </div>
                     )}
-                    <div><button style={btn("#111")} onClick={() => { setDone(null); setMode(null); onClose(); }}>Listo</button></div>
+                    <div><button style={btn("#111")} onClick={() => { setDone(null); setMode(null); onClose(); onDone?.(); }}>Listo</button></div>
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 12 }}>

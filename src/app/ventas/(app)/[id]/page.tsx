@@ -5,6 +5,7 @@ import { getCurrentSeller } from "@/lib/ventas/session";
 import { getSellerLead, getLeadRestaurant } from "@/lib/ventas/leads";
 import { statusInfo } from "@/lib/ventas/status";
 import DeleteLead from "./DeleteLead";
+import VisitResult from "./VisitResult";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,17 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
           {restaurant && <a href={`/qr/${restaurant.slug}`} target="_blank" rel="noreferrer" className="ventas-btn ghost">Ver su carta QR ↗</a>}
         </div>
       </div>
+
+      {!["registrado", "activo"].includes(lead.crmStatus || "") && !lead.convertedToOwnerId && (
+        <div className="ventas-card" style={{ padding: 18, display: "grid", gap: 12 }}>
+          <div>
+            <div style={{ fontWeight: 800 }}>Resultado de la visita</div>
+            <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>Después de la demo, anota cómo terminó. “Aceptó” le envía el enlace de registro por correo y WhatsApp.</div>
+          </div>
+          <VisitResult leadId={id} color={restaurant?.cartaAccentColor && /^#[0-9a-fA-F]{6}$/.test(restaurant.cartaAccentColor) ? restaurant.cartaAccentColor : "#DE7C00"}
+            email={lead.email ?? ""} whatsapp={lead.whatsapp ?? ""} planId={lead.recommendedPlan ?? null} localName={restaurant?.name ?? (lead.localName || "este local")} />
+        </div>
+      )}
 
       {reg && (
         <div className="ventas-card" style={{ padding: 18, display: "grid", gap: 6 }}>

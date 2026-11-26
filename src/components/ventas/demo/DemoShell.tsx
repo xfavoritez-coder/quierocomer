@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Bell, QrCode, ChevronLeft, ChevronRight, CreditCard, Handshake, Heart, Maximize2, Minimize2, ShoppingBag, StickyNote, X } from "lucide-react";
+import { Bell, QrCode, ChevronLeft, ChevronRight, CreditCard, Heart, Maximize2, Minimize2, ShoppingBag, StickyNote, X } from "lucide-react";
 import type { ChapterId, DemoData, LiveOrder } from "./types";
 import { SELLER_NOTES } from "./notes";
 import { EASE, LocalLogo, clp } from "./ui";
@@ -15,10 +15,9 @@ import Ecommerce, { ecommerceSteps } from "./chapters/Ecommerce";
 import Pos, { posSteps } from "./chapters/Pos";
 import Planes, { planesSteps } from "./chapters/Planes";
 import Accesos from "./chapters/Accesos";
-import CloseBar from "./CloseBar";
 import { recommendPlanId, withRecommendation, type InterestModule } from "./recommend";
 
-export type ChapterProps = { data: DemoData; step: number; onStart?: () => void; onQr?: () => void; live?: { orders: LiveOrder[] } };
+export type ChapterProps = { data: DemoData; step: number; onQr?: () => void; live?: { orders: LiveOrder[] } };
 
 /** Datos del lead que solo ve el vendedor (cierre e intereses). */
 export type SellerContext = { email: string; whatsapp: string; interests: string[] };
@@ -59,7 +58,6 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
   const [fullscreen, setFullscreen] = useState(false);
   const [idle, setIdle] = useState(false);
   const canClose = mode === "seller" && !!baseData.leadId && !!seller;
-  const [closeOpen, setCloseOpen] = useState(false);
 
   // ── Intereses del dueño → plan recomendado ──
   const [interests, setInterests] = useState<string[]>(seller?.interests ?? []);
@@ -148,9 +146,6 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
   }, [mode, data.leadId, data.slug, track]);
 
   // Al llegar al cierre de Planes aparece la barra de cierre.
-  const atEnd = chapter.id === "planes" && step === chapterSteps - 1; // cierre de Planes
-  const [autoShown, setAutoShown] = useState(false);
-  if (atEnd && canClose && !autoShown) { setAutoShown(true); setCloseOpen(true); }
 
   // ── Navegación ──
   const next = useCallback(() => {
@@ -181,9 +176,8 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
       else if ((e.key === "n" || e.key === "N") && mode === "seller") setNotesOpen((v) => !v);
       else if (e.key === "f" || e.key === "F") toggleFullscreen();
       else if (e.key === "q" || e.key === "Q") { setQrLanding(false); setQrOpen((v) => !v); }
-      else if ((e.key === "c" || e.key === "C") && canClose) setCloseOpen((v) => !v);
       else if ((e.key === "i" || e.key === "I") && chapterModule) toggleInterest(chapterModule);
-      else if (e.key === "Escape") { setNotesOpen(false); setQrOpen(false); setCloseOpen(false); }
+      else if (e.key === "Escape") { setNotesOpen(false); setQrOpen(false); }
       else if (/^[1-7]$/.test(e.key)) goTo(Number(e.key) - 1);
     };
     window.addEventListener("keydown", onKey);
@@ -199,7 +193,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
     window.addEventListener("touchstart", wake);
     return () => { clearTimeout(t); window.removeEventListener("mousemove", wake); window.removeEventListener("touchstart", wake); };
   }, []);
-  const hideChrome = idle && !notesOpen && !qrOpen && !closeOpen;
+  const hideChrome = idle && !notesOpen && !qrOpen;
 
   // Deslizar en celular.
   const touchX = useRef<number | null>(null);
@@ -234,7 +228,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
             transition={{ duration: reduce ? 0.2 : 0.85, ease: EASE }}
             style={{ position: "absolute", inset: 0 }}
           >
-            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} live={{ orders: liveOrders }} onQr={data.slug ? () => { setQrLanding(false); setQrOpen(true); } : undefined} />
+            <chapter.Comp data={data} step={step} live={{ orders: liveOrders }} onQr={data.slug ? () => { setQrLanding(false); setQrOpen(true); } : undefined} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -259,7 +253,6 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
         <div style={{ display: "flex", gap: 6 }}>
           {canClose && chapterModule && <IconBtn dark={chapter.dark} label={liked ? "Le interesó (I)" : "Marcar que le interesó (I)"} onClick={() => toggleInterest(chapterModule)} active={liked}><Heart size={17} fill={liked ? "currentColor" : "none"} /></IconBtn>}
           {mode === "seller" && <IconBtn dark={chapter.dark} label="Notas (N)" onClick={() => setNotesOpen((v) => !v)} active={notesOpen}><StickyNote size={17} /></IconBtn>}
-          {canClose && <IconBtn dark={chapter.dark} label="Cierre (C)" onClick={() => setCloseOpen((v) => !v)} active={closeOpen}><Handshake size={17} /></IconBtn>}
           <IconBtn dark={chapter.dark} label={fullscreen ? "Salir de pantalla completa (F)" : "Pantalla completa (F)"} onClick={toggleFullscreen}>{fullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</IconBtn>
           {exitHref && <IconBtn dark={chapter.dark} label="Salir de la demo" onClick={() => { window.location.href = exitHref; }}><X size={17} /></IconBtn>}
         </div>
@@ -342,12 +335,6 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
         </AnimatePresence>
       </div>
 
-      {/* ── Barra de cierre (tecla C) ── */}
-      {canClose && seller && (
-        <CloseBar leadId={baseData.leadId!} color={data.color} open={closeOpen} onClose={() => setCloseOpen(false)}
-          initialEmail={seller.email} initialWhatsapp={seller.whatsapp} planId={planId} localName={data.name} />
-      )}
-
       {/* ── Notas del vendedor (tecla N) ── */}
       <AnimatePresence>
         {notesOpen && mode === "seller" && (
@@ -373,7 +360,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
                 ))}
               </div>
             )}
-            <div style={{ marginTop: 16, fontSize: 12, color: "#8e8e93" }}>← → avanzar · 1–7 capítulos · F pantalla completa · Q código QR · I le interesó · C cierre</div>
+            <div style={{ marginTop: 16, fontSize: 12, color: "#8e8e93" }}>← → avanzar · 1–7 capítulos · F pantalla completa · Q código QR · I le interesó</div>
           </motion.aside>
         )}
       </AnimatePresence>
