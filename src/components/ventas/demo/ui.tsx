@@ -140,8 +140,12 @@ export function useViewport() {
 /** Contenedor centrado de un capítulo (deja espacio para la barra y el progreso). */
 export function Stage({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "clamp(92px, 12vh, 118px) clamp(20px, 5vw, 80px) 64px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", ...style }}>
-      {children}
+    // Contenedor con scroll: en celular, si el contenido es más alto que la pantalla, se desliza
+    // en vez de quedar cortado arriba y abajo (y con él los botones de prueba).
+    <div className="demo-stage" style={{ position: "absolute", inset: 0, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+      <div style={{ minHeight: "100%", padding: "clamp(92px, 12vh, 118px) clamp(20px, 5vw, 80px) 64px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", ...style }}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -159,8 +163,10 @@ export function TryItHint({ show, color, text = "Pruébalo en tu celular" }: { s
 }
 
 /** Botón para abrir el QR y probar en el celular (reemplaza al botón flotante). */
-export function QrPill({ label, color, onClick, dark = false, delay = 0.8, style }: { label: string; color: string; onClick?: () => void; dark?: boolean; delay?: number; style?: CSSProperties }) {
+export function QrPill({ label, mobileLabel, color, onClick, dark = false, delay = 0.8, style }: { label: string; mobileLabel?: string; color: string; onClick?: () => void; dark?: boolean; delay?: number; style?: CSSProperties }) {
   const reduce = useReducedMotion();
+  // En celular no se escanea: el botón abre la página directo (ver onQr en DemoShell).
+  const { narrow } = useViewport();
   if (!onClick) return null;
   return (
     <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay }} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -170,8 +176,8 @@ export function QrPill({ label, color, onClick, dark = false, delay = 0.8, style
       <span style={{ width: 30, height: 30, borderRadius: 99, display: "grid", placeItems: "center", background: color, color: onColor(color) }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 17h3v3"/></svg>
       </span>
-      {label}
-      <motion.span animate={reduce ? {} : { y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.3 }} style={{ color }}>↑</motion.span>
+      {narrow ? (mobileLabel ?? label) : label}
+      <motion.span animate={reduce ? {} : { y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.3 }} style={{ color }}>{narrow ? "↗" : "↑"}</motion.span>
     </motion.button>
   );
 }

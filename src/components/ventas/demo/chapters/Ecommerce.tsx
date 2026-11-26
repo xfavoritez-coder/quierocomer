@@ -75,7 +75,7 @@ function EcommerceStep({ data, step, live, onQr }: ChapterProps) {
             </motion.div>
           )}
         </AnimatePresence>
-        {!got && data.slug && <QrPill label="Haz tu pedido de prueba: escanea el QR" color={c} onClick={onQr} delay={1.2} style={{ marginTop: 6 }} />}
+        {!got && data.slug && <QrPill label="Haz tu pedido de prueba: escanea el QR" mobileLabel="Haz tu pedido de prueba" color={c} onClick={onQr} delay={1.2} style={{ marginTop: 6 }} />}
       </Stage>
     );
   }

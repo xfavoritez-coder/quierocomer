@@ -54,7 +54,7 @@ export default function Loyalty({ data, step, onQr }: ChapterProps) {
                 style={{ padding: "7px 14px", borderRadius: 99, fontSize: 13, fontWeight: 700 }}>{t}</motion.span>
             ))}
           </div>
-          {k === 1 && data.slug && <QrPill label="Inscríbete tú en tu tarjeta" color={accent} onClick={onQr} dark style={{ marginTop: 22 }} />}
+          {k === 1 && data.slug && <QrPill label="Inscríbete tú en tu tarjeta" mobileLabel="Inscríbete tú en tu tarjeta" color={accent} onClick={onQr} dark style={{ marginTop: 22 }} />}
           {k >= 2 && <PushTest key={k} leadId={data.slug ? data.leadId : null} kind={k === 2 ? "near" : "birthday"} color={accent} onShow={() => setShown((x) => ({ ...x, [k === 2 ? "near" : "bday"]: true }))} />}
         </div>
         <div style={{ position: "relative", flexShrink: 0 }}>

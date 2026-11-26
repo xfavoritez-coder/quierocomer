@@ -25,7 +25,7 @@ export default function Accesos({ data }: ChapterProps) {
         <Reveal step={0} at={0} delay={0.1}><Headline size="md" style={{ marginTop: 10 }}>Míralo <BrandText color={c}>funcionando.</BrandText></Headline></Reveal>
         <Reveal step={0} at={0} delay={0.18}><div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "rgba(0,0,0,.5)", marginTop: 8 }}>Escanea o abre cada uno. El panel y el POS son de un local de muestra con meses de datos.</div></Reveal>
       </div>
-      <div onClick={stop} style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : `repeat(${links.length + 2}, minmax(0, 1fr))`, gap: 14, width: "min(1180px, 100%)", marginTop: "clamp(20px, 3.5vh, 38px)", overflowY: narrow ? "auto" : "visible", maxHeight: narrow ? "64vh" : undefined }}>
+      <div onClick={stop} style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : `repeat(${links.length + 2}, minmax(0, 1fr))`, gap: 14, width: "min(1180px, 100%)", marginTop: "clamp(20px, 3.5vh, 38px)", paddingBottom: narrow ? 20 : 0 }}>
         {links.map((l, i) => (
           <Reveal key={l.title} step={0} at={0} delay={0.25 + i * 0.08} style={{ height: "100%" }}>
             <div style={{ height: "100%", boxSizing: "border-box", borderRadius: 26, padding: 20, background: "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,.06), 0 24px 60px -34px rgba(0,0,0,.35)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>

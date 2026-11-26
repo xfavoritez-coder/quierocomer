@@ -203,6 +203,14 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
   const qrCfg = qrLanding ? QR_LANDING : chapter.qr;
   const qrUrl = data.slug && typeof window !== "undefined" ? `${window.location.origin}${qrCfg.path(data.slug)}` : null;
 
+  // Botones "Pruébalo": en computador/tablet muestran el QR para escanear; en celular
+  // (pantalla angosta) abren la página directo en otra pestaña, porque no te puedes escanear a ti mismo.
+  const openTest = () => {
+    const url = data.slug && typeof window !== "undefined" ? `${window.location.origin}${chapter.qr.path(data.slug)}` : null;
+    if (url && window.innerWidth < 820) { window.open(url, "_blank"); return; }
+    setQrLanding(false); setQrOpen(true);
+  };
+
   return (
     <div
       onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
@@ -228,7 +236,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
             transition={{ duration: reduce ? 0.2 : 0.85, ease: EASE }}
             style={{ position: "absolute", inset: 0 }}
           >
-            <chapter.Comp data={data} step={step} live={{ orders: liveOrders }} onQr={data.slug ? () => { setQrLanding(false); setQrOpen(true); } : undefined} />
+            <chapter.Comp data={data} step={step} live={{ orders: liveOrders }} onQr={data.slug ? openTest : undefined} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -299,6 +307,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
                     <QRCodeSVG value={qrUrl} size={280} level="M" fgColor="#111" />
                   </div>
                   <div style={{ fontSize: 15, color: "#666", marginTop: 18 }}>{qrCfg.hint}</div>
+                  <a href={qrUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 14, color: data.color, fontWeight: 750, fontSize: 15, textDecoration: "none" }}>Abrir en este equipo ↗</a>
                 </>
               ) : (
                 <>

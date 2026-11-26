@@ -79,7 +79,7 @@ export default function CartaQR({ data, step, onQr }: ChapterProps) {
                           {on && (
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease: EASE }} style={{ overflow: "hidden" }}>
                               <div style={{ fontSize: "clamp(14px, 1.2vw, 16.5px)", color: "rgba(0,0,0,.55)", marginTop: 4, lineHeight: 1.45 }}>{f.sub}</div>
-                              {f.id === "garzon" && data.slug && <QrPill label="Pruébalo: escanea y toca la campana" color={c} onClick={onQr} delay={0.4} style={{ marginTop: 12, fontSize: 14 }} />}
+                              {f.id === "garzon" && data.slug && <QrPill label="Pruébalo: escanea y toca la campana" mobileLabel="Pruébalo: abre la carta y toca la campana" color={c} onClick={onQr} delay={0.4} style={{ marginTop: 12, fontSize: 14 }} />}
                               {f.id === "pdf" && <PdfPicker data={data} onShow={setPreview} />}
                             </motion.div>
                           )}
