@@ -51,7 +51,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
 
   const starLabels = ['Muy mal', 'Mal', 'Regular', 'Bien', 'Excelente'];
   const starEmojis = ['😞', '😕', '😐', '🙂', '🤩'];
-  const stars = [1, 2, 3, 4, 5].map(n => {
+  const stars = [5, 4, 3, 2, 1].map(n => {
     const href = `${args.link}${args.link.includes('?') ? '&' : '?'}stars=${n}`;
     return `<tr><td align="center" style="padding:4px 0;">
       <a href="${esc(href)}" style="display:inline-block;width:100%;max-width:300px;padding:12px 16px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fafafa;text-decoration:none;color:#333;font-size:14px;text-align:center;">
