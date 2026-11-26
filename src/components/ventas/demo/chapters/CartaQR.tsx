@@ -2,6 +2,12 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { FONT_LINK, type Section } from "@/components/exportar/ExportarCarta";
+import TemaCarbon from "@/components/exportar/temas/TemaCarbon";
+import TemaHuerto from "@/components/exportar/temas/TemaHuerto";
+import TemaMedit from "@/components/exportar/temas/TemaMedit";
+import TemaPiedra from "@/components/exportar/temas/TemaPiedra";
 import { Bell, Languages, Sparkles, Leaf, FileText, X, Eye } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData } from "../types";
@@ -87,8 +93,11 @@ export default function CartaQR({ data, step, onQr }: ChapterProps) {
 
             {/* Celular: entra con fuerza al pasar de la portada a las funciones */}
             <div style={{ position: "relative", flexShrink: 0, perspective: 1400 }}>
+              {/* Cartas impresas que salen del celular */}
+              <AnimatePresence>{active === "pdf" && <PaperMenus data={data} narrow={narrow} />}</AnimatePresence>
               <motion.div initial={reduce ? false : { opacity: 0, y: 260, rotateX: 38, rotateZ: -6, scale: 1.35, filter: "blur(16px)" }}
-                animate={{ opacity: 1, y: 0, rotateX: 0, rotateZ: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.3, ease: EASE, delay: 0.1 }}>
+                animate={{ opacity: 1, y: 0, rotateX: 0, rotateZ: 0, scale: 1, filter: "blur(0px)", x: active === "pdf" && !narrow ? -80 : 0 }} transition={{ duration: 1.1, ease: EASE }}
+                style={{ position: "relative", zIndex: 2 }}>
                 <PhoneFrame width={narrow ? 210 : 290}>
                   <CartaPhone data={data} active={active} />
                 </PhoneFrame>
@@ -242,11 +251,11 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
             <motion.div key="pdf" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ duration: 0.6, ease: EASE }}
               style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "14px 12px 16px", background: "#fff", borderRadius: "22px 22px 0 0", boxShadow: "0 -12px 40px rgba(0,0,0,.16)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 12.5 }}><FileText size={14} color={c} /> Exportar carta en PDF</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginTop: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5, marginTop: 10 }}>
                 {TEMPLATES.map((t, i) => (
                   <div key={t.key} style={{ borderRadius: 8, padding: 5, background: i === 0 ? rgba(c, 0.1) : "#f5f5f5", boxShadow: i === 0 ? `inset 0 0 0 1.5px ${c}` : "none", textAlign: "center" }}>
                     <MiniSheet template={t.key} color={c} />
-                    <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 4 }}>{t.label}</div>
+                    <div style={{ fontSize: 8.5, fontWeight: 700, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.label}</div>
                   </div>
                 ))}
               </div>
@@ -259,38 +268,83 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
   );
 }
 
-// ── Carta impresa: diseños reales de QuieroComer ───────────────────────────
+// ── Carta impresa: los mismos diseños de /panel/exportar ───────────────────
 const TEMPLATES = [
-  { key: "magazine", label: "Magazine", desc: "Fotos grandes, estilo revista" },
-  { key: "bistro", label: "Bistro", desc: "Tarjetas con foto, fondo crema" },
-  { key: "minimal", label: "Minimal", desc: "Destacados y lista elegante" },
+  { key: "carbon", label: "Carbón", desc: "Oscuro y dorado", bg: "#141414", ink: "#f3ead8", accent: "#d8ad57" },
+  { key: "huerto", label: "Huerto", desc: "Natural y fresco", bg: "#f4efe2", ink: "#23331f", accent: "#3f6b4c" },
+  { key: "medit", label: "Mediterráneo", desc: "Claro y elegante", bg: "#fbfaf6", ink: "#1d2c3c", accent: "#2f5d8a" },
+  { key: "piedra", label: "Piedra", desc: "Sobrio y cálido", bg: "#e9e4dc", ink: "#2d2925", accent: "#8a7e72" },
 ] as const;
+type TemplateKey = (typeof TEMPLATES)[number]["key"];
 
-function MiniSheet({ template, color }: { template: string; color: string }) {
-  const bg = template === "bistro" ? "#f6efe2" : "#fff";
+function MiniSheet({ template }: { template: string; color?: string }) {
+  const t = TEMPLATES.find((x) => x.key === template) ?? TEMPLATES[0];
   return (
-    <div style={{ aspectRatio: "0.72", borderRadius: 3, background: bg, padding: 4, boxSizing: "border-box", boxShadow: "0 2px 6px rgba(0,0,0,.12)", display: "grid", gap: 3, alignContent: "start" }}>
-      <div style={{ height: 4, width: "60%", margin: "0 auto", borderRadius: 2, background: color }} />
-      {template === "magazine" && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>{[0, 1, 2, 3].map((i) => <div key={i} style={{ height: 10, borderRadius: 2, background: "#ddd" }} />)}</div>}
-      {template === "bistro" && [0, 1, 2].map((i) => <div key={i} style={{ display: "flex", gap: 2 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: "#d9c9ad" }} /><div style={{ flex: 1, height: 3, marginTop: 2, borderRadius: 2, background: "#cdbb9c" }} /></div>)}
-      {template === "minimal" && <><div style={{ height: 12, borderRadius: 2, background: "#e5e5e5" }} />{[0, 1, 2].map((i) => <div key={i} style={{ height: 2, borderRadius: 2, background: "#ccc" }} />)}</>}
+    <div style={{ aspectRatio: "0.72", borderRadius: 3, background: t.bg, padding: 4, boxSizing: "border-box", boxShadow: "0 2px 6px rgba(0,0,0,.15)", display: "grid", gap: 3, alignContent: "start" }}>
+      <div style={{ height: 3, width: "55%", margin: "1px auto 2px", borderRadius: 2, background: t.accent }} />
+      {[0, 1, 2, 3].map((i) => <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 2 }}><div style={{ height: 2, width: "60%", borderRadius: 2, background: t.ink, opacity: 0.5 }} /><div style={{ height: 2, width: "18%", borderRadius: 2, background: t.accent }} /></div>)}
     </div>
+  );
+}
+
+/** Secciones de la carta del local en el formato de los diseños de exportación. */
+function toSections(data: DemoData): Section[] {
+  return data.categories.map((cat) => ({
+    titulo: cat.name,
+    platos: cat.dishes.filter((d) => d.name.trim() && d.price > 0).map((d) => ({ nombre: d.name, descripcion: d.description || null, precio: clp(d.price), precioDescuento: null, foto: d.photo })),
+  })).filter((s) => s.platos.length);
+}
+
+/** Hojas de la carta impresa, con los diseños reales, saliendo del iPhone. */
+function PaperMenus({ data, narrow }: { data: DemoData; narrow: boolean }) {
+  const dishes = featuredDishes(data, 7).filter((d) => d.price > 0);
+  const w = narrow ? 140 : 190;
+  const spots = [
+    { x: narrow ? 70 : 150, y: -10, rot: 4 },
+    { x: narrow ? 110 : 235, y: 22, rot: 10 },
+    { x: narrow ? 150 : 320, y: 58, rot: 16 },
+  ];
+  return (
+    <>
+      {TEMPLATES.slice(0, 3).map((t, i) => {
+        const sp = spots[i];
+        return (
+          <motion.div key={t.key} initial={{ opacity: 0, x: 40, y: 120, rotate: 0, scale: 0.5 }} animate={{ opacity: 1, x: sp.x, y: sp.y, rotate: sp.rot, scale: 1 }} exit={{ opacity: 0, x: 40, y: 120, scale: 0.5 }}
+            transition={{ duration: 1, ease: EASE, delay: 0.25 + (2 - i) * 0.15 }}
+            style={{ position: "absolute", top: "12%", left: 0, zIndex: 1 + (2 - i), width: w, aspectRatio: "0.707", borderRadius: 4, background: t.bg, color: t.ink, padding: w * 0.09, boxSizing: "border-box",
+              boxShadow: "0 30px 60px -20px rgba(0,0,0,.45)", fontFamily: "'Cormorant Garamond', Georgia, serif", overflow: "hidden" }}>
+            <div style={{ textAlign: "center", borderBottom: `1.5px solid ${t.accent}`, paddingBottom: 6 }}>
+              <div style={{ fontSize: w * 0.085, fontWeight: 700, letterSpacing: ".04em" }}>{data.name}</div>
+              <div style={{ fontSize: w * 0.045, color: t.accent, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase", marginTop: 2 }}>Carta</div>
+            </div>
+            <div style={{ display: "grid", gap: w * 0.03, marginTop: w * 0.06 }}>
+              {dishes.map((d) => (
+                <div key={d.name} style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: w * 0.052 }}>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+                  <span style={{ fontWeight: 700, color: t.accent }}>{clp(d.price)}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: w * 0.06, textAlign: "center", fontSize: w * 0.042, color: t.accent, letterSpacing: ".1em" }}>{t.label.toUpperCase()}</div>
+          </motion.div>
+        );
+      })}
+    </>
   );
 }
 
 /** Selector de diseño en el texto: elige y "Ver" abre su carta con ese diseño. */
 function PdfPicker({ data, onShow }: { data: DemoData; onShow: (t: string) => void }) {
   const c = data.color;
-  const [sel, setSel] = useState<string>("magazine");
-  if (!data.slug) return null;
+  const [sel, setSel] = useState<TemplateKey>("carbon");
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 14 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
         {TEMPLATES.map((t) => (
-          <button key={t.key} onClick={() => setSel(t.key)} style={{ border: "none", cursor: "pointer", font: "inherit", textAlign: "left", padding: "8px 10px", borderRadius: 14, background: "#fff",
+          <button key={t.key} onClick={() => setSel(t.key)} style={{ border: "none", cursor: "pointer", font: "inherit", textAlign: "center", padding: 6, borderRadius: 12, background: "#fff",
             boxShadow: sel === t.key ? `0 0 0 2px ${c}` : "0 0 0 1px rgba(0,0,0,.1)" }}>
-            <div style={{ fontWeight: 750, fontSize: 14 }}>{t.label}</div>
-            <div style={{ fontSize: 11.5, color: "rgba(0,0,0,.5)" }}>{t.desc}</div>
+            <div style={{ width: 38, margin: "0 auto" }}><MiniSheet template={t.key} /></div>
+            <div style={{ fontWeight: 750, fontSize: 12.5, marginTop: 5 }}>{t.label}</div>
           </button>
         ))}
       </div>
@@ -302,14 +356,23 @@ function PdfPicker({ data, onShow }: { data: DemoData; onShow: (t: string) => vo
   );
 }
 
-/** La carta impresa real del local (misma página que se exporta a PDF), a pantalla completa. */
+/** La carta del local con el diseño de exportación elegido (mismo componente de /panel/exportar). */
 function PrintPreview({ data, template, onChange, onClose }: { data: DemoData; template: string; onChange: (t: string) => void; onClose: () => void }) {
   const c = data.color;
+  const { w } = useViewport();
+  const [qr, setQr] = useState("");
+  useEffect(() => {
+    QRCode.toDataURL(`https://quierocomer.com/qr/${data.slug ?? ""}`, { width: 200, margin: 1, errorCorrectionLevel: "H" }).then(setQr).catch(() => {});
+  }, [data.slug]);
+  const Tema = template === "huerto" ? TemaHuerto : template === "medit" ? TemaMedit : template === "piedra" ? TemaPiedra : TemaCarbon;
+  const sheetW = Math.min(860, w - 40);
+  const zoom = sheetW / 794;
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }} onClick={(e) => { e.stopPropagation(); onClose(); }}
       style={{ position: "absolute", inset: 0, zIndex: 35, background: "rgba(10,10,12,.72)", backdropFilter: "blur(18px)", display: "flex", flexDirection: "column", alignItems: "center", padding: "70px 20px 24px", boxSizing: "border-box" }}>
+      <link rel="stylesheet" href={FONT_LINK} />
       <motion.div onClick={(e) => e.stopPropagation()} initial={{ y: 40, scale: 0.96, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={{ duration: 0.55, ease: EASE }}
-        style={{ width: "min(900px, 100%)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+        style={{ width: sheetW, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <div style={{ color: "#fff", fontWeight: 800, fontSize: 18, marginRight: "auto" }}>Carta impresa de {data.name}</div>
           {TEMPLATES.map((t) => (
@@ -318,8 +381,12 @@ function PrintPreview({ data, template, onChange, onClose }: { data: DemoData; t
           ))}
           <button onClick={onClose} aria-label="Cerrar" style={{ border: "none", cursor: "pointer", width: 38, height: 38, borderRadius: 99, background: "rgba(255,255,255,.12)", color: "#fff", display: "grid", placeItems: "center" }}><X size={18} /></button>
         </div>
-        <div style={{ flex: 1, minHeight: 0, borderRadius: 18, overflow: "hidden", background: "#e5e5e5", boxShadow: "0 40px 100px -30px rgba(0,0,0,.7)" }}>
-          <iframe key={template} title="Carta impresa" src={`/qr/${data.slug}/carta?template=${template}&embed=1`} style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", borderRadius: 10, boxShadow: "0 40px 100px -30px rgba(0,0,0,.7)", userSelect: "text" }}>
+          <AnimatePresence mode="wait">
+            <motion.div key={template} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} style={{ width: 794, zoom }}>
+              <Tema restaurant={{ name: data.name, logoUrl: data.logoUrl, address: null, phone: null }} sections={toSections(data)} incluirFotos qrDataUrl={qr} />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
     </motion.div>

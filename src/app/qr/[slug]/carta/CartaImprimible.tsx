@@ -333,7 +333,7 @@ function TemplateMinimal({ restaurant, sections, promotions, qrUrl }: Omit<Props
 // ═══════════════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════════════
-export default function CartaImprimible({ restaurant, sections, promotions, qrUrl, initialTemplate, embed = false }: Props & { embed?: boolean }) {
+export default function CartaImprimible({ restaurant, sections, promotions, qrUrl, initialTemplate }: Props) {
   const [template, setTemplate] = useState<Template>(initialTemplate);
 
   const templates: { key: Template; label: string; desc: string }[] = [
@@ -354,16 +354,16 @@ export default function CartaImprimible({ restaurant, sections, promotions, qrUr
         }
         @media screen {
           body { background: #e5e5e5 !important; }
-          .carta-print { box-shadow: 0 4px 24px rgba(0,0,0,0.15); border-radius: 4px; margin-top: ${embed ? 24 : 80}px !important; margin-bottom: 40px !important; }
+          .carta-print { box-shadow: 0 4px 24px rgba(0,0,0,0.15); border-radius: 4px; margin-top: 80px !important; margin-bottom: 40px !important; }
         }
         @page { margin: 10mm; }
       `}</style>
 
-      {/* Toolbar (oculta cuando se muestra incrustada, ej. en la demo de Ventas) */}
+      {/* Toolbar */}
       <div className="no-print" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         background: "#1a1a1a", padding: "10px 16px",
-        display: embed ? "none" : "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
       }}>
         {templates.map(t => (

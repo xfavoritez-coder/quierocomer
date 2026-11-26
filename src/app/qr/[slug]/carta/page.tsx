@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CartaImprimiblePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { slug } = await params;
-  const { template, embed } = await searchParams;
+  const { template } = await searchParams;
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug },
@@ -76,7 +76,6 @@ export default async function CartaImprimiblePage({ params, searchParams }: { pa
       promotions={promotions}
       qrUrl={qrUrl}
       initialTemplate={(template as any) || "magazine"}
-      embed={embed === "1"}
     />
   );
 }
