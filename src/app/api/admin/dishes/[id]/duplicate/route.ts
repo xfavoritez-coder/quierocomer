@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
@@ -35,6 +35,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     });
     if (!orig) return NextResponse.json({ error: "Plato no encontrado" }, { status: 404 });
+    try {
+      await assertOwnsRestaurant(req, orig.restaurantId);
+    } catch (e) {
+      return authErrorResponse(e);
+    }
 
     const maxPos = await prisma.dish.findFirst({
       where: { categoryId: orig.categoryId },

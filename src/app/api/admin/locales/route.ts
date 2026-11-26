@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { extractCommune } from "@/lib/communeUtils";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import type { EcommerceConfig } from "@/lib/ecommerce/config";
@@ -9,6 +9,7 @@ import type { EcommerceConfig } from "@/lib/ecommerce/config";
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   try {
     const restaurants = await prisma.restaurant.findMany({
       orderBy: { createdAt: "desc" },
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   try {
     const { name, slug, description, phone, address, logoUrl, bannerUrl, cartaTheme, ownerId } = await req.json();
     if (!name || !slug) return NextResponse.json({ error: "Nombre y slug requeridos" }, { status: 400 });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { chileDayRangeUtc } from "@/lib/driver/serialize";
 
 const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
@@ -8,6 +8,7 @@ const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const restaurantId = searchParams.get("restaurantId");
@@ -70,6 +71,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const { id, status } = await req.json();
   if (!id || !status) return NextResponse.json({ error: "id and status required" }, { status: 400 });

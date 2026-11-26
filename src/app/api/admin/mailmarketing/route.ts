@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   // Aggregate by purpose (campaign)
   const raw = await prisma.emailLog.groupBy({

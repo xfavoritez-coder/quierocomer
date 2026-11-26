@@ -58,7 +58,7 @@ export default function AgregarLocalPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ slug: string; restaurantId: string; totalDishes: number; totalCategories: number; url: string } | null>(null);
+  const [result, setResult] = useState<{ slug: string; restaurantId: string; totalDishes: number; totalCategories: number; url: string; claimToken?: string | null } | null>(null);
   const [photoResults, setPhotoResults] = useState<{ dishId: string; dishName: string; query: string; photoUrl: string | null; selected: boolean }[]>([]);
   const [photoProgress, setPhotoProgress] = useState("");
   const [mode, setMode] = useState<"photos" | "url">("photos");
@@ -188,7 +188,7 @@ export default function AgregarLocalPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
 
-      setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
+      setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url, claimToken: data.claimToken });
 
       // Paso de extracción de ingredientes — quitado de momento (mucho leseo, nadie lo usa)
       setSavingProgress("");
@@ -536,7 +536,7 @@ export default function AgregarLocalPage() {
                   const res = await fetch("/api/agregarlocal/translate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ restaurantId: result.restaurantId }),
+                    body: JSON.stringify({ restaurantId: result.restaurantId, claimToken: result.claimToken }),
                   });
                   const data = await res.json();
                   if (!res.ok) throw new Error(data.error || "Error");
@@ -679,6 +679,7 @@ export default function AgregarLocalPage() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           restaurantId: result.restaurantId,
+                          claimToken: result.claimToken,
                           photosByName: selected.map(r => ({ name: r.dishName, url: r.photoUrl })),
                         }),
                       });
@@ -789,6 +790,7 @@ export default function AgregarLocalPage() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
                             restaurantId: result.restaurantId,
+                            claimToken: result.claimToken,
                             name: ownerName.trim(),
                             email: ownerEmail.trim(),
                             whatsapp: ownerWhatsapp.trim() || null,

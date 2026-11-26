@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import AprendizajesClient from "@/components/fran/AprendizajesClient";
+import { requireFranAccess } from "@/lib/franAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ export default async function AprendizajesPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await requireFranAccess();
   const { slug } = await params;
   const proyecto = await prisma.franProyecto.findUnique({
     where: { slug },

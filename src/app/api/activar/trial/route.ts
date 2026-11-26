@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPanelId, readAdminSession } from "@/lib/session";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -38,12 +39,17 @@ export async function POST(req: NextRequest) {
   if (newOwnerName || newEmail || newWhatsapp) {
     const owner = await prisma.restaurantOwner.findFirst({
       where: { restaurants: { some: { id: restaurantId } } },
-      select: { id: true, email: true },
+      select: { id: true, email: true, name: true, whatsapp: true },
     });
     if (owner) {
+      // Esta ruta es pública. Solo el propio dueño (con sesión) o el superadmin
+      // pueden cambiar el correo (que resetea la contraseña) o sobrescribir datos.
+      // Para cualquier otro, solo se completan datos vacíos y el correo verificado
+      // se mantiene: las credenciales llegan al correo real del dueño.
+      const trusted = getPanelId(req) === owner.id || readAdminSession(req)?.role === "SUPERADMIN";
       const ownerUpdate: Record<string, any> = {};
-      if (newOwnerName?.trim()) ownerUpdate.name = newOwnerName.trim();
-      if (newEmail?.trim()) {
+      if (newOwnerName?.trim() && (trusted || !owner.name?.trim())) ownerUpdate.name = newOwnerName.trim();
+      if (newEmail?.trim() && trusted) {
         const cleanEmail = newEmail.trim().toLowerCase();
         ownerUpdate.email = cleanEmail;
         // If email changed, regenerate password hash so credentials match
@@ -51,7 +57,7 @@ export async function POST(req: NextRequest) {
           ownerUpdate.passwordHash = await bcrypt.hash(`${restaurant.slug}2026`, 10);
         }
       }
-      if (newWhatsapp?.trim()) ownerUpdate.whatsapp = newWhatsapp.trim();
+      if (newWhatsapp?.trim() && (trusted || !owner.whatsapp?.trim())) ownerUpdate.whatsapp = newWhatsapp.trim();
       if (Object.keys(ownerUpdate).length > 0) {
         await prisma.restaurantOwner.update({
           where: { id: owner.id },

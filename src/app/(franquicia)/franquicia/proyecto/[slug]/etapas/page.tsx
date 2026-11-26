@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, Clock } from "lucide-react";
+import { requireFranAccess } from "@/lib/franAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function EtapasPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await requireFranAccess();
   const { slug } = await params;
   const proyecto = await prisma.franProyecto.findUnique({
     where: { slug },

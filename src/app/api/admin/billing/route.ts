@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 import { planNetAmount } from "@/lib/billing/plans-config";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   const restaurants = await prisma.restaurant.findMany({
     where: {

@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { canSetupRestaurant } from "@/lib/restaurantClaim";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
@@ -8,9 +9,14 @@ import { buildPanelEntryUrl } from "@/lib/panelEntryLink";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /** Create owner for a freshly-added restaurant (from /agregarlocal) */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { restaurantId, name, email, whatsapp, sendWelcome } = await request.json();
+    const { restaurantId, name, email, whatsapp, sendWelcome, claimToken } = await request.json();
+
+    // Solo superadmin, o quien acaba de crear ESTE local en /agregarlocal.
+    if (!restaurantId || !canSetupRestaurant(request, String(restaurantId), claimToken)) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
 
     if (!restaurantId || !name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: "Nombre y correo requeridos" }, { status: 400 });

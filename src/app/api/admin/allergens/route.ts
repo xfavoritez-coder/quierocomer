@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import type { AllergenType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const type = (req.nextUrl.searchParams.get("type") || "ALLERGEN") as AllergenType;
 
@@ -20,6 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const { name, type } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "name requerido" }, { status: 400 });
@@ -43,6 +45,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const { allergenId, linkIngredientId, unlinkIngredientId, name } = await req.json();
   if (!allergenId) return NextResponse.json({ error: "allergenId requerido" }, { status: 400 });
@@ -78,6 +81,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });

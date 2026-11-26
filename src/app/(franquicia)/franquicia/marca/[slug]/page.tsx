@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { FolderOpen, MapPin, Building2 } from "lucide-react";
 import MarcaIdentidadClient from "@/components/fran/MarcaIdentidadClient";
+import { requireFranAccess } from "@/lib/franAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function MarcaPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await requireFranAccess();
   const { slug } = await params;
   const marca = await prisma.franMarca.findUnique({
     where: { slug },

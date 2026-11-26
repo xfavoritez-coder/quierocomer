@@ -51,9 +51,19 @@ export async function getOwnedRestaurantIds(req: NextRequest): Promise<string[] 
     const memberId = rawId.slice(3);
     const member = await prisma.teamMember.findUnique({
       where: { id: memberId },
-      select: { restaurantId: true },
+      select: { restaurantId: true, email: true, restaurant: { select: { ownerId: true } } },
     });
-    return member?.restaurantId ? [member.restaurantId] : [];
+    if (!member?.restaurantId) return [];
+    // Acceso multi-sucursal: mismo email + mismo dueño + ACTIVE (misma lógica
+    // que /api/panel/me y teamMemberCanAccess). La sucursal de la sesión siempre se incluye.
+    const ownerId = member.restaurant?.ownerId;
+    const siblings = ownerId
+      ? await prisma.teamMember.findMany({
+          where: { email: { equals: member.email, mode: "insensitive" }, status: "ACTIVE", restaurant: { ownerId } },
+          select: { restaurantId: true },
+        })
+      : [];
+    return Array.from(new Set([member.restaurantId, ...siblings.map((x) => x.restaurantId)]));
   }
 
   const owner = await prisma.restaurantOwner.findUnique({

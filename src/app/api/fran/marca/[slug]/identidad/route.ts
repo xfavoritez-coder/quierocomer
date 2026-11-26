@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 
 const IDENTITY_FIELDS = [
   "proposito", "mision", "vision",
@@ -16,6 +16,7 @@ export async function GET(
 ) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   const { slug } = await params;
   const marca = await prisma.franMarca.findUnique({
@@ -33,6 +34,7 @@ export async function PATCH(
 ) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   const { slug } = await params;
   const marca = await prisma.franMarca.findUnique({ where: { slug } });

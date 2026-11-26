@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AlertTriangle, Clock, CheckCircle2, FolderOpen } from "lucide-react";
+import { requireFranAccess } from "@/lib/franAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ function ProgressBar({ pct }: { pct: number }) {
 }
 
 export default async function FranDashboard() {
+  await requireFranAccess();
   const proyectos = await prisma.franProyecto.findMany({
     where: { estado: { not: "CANCELADO" } },
     include: {

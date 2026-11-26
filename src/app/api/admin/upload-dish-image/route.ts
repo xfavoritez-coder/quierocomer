@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
 import { supabase } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/optimizeImage";
 import { logActivity } from "@/lib/admin/logActivity";
@@ -16,6 +16,14 @@ export async function POST(req: NextRequest) {
     const dishName = (formData.get("dishName") as string) || "plato";
 
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+
+    // No-superadmin: si manda localId, debe ser uno de sus locales (se usa para logActivity y nombre de archivo).
+    if (!isSuperAdmin(req) && localId !== "unknown") {
+      const owned = await getOwnedRestaurantIds(req);
+      if (!owned || !owned.includes(localId)) {
+        return NextResponse.json({ error: "No tienes permisos para este restaurant" }, { status: 403 });
+      }
+    }
 
     // Accept any image type — sharp will validate and convert
     if (!file.type.startsWith("image/")) {

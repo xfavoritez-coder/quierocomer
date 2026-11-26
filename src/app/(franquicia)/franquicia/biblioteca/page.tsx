@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { requireFranAccess } from "@/lib/franAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -6,7 +7,8 @@ const GOLD = "#F4A623";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
-export default function BibliotecaPage() {
+export default async function BibliotecaPage() {
+  await requireFranAccess();
   return (
     <div
       style={{

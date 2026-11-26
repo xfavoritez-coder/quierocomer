@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, getOwnedRestaurantIds, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 
 async function matchTicketToSession(restaurantId: string, mesaId: string | null, paidAt: Date): Promise<{ sessionId: string | null; confidence: string }> {
@@ -35,9 +35,15 @@ export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || undefined;
   const confidence = req.nextUrl.searchParams.get("confidence") || undefined;
 
+  // Superadmin (null) ve todo; el resto solo sus locales.
+  const ownedIds = await getOwnedRestaurantIds(req);
+  if (ownedIds && restaurantId && !ownedIds.includes(restaurantId)) {
+    return NextResponse.json({ error: "No tienes permisos para este restaurant" }, { status: 403 });
+  }
+
   const tickets = await prisma.restaurantTicket.findMany({
     where: {
-      ...(restaurantId ? { restaurantId } : {}),
+      ...(restaurantId ? { restaurantId } : ownedIds ? { restaurantId: { in: ownedIds } } : {}),
       ...(confidence ? { matchConfidence: confidence } : {}),
     },
     include: { restaurant: { select: { name: true } } },
@@ -59,6 +65,8 @@ export async function POST(req: NextRequest) {
     // Batch (CSV) or single
     const items = Array.isArray(body) ? body : [body];
     const results = [];
+    // Superadmin (null) puede cargar a cualquier local; el resto solo a los suyos.
+    const ownedIds = await getOwnedRestaurantIds(req);
 
     for (const item of items) {
       const { restaurantId, restaurantSlug, mesaId, ticketTotal, ticketCountItems, paidAt, notes } = item;
@@ -69,6 +77,7 @@ export async function POST(req: NextRequest) {
         if (r) resId = r.id;
       }
       if (!resId || !ticketTotal || !paidAt) { results.push({ error: "Missing fields", item }); continue; }
+      if (ownedIds && !ownedIds.includes(resId)) { results.push({ error: "No tienes permisos para este restaurant", item }); continue; }
 
       const paidDate = new Date(paidAt);
       const match = await matchTicketToSession(resId, mesaId || null, paidDate);
@@ -103,6 +112,15 @@ export async function DELETE(req: NextRequest) {
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const existing = await prisma.restaurantTicket.findUnique({ where: { id }, select: { restaurantId: true } });
+  if (existing) {
+    try {
+      await assertOwnsRestaurant(req, existing.restaurantId);
+    } catch (err) {
+      return authErrorResponse(err);
+    }
+  }
 
   await prisma.restaurantTicket.delete({ where: { id } });
   return NextResponse.json({ ok: true });

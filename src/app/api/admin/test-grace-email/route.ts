@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { sendAdminEmail, graceExpiryWarningEmailHtml } from "@/lib/email/sendAdminEmail";
 import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
 
@@ -8,6 +8,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   try {
     const body = await req.json().catch(() => ({}));

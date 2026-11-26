@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { getPanelId } from "@/lib/session";
+import { isSuperAdmin } from "@/lib/adminAuth";
+import { assertOwnership } from "@/lib/ecommerce/panelAuth";
 
 // GET /api/admin/team?restaurantId=xxx — list owner + team members
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
   if (!restaurantId) return NextResponse.json({ error: "Missing restaurantId" }, { status: 400 });
+
+  // Antes no tenía control: cualquiera veía los correos del dueño y del equipo de
+  // cualquier local. Ahora: superadmin, o una sesión con acceso a ese local
+  // (dueño, miembro del equipo de esa sucursal, o la demo de ese local).
+  if (!isSuperAdmin(req) && !(await assertOwnership(req, restaurantId))) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },

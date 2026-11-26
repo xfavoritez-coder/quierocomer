@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, requireRestaurantForOwner, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
@@ -12,6 +12,12 @@ export async function GET(req: NextRequest) {
 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
   if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
+
+  try {
+    await requireRestaurantForOwner(req, restaurantId);
+  } catch (e) {
+    return authErrorResponse(e);
+  }
 
   const dishes = await prisma.dish.findMany({
     where: { restaurantId, deletedAt: null },
@@ -65,6 +71,15 @@ export async function POST(req: NextRequest) {
 
     if (!restaurantId || !categoryId || !name || price == null) {
       return NextResponse.json({ error: "restaurantId, categoryId, name y price requeridos" }, { status: 400 });
+    }
+
+    try {
+      await requireRestaurantForOwner(req, restaurantId);
+      // La categoría también debe pertenecer a un local propio
+      const cat = await prisma.category.findUnique({ where: { id: categoryId }, select: { restaurantId: true } });
+      if (cat) await assertOwnsRestaurant(req, cat.restaurantId);
+    } catch (e) {
+      return authErrorResponse(e);
     }
 
     // Get max position in category

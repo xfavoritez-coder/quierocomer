@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createRestaurantClaim } from "@/lib/restaurantClaim";
 export const maxDuration = 300;
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
@@ -231,6 +232,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
+      // Permiso firmado para los pasos siguientes del alta (dueño, fotos, traducción).
+      claimToken: createRestaurantClaim(restaurant.id),
       dishIds: createdDishes.map(d => d.id),
       restaurant: {
         id: restaurant.id,

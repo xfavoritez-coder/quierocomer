@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { createMPCustomer, createMPSubscription } from "@/lib/billing/mercadopago";
 import { grossOf } from "@/lib/billing/plans-config";
 
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   if (!(seedSecret && queryKey === seedSecret)) {
     const authErr = checkAdminAuth(req);
     if (authErr) return authErr;
+    if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);

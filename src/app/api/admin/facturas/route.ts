@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import { sendAdminEmail, facturaEmailHtml } from "@/lib/email/sendAdminEmail";
@@ -25,6 +25,7 @@ function netForRestaurant(plan: string, customPlanPriceNet: number | null): numb
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   const periodo = req.nextUrl.searchParams.get("periodo") || getCurrentPeriodo();
 
@@ -86,6 +87,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   try {
     const formData = await req.formData();
@@ -206,6 +208,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   const invoiceId = req.nextUrl.searchParams.get("invoiceId");
   if (!invoiceId) return NextResponse.json({ error: "Falta invoiceId" }, { status: 400 });

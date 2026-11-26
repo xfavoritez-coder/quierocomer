@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { sendAdminEmail, planExpiringSoonEmailHtml } from "@/lib/email/sendAdminEmail";
 import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
 
@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
   if (!secret || !cronSecret || secret !== cronSecret) {
     const authErr = checkAdminAuth(req);
     if (authErr) return authErr;
+    if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
   }
 
   try {

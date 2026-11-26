@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
 import { translateAllForRestaurant } from "@/lib/ai/translateContent";
 
 export async function POST(req: NextRequest) {
   // Allow CRON_SECRET header as alternative auth
   const cronSecret = req.headers.get("x-cron-secret");
-  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+  const viaCron = !!cronSecret && cronSecret === process.env.CRON_SECRET;
+  if (!viaCron) {
     const authErr = checkAdminAuth(req);
     if (authErr) return authErr;
   }
@@ -13,6 +14,14 @@ export async function POST(req: NextRequest) {
   const { restaurantId } = await req.json();
   if (!restaurantId) {
     return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
+  }
+
+  if (!viaCron) {
+    try {
+      await assertOwnsRestaurant(req, restaurantId);
+    } catch (err) {
+      return authErrorResponse(err);
+    }
   }
 
   try {

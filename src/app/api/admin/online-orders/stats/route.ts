@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { chileDayRangeUtc } from "@/lib/driver/serialize";
 
 // Métodos online (con pasarela): solo cuentan como venta si están PAGADOS.
@@ -9,6 +9,7 @@ const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const restaurantId = searchParams.get("restaurantId") || undefined;

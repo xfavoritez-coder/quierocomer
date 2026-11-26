@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag, revalidatePath } from 'next/cache'
-import { checkAdminAuth } from '@/lib/adminAuth'
+import { checkAdminAuth, isSuperAdmin } from '@/lib/adminAuth'
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const slug = url.searchParams.get('slug')
   // Accept either SEED_SECRET key or admin session cookie
   const hasKey = key === process.env.SEED_SECRET
-  const hasAdmin = !checkAdminAuth(request)
+  const hasAdmin = !checkAdminAuth(request) && isSuperAdmin(request)
   if (!hasKey && !hasAdmin && process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   }
