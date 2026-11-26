@@ -1,4 +1,5 @@
 "use client";
+import StoreLogoFallback from "@/components/ecommerce/StoreLogoFallback";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { capturePendingCouponFromUrl } from "@/lib/ecommerce/pendingCoupon";
 import { Toaster, toast } from "sonner";
@@ -441,7 +442,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
             {showHeaderLogo ? (
               <img src={tenant.logoUrl!} alt={tenant.name} className="h-16 w-auto object-contain" onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             ) : (
-              <span className="font-black text-xl text-gray-900">{tenant.name}</span>
+              <StoreLogoFallback name={tenant.name} color={tenant.primaryColor} size={48} dark={headerDark} nameClassName="font-black text-xl max-w-[60vw]" />
             )}
           </div>
           {/* Acceso a cuenta/menú — solo desktop (en móvil está el menú flotante) */}

@@ -1,4 +1,5 @@
 "use client";
+import StoreLogoFallback from "@/components/ecommerce/StoreLogoFallback";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { capturePendingCouponFromUrl } from "@/lib/ecommerce/pendingCoupon";
 import { Toaster, toast } from "sonner";
@@ -584,7 +585,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
             {showHeaderLogo ? (
               <img src={tenant.logoUrl!} alt={tenant.name} className="w-auto object-contain" style={{ height: 48 }} onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             ) : (
-              <span className={`font-black text-xl ${headerDark ? "text-white" : "text-gray-900"}`}>{tenant.name}</span>
+              <StoreLogoFallback name={tenant.name} color={tenant.primaryColor} size={34} dark={headerDark} nameClassName="font-black text-lg max-w-[calc(100vw-250px)]" />
             )}
           </a>
           <div className="flex items-center gap-1">
@@ -607,7 +608,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
             {showHeaderLogo ? (
               <img src={tenant.logoUrl!} alt={tenant.name} className="w-auto object-contain" style={{ height: 44 }} onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             ) : (
-              <span className={`font-black text-lg ${headerDark ? "text-white" : "text-gray-900"}`}>{tenant.name}</span>
+              <StoreLogoFallback name={tenant.name} color={tenant.primaryColor} size={36} dark={headerDark} nameClassName="font-black text-lg max-w-[260px]" />
             )}
           </a>
 
