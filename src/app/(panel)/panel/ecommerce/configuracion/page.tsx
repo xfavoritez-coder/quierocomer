@@ -660,13 +660,6 @@ export default function EcommerceConfiguracionPage() {
               </div>
               <Toggle on={cfg.showPhone} onClick={() => patch({ showPhone: !cfg.showPhone })} />
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
-              <div style={{ maxWidth: 380 }}>
-                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Ocultar dirección en el seguimiento</p>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>No mostrar la dirección del local en el enlace de seguimiento del pedido (/pedido). Útil para locales sin atención al público o cocinas ocultas.</p>
-              </div>
-              <Toggle on={cfg.hideTrackingAddress} onClick={() => patch({ hideTrackingAddress: !cfg.hideTrackingAddress })} />
-            </div>
           </section>
           )}
 
@@ -743,6 +736,13 @@ export default function EcommerceConfiguracionPage() {
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Enviar al cliente un correo con el enlace de seguimiento de su pedido. Si lo desactivas, no se envía ningún correo al cliente.</p>
               </div>
               <Toggle on={cfg.trackingEmailEnabled} onClick={() => patch({ trackingEmailEnabled: !cfg.trackingEmailEnabled })} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+              <div style={{ maxWidth: 380 }}>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Ocultar dirección del local</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>No mostrar la dirección del local en el enlace de seguimiento del pedido. Útil para locales sin atención al público o cocinas ocultas.</p>
+              </div>
+              <Toggle on={cfg.hideTrackingAddress} onClick={() => patch({ hideTrackingAddress: !cfg.hideTrackingAddress })} />
             </div>
           </section>
           )}
