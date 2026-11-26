@@ -327,7 +327,7 @@ function TierPage({ data, plan: p, step, label, narrow }: { data: DemoData; plan
     <Stage style={{ flexDirection: "column" }}>
       <div style={{ textAlign: "center", maxWidth: 820 }}>
         <Reveal key={`h${step}`} step={0} at={0}><Eyebrow color={c}>{label}</Eyebrow></Reveal>
-        <Reveal key={`t${step}`} step={0} at={0} delay={0.1}><Headline size="lg" style={{ marginTop: 10 }}>{p.name}. <BrandText color={c}>0% comisión.</BrandText></Headline></Reveal>
+        <Reveal key={`t${step}`} step={0} at={0} delay={0.1}><Headline size="lg" style={{ marginTop: 10 }}><BrandText color={c}>{p.name}</BrandText></Headline></Reveal>
         <Reveal key={`s${step}`} step={0} at={0} delay={0.18}><div style={{ fontSize: "clamp(15px, 1.4vw, 19px)", color: "rgba(0,0,0,.5)", marginTop: 10 }}>Pagas según los pedidos que recibes al mes. Nunca un porcentaje de tus ventas.</div></Reveal>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${narrow ? 1 : tiers.length}, minmax(0, 1fr))`, gap: 14, width: "min(1040px, 100%)", marginTop: "clamp(22px, 3.5vh, 40px)", alignItems: "stretch" }}>
