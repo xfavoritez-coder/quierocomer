@@ -203,7 +203,7 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
           ))}
         </motion.div>
 
-        {/* Campana del garzón: al llamar, ondas y "Avisando al garzón" dentro del celular */}
+        {/* Campana del garzón: al llamar, tirita con ondas */}
         <div style={{ position: "absolute", right: 12, bottom: 12 }}>
           {calling && [0, 1].map((i) => (
             <motion.span key={i} initial={{ scale: 1, opacity: 0.55 }} animate={{ scale: 2.3, opacity: 0 }} transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.8, ease: "easeOut" }}
