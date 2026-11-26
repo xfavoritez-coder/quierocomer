@@ -104,7 +104,7 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
   const offsetY = bbox.y
 
   return (
-    <div ref={containerRef} style={{ width: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+    <div ref={containerRef} style={{ width: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{
         position: 'relative',
         width: viewW,
