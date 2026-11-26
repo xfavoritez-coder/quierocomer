@@ -27,7 +27,8 @@ const CHAPTER_MODULE: Partial<Record<ChapterId, InterestModule>> = { carta: "car
 
 // QR por capítulo: abre en el celular del dueño la versión real de ese módulo.
 type ChapterQr = { path: (slug: string) => string; kicker: string; title: (name: string) => string; hint: string };
-const QR_CARTA: ChapterQr = { path: (s) => `/qr/${s}?carta=1`, // directo a la carta (sin la portada del local) kicker: "Pruébalo en tu celular", title: (n) => `Escanea y abre la carta de ${n}`, hint: "Toca la campana para llamar al garzón y mira esta pantalla." };
+// El QR de la carta abre directo la carta (?carta=1), sin pasar por la portada del local.
+const QR_CARTA: ChapterQr = { path: (s) => `/qr/${s}?carta=1`, kicker: "Pruébalo en tu celular", title: (n) => `Escanea y abre la carta de ${n}`, hint: "Toca la campana para llamar al garzón y mira esta pantalla." };
 const QR_STORE: ChapterQr = { path: (s) => `/ecommerce/${s}`, kicker: "Haz un pedido de prueba", title: (n) => `La tienda de ${n}`, hint: "Pide desde tu celular (retiro, pago en efectivo) y mira cómo llega aquí. No se cobra nada." };
 const QR_LOYALTY: ChapterQr = { path: (s) => `/fidelidad/${s}`, kicker: "Inscríbete tú mismo", title: (n) => `Tu tarjeta de ${n}`, hint: "Escanea, inscríbete y mira cómo aparece aquí al instante." };
 type Chapter = { id: ChapterId; title: string; steps: number | ((d: DemoData) => number); dark: boolean; Comp: ComponentType<ChapterProps>; qr: ChapterQr };
