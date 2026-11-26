@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Check, Star, ArrowRight, X, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData, DemoPlan, DemoPlanSection } from "../types";
-import { BrandText, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, clp, onColor, rgba, useViewport } from "../ui";
+import { BrandText, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, clp, lighten, onColor, rgba, useViewport } from "../ui";
 
 const MAX_FEATURES = 6;
 
@@ -122,13 +122,15 @@ function ModuleIcon({ name, size = 19 }: { name: string; size?: number }) {
   return <I size={size} />;
 }
 
-// "Hasta 100 pedidos", "Hasta 499 pedidos 49.900", "Mas de 500 pedidos 79.900"
-const TIER_RE = /^\s*(hasta|m[aá]s de)\s+([\d.]+)\s+pedidos(?:\s*[:·-]?\s*\$?\s*([\d.]+))?\s*$/i;
+// "Hasta 100 pedidos", "Hasta 499 pedidos 49.900", "Más de 500 pedidos 79.900", "Pedidos ilimitados 89.900"
+const TIER_RE = /^\s*(?:(hasta|m[aá]s de)\s+([\d.]+)\s+pedidos|pedidos\s+ilimitados)(?:\s*[:·-]?\s*\$?\s*([\d.]+))?\s*$/i;
 function tiersOf(p: DemoPlan) {
-  const tiers = p.features.map((f) => f.match(TIER_RE)).filter(Boolean).map((m) => ({
-    label: `${/hasta/i.test(m![1]) ? "Hasta" : "Más de"} ${m![2]}`,
-    price: m![3] ? Number(m![3].replace(/\./g, "")) : p.price,
-  }));
+  const tiers = p.features.map((f) => f.match(TIER_RE)).filter(Boolean).map((m) => {
+    const n = m![2] ? Number(m![2].replace(/\./g, "")) : 0;
+    // "Hasta 499" se muestra como "Hasta 500"; "Más de N" o "ilimitados" → "Pedidos ilimitados".
+    const label = m![1] && /hasta/i.test(m![1]) ? `Hasta ${(n % 100 === 99 ? n + 1 : n).toLocaleString("es-CL")} pedidos` : "Pedidos ilimitados";
+    return { label, price: m![3] ? Number(m![3].replace(/\./g, "")) : p.price };
+  });
   const rest = p.features.filter((f) => !TIER_RE.test(f));
   return { tiers, rest };
 }
@@ -153,7 +155,7 @@ function ModulesStep({ data, step, section, label, narrow }: { data: DemoData; s
           </Reveal>
         ))}
       </div>
-      <AnimatePresence>{open && <ModuleModal plan={open} color={c} onClose={() => setOpen(null)} />}</AnimatePresence>
+      <AnimatePresence>{open && <ModuleModal plan={open} color={c} narrow={narrow} onClose={() => setOpen(null)} />}</AnimatePresence>
     </Stage>
   );
 }
@@ -173,34 +175,118 @@ const MODULE_INFO: [RegExp, string][] = [
 ];
 const moduleInfo = (name: string) => MODULE_INFO.find(([re]) => re.test(name))?.[1] ?? null;
 
-function ModuleModal({ plan: p, color: c, onClose }: { plan: DemoPlan; color: string; onClose: () => void }) {
+function ModuleModal({ plan: p, color: c, narrow, onClose }: { plan: DemoPlan; color: string; narrow: boolean; onClose: () => void }) {
   const info = moduleInfo(p.name);
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => { e.stopPropagation(); onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: 30, background: "rgba(10,10,12,.5)", backdropFilter: "blur(16px)", display: "grid", placeItems: "center", padding: 20 }}>
-      <motion.div onClick={(e) => e.stopPropagation()} initial={{ y: 40, scale: 0.94, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }} exit={{ y: 20, opacity: 0 }} transition={{ duration: 0.5, ease: EASE }}
-        style={{ width: "min(520px, 100%)", maxHeight: "86vh", overflowY: "auto", borderRadius: 30, background: "#fff", boxShadow: "0 50px 120px -30px rgba(0,0,0,.6)", position: "relative" }}>
-        <div style={{ padding: "28px 28px 22px", background: `radial-gradient(120% 120% at 0% 0%, ${rgba(c, 0.18)} 0%, transparent 60%)` }}>
+      style={{ position: "fixed", inset: 0, zIndex: 30, background: "rgba(10,10,12,.55)", backdropFilter: "blur(18px)", display: "grid", placeItems: "center", padding: 20 }}>
+      <motion.div onClick={(e) => e.stopPropagation()} initial={{ y: 50, scale: 0.92, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }} exit={{ y: 24, scale: 0.97, opacity: 0 }} transition={{ duration: 0.55, ease: EASE }}
+        style={{ width: "min(720px, 100%)", maxHeight: "88vh", overflowY: "auto", borderRadius: 32, background: "#fff", boxShadow: "0 60px 140px -30px rgba(0,0,0,.65)", position: "relative", display: "grid", gridTemplateColumns: narrow ? "1fr" : "minmax(0, 1fr) minmax(0, 1.1fr)" }}>
+        {/* Ilustración */}
+        <div style={{ position: "relative", minHeight: narrow ? 220 : 340, overflow: "hidden", background: `radial-gradient(120% 120% at 20% 10%, ${lighten(c, 0.35)} 0%, ${c} 55%, ${rgba(c, 0.9)} 100%)`, display: "grid", placeItems: "center" }}>
+          <div aria-hidden style={{ position: "absolute", inset: 0, background: "radial-gradient(60% 50% at 80% 90%, rgba(255,255,255,.25), transparent)" }} />
+          <motion.div initial={{ y: 30, opacity: 0, scale: 0.9 }} animate={{ y: [0, -6, 0], opacity: 1, scale: 1 }} transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.6 }, opacity: { duration: 0.6, delay: 0.15 }, scale: { duration: 0.7, delay: 0.15, ease: EASE } }}>
+            <ModuleArt name={p.name} color={c} />
+          </motion.div>
+        </div>
+        {/* Detalle */}
+        <div style={{ padding: "30px 28px 28px", position: "relative" }}>
           <button onClick={onClose} aria-label="Cerrar" style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: 99, border: "none", cursor: "pointer", background: "rgba(0,0,0,.06)", display: "grid", placeItems: "center" }}><X size={17} /></button>
-          <div style={{ width: 56, height: 56, borderRadius: 18, display: "grid", placeItems: "center", background: c, color: onColor(c), boxShadow: `0 14px 30px -10px ${rgba(c, 0.7)}` }}><ModuleIcon name={p.name} size={26} /></div>
-          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-.03em", marginTop: 16 }}>{p.name}</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 6 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: c }}><ModuleIcon name={p.name} size={14} /> Módulo</div>
+          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-.03em", marginTop: 8, lineHeight: 1.1, paddingRight: 30 }}>{p.name}</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 10 }}>
             {p.priceFrom && <span style={{ fontSize: 13, color: "rgba(0,0,0,.45)", fontWeight: 700 }}>Desde</span>}
-            <span style={{ fontFamily: "var(--demo-mono)", fontSize: 30, fontWeight: 700, color: c }}>{clp(p.price)}</span>
+            <span style={{ fontFamily: "var(--demo-mono)", fontSize: 30, fontWeight: 700, letterSpacing: "-.02em" }}>{clp(p.price)}</span>
             <span style={{ fontSize: 14, color: "rgba(0,0,0,.45)" }}>/ mes</span>
           </div>
-          {p.subtitle && <div style={{ fontSize: 13, color: "rgba(0,0,0,.5)", marginTop: 4 }}>{p.subtitle}</div>}
-          {info && <p style={{ fontSize: 16, color: "rgba(0,0,0,.65)", lineHeight: 1.5, margin: "16px 0 0" }}>{info}</p>}
+          {p.subtitle && <div style={{ fontSize: 13, color: "rgba(0,0,0,.5)", marginTop: 2 }}>{p.subtitle}</div>}
+          {info && <p style={{ fontSize: 15.5, color: "rgba(0,0,0,.62)", lineHeight: 1.5, margin: "16px 0 0" }}>{info}</p>}
+          {p.features.length > 0 && (
+            <div style={{ display: "grid", gap: 8, marginTop: 18 }}>
+              {p.features.map((f, i) => (
+                <motion.div key={f} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.05, duration: 0.4, ease: EASE }}
+                  style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14.5, lineHeight: 1.4, padding: "9px 12px", borderRadius: 14, background: "#f7f6f3" }}>
+                  <span style={{ width: 20, height: 20, borderRadius: 99, flexShrink: 0, display: "grid", placeItems: "center", background: c, color: onColor(c), marginTop: 1 }}><Check size={12} strokeWidth={3} /></span>{f}
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
-        {p.features.length > 0 && (
-          <div style={{ padding: "6px 28px 28px", display: "grid", gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "rgba(0,0,0,.4)" }}>Incluye</div>
-            {p.features.map((f) => <div key={f} style={{ display: "flex", gap: 10, fontSize: 15, lineHeight: 1.4 }}><span style={{ width: 22, height: 22, borderRadius: 99, flexShrink: 0, display: "grid", placeItems: "center", background: rgba(c, 0.12), color: c }}><Check size={13} strokeWidth={3} /></span>{f}</div>)}
-          </div>
-        )}
       </motion.div>
     </motion.div>
   );
+}
+
+/** Ilustración de cada módulo (sobre el degradado del color del local). */
+function ModuleArt({ name, color: c }: { name: string; color: string }) {
+  const card: React.CSSProperties = { background: "#fff", borderRadius: 18, boxShadow: "0 24px 50px -18px rgba(0,0,0,.45)", color: "#111" };
+  const line = (w: string | number, o = 0.15) => <div style={{ height: 7, width: w, borderRadius: 4, background: `rgba(0,0,0,${o})` }} />;
+  if (/loyal|fideliz|tarjeta/i.test(name)) return (
+    <div style={{ ...card, width: 220, padding: 16, background: `linear-gradient(135deg, ${lighten(c, 0.15)}, ${c})`, color: onColor(c) }}>
+      <div style={{ fontWeight: 800, fontSize: 14 }}>Tarjeta de cliente</div>
+      <div style={{ fontSize: 11, opacity: 0.8 }}>4 de 5 sellos</div>
+      <div style={{ display: "flex", gap: 7, marginTop: 34 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ flex: 1, aspectRatio: "1", borderRadius: 99, background: i < 4 ? "rgba(255,255,255,.95)" : "transparent", border: "2px solid rgba(255,255,255,.7)", display: "grid", placeItems: "center", color: c }}>{i < 4 ? <Check size={13} strokeWidth={3} /> : <Heart size={12} color="#fff" />}</div>)}</div>
+    </div>
+  );
+  if (/carta|qr/i.test(name)) return (
+    <div style={{ ...card, width: 150, height: 250, borderRadius: 28, padding: 10, background: "#111" }}>
+      <div style={{ background: "#fff", borderRadius: 20, height: "100%", padding: 12, boxSizing: "border-box", display: "grid", gap: 8, alignContent: "start" }}>
+        <div style={{ height: 50, borderRadius: 10, background: rgba(c, 0.25) }} />
+        {[0, 1, 2].map((i) => <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}><div style={{ width: 26, height: 26, borderRadius: 7, background: rgba(c, 0.2) }} /><div style={{ flex: 1, display: "grid", gap: 4 }}>{line("90%")}{line("50%", 0.08)}</div></div>)}
+        <div style={{ marginLeft: "auto", width: 30, height: 30, borderRadius: 99, background: c, color: onColor(c), display: "grid", placeItems: "center" }}><QrCode size={15} /></div>
+      </div>
+    </div>
+  );
+  if (/apps? delivery|integraci/i.test(name)) return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ display: "grid", gap: 8 }}>{[["Uber Eats", "#06c167"], ["PedidosYa", "#fa0050"], ["Rappi", "#ff441f"]].map(([n, col]) => <div key={n} style={{ ...card, padding: "8px 12px", fontWeight: 800, fontSize: 12, color: col, borderRadius: 12 }}>{n}</div>)}</div>
+      <div style={{ color: "#fff", fontSize: 26, fontWeight: 800 }}>→</div>
+      <div style={{ ...card, width: 110, padding: 12, display: "grid", gap: 6 }}><b style={{ fontSize: 12 }}>Tu POS</b>{[0, 1, 2].map((i) => <div key={i} style={{ height: 16, borderRadius: 6, background: rgba(c, 0.18 + i * 0.1) }} />)}</div>
+    </div>
+  );
+  if (/kds|cocina|pantalla/i.test(name)) return (
+    <div style={{ ...card, width: 250, padding: 10, background: "#1b1b1d", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+      {[["#f59e0b", "08:12"], ["#16a34a", "03:40"], ["#ef4444", "14:05"]].map(([col, t], i) => (
+        <div key={i} style={{ background: "#fff", borderRadius: 8, overflow: "hidden" }}><div style={{ background: col, color: "#fff", fontSize: 10, fontWeight: 800, padding: "4px 6px" }}>{t}</div><div style={{ padding: 6, display: "grid", gap: 4 }}>{line("90%")}{line("70%")}{line("80%", 0.08)}</div></div>
+      ))}
+    </div>
+  );
+  if (/repartidor|motorist|flota/i.test(name)) return (
+    <div style={{ ...card, width: 230, height: 170, padding: 0, overflow: "hidden", position: "relative", background: "#eef1f4" }}>
+      <svg width="230" height="170" style={{ position: "absolute", inset: 0 }}><path d="M30 140 C 80 60, 140 150, 200 40" fill="none" stroke={c} strokeWidth="6" strokeLinecap="round" strokeDasharray="1 12" /></svg>
+      <div style={{ position: "absolute", left: 18, top: 124, width: 26, height: 26, borderRadius: 8, background: c, color: onColor(c), display: "grid", placeItems: "center" }}><Store size={14} /></div>
+      <div style={{ position: "absolute", left: 104, top: 82, width: 32, height: 32, borderRadius: 99, background: "#fff", color: c, display: "grid", placeItems: "center", boxShadow: "0 6px 14px rgba(0,0,0,.25)" }}><Bike size={17} /></div>
+      <div style={{ position: "absolute", left: 188, top: 26, width: 24, height: 24, borderRadius: 99, background: "#111" }} />
+    </div>
+  );
+  if (/mesa|sal[oó]n/i.test(name)) return (
+    <div style={{ ...card, width: 230, padding: 14, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+      {[1, 0, 1, 1, 0, 0].map((busy, i) => <div key={i} style={{ aspectRatio: "1", borderRadius: 14, background: busy ? c : "#f2f1ee", color: busy ? onColor(c) : "#999", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13 }}>{i + 1}</div>)}
+    </div>
+  );
+  if (/recupera/i.test(name)) return (
+    <div style={{ ...card, width: 230, padding: 0, display: "flex", overflow: "hidden" }}>
+      <div style={{ background: c, color: onColor(c), padding: "18px 14px", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 26 }}>-15%</div>
+      <div style={{ padding: 14, borderLeft: "2px dashed #ddd" }}><div style={{ fontWeight: 800, fontSize: 13 }}>¡Te extrañamos!</div><div style={{ fontSize: 11, color: "#777", marginTop: 4 }}>Vuelve esta semana</div><div style={{ marginTop: 8, fontFamily: "var(--demo-mono)", fontWeight: 800, fontSize: 12, color: c }}>VUELVE15</div></div>
+    </div>
+  );
+  if (/boleta|factura|electr/i.test(name)) return (
+    <div style={{ ...card, width: 170, padding: 16, borderRadius: 6, display: "grid", gap: 7, fontFamily: "var(--demo-mono)" }}>
+      <b style={{ fontSize: 11, textAlign: "center" }}>BOLETA ELECTRÓNICA</b>
+      <div style={{ fontSize: 9, textAlign: "center", color: "#777" }}>N° 001284 · SII</div>
+      {[0, 1, 2].map((i) => <div key={i} style={{ display: "flex", justifyContent: "space-between" }}>{line("55%")}{line("22%")}</div>)}
+      <div style={{ borderTop: "1px dashed #ccc", paddingTop: 6, display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800 }}><span>TOTAL</span><span style={{ color: c }}>$24.390</span></div>
+    </div>
+  );
+  if (/tienda|ecommerce|online/i.test(name)) return (
+    <div style={{ ...card, width: 150, height: 250, borderRadius: 28, padding: 10, background: "#111" }}>
+      <div style={{ background: "#f5f3ee", borderRadius: 20, height: "100%", padding: 12, boxSizing: "border-box", display: "grid", gap: 8, alignContent: "start" }}>
+        <div style={{ height: 70, borderRadius: 12, background: rgba(c, 0.3) }} />{line("70%")}{line("40%", 0.08)}
+        <div style={{ marginTop: 40, borderRadius: 99, padding: "8px 0", textAlign: "center", fontSize: 10, fontWeight: 800, background: c, color: onColor(c) }}>Pedir</div>
+      </div>
+    </div>
+  );
+  return <div style={{ ...card, width: 120, height: 120, display: "grid", placeItems: "center", color: c }}><ModuleIcon name={name} size={48} /></div>;
 }
 
 function ModuleTile({ plan: p, color: c }: { plan: DemoPlan; color: string }) {
@@ -256,7 +342,7 @@ function TierPage({ data, plan: p, step, label, narrow }: { data: DemoData; plan
                   <div style={{ width: 40, height: 40, borderRadius: 13, display: "grid", placeItems: "center", background: hl ? c : rgba(c, 0.12), color: hl ? onColor(c) : c }}><ShoppingBag size={19} /></div>
                   <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: hl ? "rgba(255,255,255,.7)" : "rgba(0,0,0,.45)" }}>{names[i] ?? "Plan"}</div>
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", marginTop: 18 }}>{t.label} pedidos</div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", marginTop: 18 }}>{t.label}</div>
                 <div style={{ fontSize: 14, color: hl ? "rgba(255,255,255,.6)" : "rgba(0,0,0,.45)" }}>al mes</div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 18 }}>
                   <span style={{ fontFamily: "var(--demo-mono)", fontSize: "clamp(32px, 3vw, 44px)", fontWeight: 700, letterSpacing: "-.03em", color: hl ? "#fff" : c }}>{clp(t.price)}</span>

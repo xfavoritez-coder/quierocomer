@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Bell, ChevronLeft, ChevronRight, CreditCard, Handshake, Heart, Maximize2, Minimize2, ShoppingBag, StickyNote, X } from "lucide-react";
+import { Bell, QrCode, ChevronLeft, ChevronRight, CreditCard, Handshake, Heart, Maximize2, Minimize2, ShoppingBag, StickyNote, X } from "lucide-react";
 import type { ChapterId, DemoData, LiveOrder } from "./types";
 import { SELLER_NOTES } from "./notes";
 import { EASE, LocalLogo, clp } from "./ui";
@@ -27,6 +27,8 @@ const CHAPTER_MODULE: Partial<Record<ChapterId, InterestModule>> = { carta: "car
 
 // QR por capítulo: abre en el celular del dueño la versión real de ese módulo.
 type ChapterQr = { path: (slug: string) => string; kicker: string; title: (name: string) => string; hint: string };
+// QR de la página del local (carta, pedir online, valoraciones…): botón flotante solo en Carta QR.
+const QR_LANDING: ChapterQr = { path: (s) => `/${s}`, kicker: "Su página", title: (n) => `La página de ${n}`, hint: "Carta, pedidos online, valoraciones y más, en un solo lugar." };
 // El QR de la carta abre directo la carta (?carta=1), sin pasar por la portada del local.
 const QR_CARTA: ChapterQr = { path: (s) => `/qr/${s}?carta=1`, kicker: "Pruébalo en tu celular", title: (n) => `Escanea y abre la carta de ${n}`, hint: "Toca la campana para llamar al garzón y mira esta pantalla." };
 const QR_STORE: ChapterQr = { path: (s) => `/ecommerce/${s}`, kicker: "Haz un pedido de prueba", title: (n) => `La tienda de ${n}`, hint: "Pide desde tu celular (retiro, pago en efectivo) y mira cómo llega aquí. No se cobra nada." };
@@ -50,6 +52,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
   const [step, setStep] = useState(0);
   const [notesOpen, setNotesOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [qrLanding, setQrLanding] = useState(false); // true: QR de la página del local
   const [fullscreen, setFullscreen] = useState(false);
   const [idle, setIdle] = useState(false);
   const canClose = mode === "seller" && !!baseData.leadId && !!seller;
@@ -174,7 +177,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
       else if (e.key === "ArrowLeft" || e.key === "PageUp" || e.key === "Backspace") { e.preventDefault(); prev(); }
       else if ((e.key === "n" || e.key === "N") && mode === "seller") setNotesOpen((v) => !v);
       else if (e.key === "f" || e.key === "F") toggleFullscreen();
-      else if (e.key === "q" || e.key === "Q") setQrOpen((v) => !v);
+      else if (e.key === "q" || e.key === "Q") { setQrLanding(false); setQrOpen((v) => !v); }
       else if ((e.key === "c" || e.key === "C") && canClose) setCloseOpen((v) => !v);
       else if ((e.key === "i" || e.key === "I") && chapterModule) toggleInterest(chapterModule);
       else if (e.key === "Escape") { setNotesOpen(false); setQrOpen(false); setCloseOpen(false); }
@@ -200,7 +203,8 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
 
   const ink = chapter.dark ? "#F5F5F7" : "#111";
   const sub = chapter.dark ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.5)";
-  const qrUrl = data.slug && typeof window !== "undefined" ? `${window.location.origin}${chapter.qr.path(data.slug)}` : null;
+  const qrCfg = qrLanding ? QR_LANDING : chapter.qr;
+  const qrUrl = data.slug && typeof window !== "undefined" ? `${window.location.origin}${qrCfg.path(data.slug)}` : null;
 
   return (
     <div
@@ -227,7 +231,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
             transition={{ duration: reduce ? 0.2 : 0.85, ease: EASE }}
             style={{ position: "absolute", inset: 0 }}
           >
-            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} live={{ orders: liveOrders }} onQr={data.slug ? () => setQrOpen(true) : undefined} />
+            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} live={{ orders: liveOrders }} onQr={data.slug ? () => { setQrLanding(false); setQrOpen(true); } : undefined} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -274,6 +278,17 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
         ))}
       </div>
 
+      {/* QR flotante: solo en Carta QR, abre la página del local */}
+      <AnimatePresence>
+        {chapter.id === "carta" && data.slug && (
+          <motion.button key="qrfab" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: hideChrome ? 0 : 1, scale: hideChrome ? 0.9 : 1 }} exit={{ opacity: 0, scale: 0.8 }}
+            onClick={(e) => { e.stopPropagation(); setQrLanding(true); setQrOpen(true); }} aria-label="QR de la página del local"
+            style={{ position: "absolute", right: 22, bottom: 30, zIndex: 11, width: 56, height: 56, borderRadius: 18, border: "none", cursor: "pointer", display: "grid", placeItems: "center", background: data.color, color: "#fff", boxShadow: `0 12px 30px -8px ${data.color}`, pointerEvents: hideChrome ? "none" : "auto" }}>
+            <QrCode size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {qrOpen && (
           <motion.div key="qr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setQrOpen(false)}
@@ -282,12 +297,12 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
               style={{ background: "#fff", color: "#111", borderRadius: 32, padding: "36px 40px", textAlign: "center", maxWidth: 440, width: "100%", boxShadow: "0 40px 120px -20px rgba(0,0,0,.6)" }}>
               {qrUrl ? (
                 <>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: data.color, letterSpacing: ".08em", textTransform: "uppercase" }}>{chapter.qr.kicker}</div>
-                  <div style={{ fontSize: 26, fontWeight: 750, letterSpacing: "-.03em", margin: "6px 0 22px" }}>{chapter.qr.title(data.name)}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: data.color, letterSpacing: ".08em", textTransform: "uppercase" }}>{qrCfg.kicker}</div>
+                  <div style={{ fontSize: 26, fontWeight: 750, letterSpacing: "-.03em", margin: "6px 0 22px" }}>{qrCfg.title(data.name)}</div>
                   <div style={{ display: "inline-block", padding: 16, borderRadius: 22, background: "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,.08)" }}>
                     <QRCodeSVG value={qrUrl} size={280} level="M" fgColor="#111" />
                   </div>
-                  <div style={{ fontSize: 15, color: "#666", marginTop: 18 }}>{chapter.qr.hint}</div>
+                  <div style={{ fontSize: 15, color: "#666", marginTop: 18 }}>{qrCfg.hint}</div>
                 </>
               ) : (
                 <>

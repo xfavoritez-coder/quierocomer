@@ -21,6 +21,8 @@ export default function Loyalty({ data, step, onQr }: ChapterProps) {
   const { narrow } = useViewport();
   const c = data.color;
   const accent = lighten(c, 0.35);
+  // Las notificaciones del celular aparecen cuando el vendedor las envía (botón).
+  const [shown, setShown] = useState({ near: false, bday: false });
 
   if (step === 0) {
     return (
@@ -53,12 +55,12 @@ export default function Loyalty({ data, step, onQr }: ChapterProps) {
             ))}
           </div>
           {k === 1 && data.slug && <QrPill label="Inscríbete tú en tu tarjeta" color={accent} onClick={onQr} dark style={{ marginTop: 22 }} />}
-          {k >= 2 && data.leadId && data.slug && <PushTest key={k} leadId={data.leadId} kind={k === 2 ? "near" : "birthday"} color={accent} />}
+          {k >= 2 && <PushTest key={k} leadId={data.slug ? data.leadId : null} kind={k === 2 ? "near" : "birthday"} color={accent} onShow={() => setShown((x) => ({ ...x, [k === 2 ? "near" : "bday"]: true }))} />}
         </div>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <Reveal step={step} at={1} y={60} delay={0.2}>
             <PhoneFrame width={narrow ? 220 : 300} style={{ background: "linear-gradient(145deg, #3a3a3e, #111)" }}>
-              <LockScreen data={data} k={k} />
+              <LockScreen data={data} k={k} shown={shown} />
             </PhoneFrame>
           </Reveal>
           <AnimatePresence>{k === 2 && !narrow && <NearbyMap color={accent} />}</AnimatePresence>
@@ -69,7 +71,7 @@ export default function Loyalty({ data, step, onQr }: ChapterProps) {
 }
 
 /** Pantalla del celular del cliente: su tarjeta en el Wallet y los avisos que le llegan. */
-function LockScreen({ data, k }: { data: DemoData; k: number }) {
+function LockScreen({ data, k, shown }: { data: DemoData; k: number; shown: { near: boolean; bday: boolean } }) {
   const reduce = useReducedMotion();
   const c = data.color;
   const prize = demoPrize(data)?.name ?? "un premio";
@@ -95,12 +97,12 @@ function LockScreen({ data, k }: { data: DemoData; k: number }) {
       {/* Avisos */}
       <div style={{ position: "absolute", left: 10, right: 10, top: "40%", display: "grid", gap: 8 }}>
         <AnimatePresence>
-          {k === 2 && (
+          {k === 2 && shown.near && (
             <Notif key="near" icon={<MapPin size={16} />} color={c} title={data.name} time="ahora" delay={0.5}>
               Estás a pasos de {data.name} 👋 Te falta 1 sello para tu {prize}.
             </Notif>
           )}
-          {k === 3 && (
+          {k === 3 && shown.bday && (
             <Notif key="bday" icon={<Gift size={16} />} color={c} title={data.name} time="ahora" delay={0.5}>
               🎂 ¡Feliz cumpleaños, {first}! Hoy te regalamos {prize}. Te esperamos.
             </Notif>
@@ -167,27 +169,30 @@ function NearbyMap({ color }: { color: string }) {
   );
 }
 
-/** Envía a la tarjeta del que se inscribió (en su Wallet) el aviso de este paso, para verlo llegar en vivo. */
-function PushTest({ leadId, kind, color }: { leadId: string; kind: "near" | "birthday"; color: string }) {
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [msg, setMsg] = useState("");
+/** Botón del vendedor: muestra la notificación en el celular de la pantalla y, si el dueño se
+ *  inscribió y agregó la tarjeta a su Wallet, se la envía también a su celular. */
+function PushTest({ leadId, kind, color, onShow }: { leadId: string | null; kind: "near" | "birthday"; color: string; onShow: () => void }) {
+  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const send = async () => {
-    setState("sending"); setMsg("");
+    onShow();
+    if (!leadId) { setState("done"); return; }
+    setState("sending"); setMsg(null);
     try {
       const r = await fetch(`/api/ventas/leads/${leadId}/loyalty-push`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setState("error"); setMsg(d.error || "No se pudo enviar"); return; }
-      setState("sent"); setMsg("Enviado. Mira tu celular 📱");
-    } catch { setState("error"); setMsg("Error de conexión"); }
+      setMsg(r.ok ? { ok: true, text: "También llegó a tu celular 📱" } : { ok: false, text: d.error || "No se pudo enviar a tu celular" });
+    } catch { setMsg({ ok: false, text: "Error de conexión" }); }
+    setState("done");
   };
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.8 }} onClick={(e) => e.stopPropagation()} style={{ marginTop: 22 }}>
       <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={send} disabled={state === "sending"}
         style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "11px 18px 11px 12px", borderRadius: 99, border: "none", cursor: "pointer", font: "inherit", fontWeight: 700, fontSize: 15, background: "#fff", color: "#111", boxShadow: "0 16px 40px -14px rgba(0,0,0,.5)", opacity: state === "sending" ? 0.7 : 1 }}>
         <span style={{ width: 30, height: 30, borderRadius: 99, display: "grid", placeItems: "center", background: color, color: onColor(color) }}><Send size={15} /></span>
-        {state === "sending" ? "Enviando…" : kind === "near" ? "Envíalo a tu celular: aviso de cercanía" : "Envíalo a tu celular: saludo de cumpleaños"}
+        {state === "sending" ? "Enviando…" : state === "done" ? "Enviar de nuevo" : kind === "near" ? "Enviar aviso de cercanía" : "Enviar saludo de cumpleaños"}
       </motion.button>
-      {msg && <div style={{ marginTop: 10, fontSize: 14, fontWeight: 600, color: state === "error" ? "#fca5a5" : color, maxWidth: 440 }}>{msg}</div>}
+      {msg && <div style={{ marginTop: 10, fontSize: 14, fontWeight: 600, color: msg.ok ? color : "rgba(255,255,255,.55)", maxWidth: 440 }}>{msg.text}</div>}
     </motion.div>
   );
 }

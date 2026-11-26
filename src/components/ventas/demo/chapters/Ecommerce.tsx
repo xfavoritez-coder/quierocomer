@@ -12,7 +12,23 @@ import OrdersInbox, { sampleOrders } from "./OrdersInbox";
 
 export const ecommerceSteps = 6;
 
-export default function Ecommerce({ data, step, live, onQr }: ChapterProps) {
+/** Cada paso entra con una transición corta (fundido, leve zoom y desenfoque). */
+export default function Ecommerce(props: ChapterProps) {
+  const reduce = useReducedMotion();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div key={props.step} style={{ position: "absolute", inset: 0 }}
+        initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 24, filter: "blur(10px)" }}
+        animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+        exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.02, y: -16, filter: "blur(10px)" }}
+        transition={{ duration: 0.45, ease: EASE }}>
+        <EcommerceStep {...props} />
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function EcommerceStep({ data, step, live, onQr }: ChapterProps) {
   const { narrow, w } = useViewport();
   const c = data.color;
   const liveOrders = [...(live?.orders ?? [])].reverse();
