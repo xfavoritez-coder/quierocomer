@@ -581,6 +581,17 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
+    // Logo visible sobre fondo blanco: si el extraído es casi todo blanco (ej. Mercat usa uno blanco
+    // para su barra oscura), se busca otra versión en la página. Best-effort.
+    if (lead.cartaUrl && !isFileUpload && !isDirectPdf) {
+      try {
+        const { improveLogo } = await import("./logo");
+        const better = await improveLogo(extraction.logoUrl, lead.cartaUrl);
+        if (better !== extraction.logoUrl) console.log(`[Pipeline] Logo mejorado: ${extraction.logoUrl} → ${better}`);
+        extraction.logoUrl = better;
+      } catch { /* sigue con el logo original */ }
+    }
+
     // Validate extraction quality — only reject if truly empty
     const dishesWithPrice = extraction.dishes.filter(d => d.price > 0);
     if (extraction.dishes.length < 3) {

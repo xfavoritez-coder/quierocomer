@@ -13,7 +13,7 @@ export default function Accesos({ data }: ChapterProps) {
   const c = data.color;
   const origin = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com";
   const links = data.slug ? [
-    { icon: QrCode, title: "Su carta QR", sub: "Lo que ven sus clientes en la mesa.", url: `${origin}/qr/${data.slug}?carta=1` },
+    { icon: QrCode, title: "Su página", sub: "Carta, pedidos online, valoraciones y más, en un solo lugar.", url: `${origin}/${data.slug}` },
     { icon: ShoppingBag, title: "Su tienda online", sub: "Para pedir retiro o delivery, sin comisiones.", url: `${origin}/ecommerce/${data.slug}` },
   ] : [];
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();

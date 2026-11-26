@@ -185,8 +185,8 @@ export async function seedShowcase(): Promise<{ restaurants: number; orders: num
     if (!(await prisma.category.count({ where: { restaurantId: rid } }))) {
       const cats = [...new Set(menu.map((m) => m.category))];
       for (let ci = 0; ci < cats.length; ci++) {
-        const cat = await prisma.category.create({ data: { restaurantId: rid, name: cats[ci], position: ci }, select: { id: true } });
-        await prisma.dish.createMany({ data: menu.filter((m) => m.category === cats[ci]).map((m, di) => ({ restaurantId: rid, categoryId: cat.id, name: m.name, price: m.price, description: m.description, photos: m.photo ? [m.photo] : [], position: di, dishDiet: "VEGAN" as const })) });
+        const cat = await prisma.category.create({ data: { restaurantId: rid, name: cats[ci], position: ci, scheduleDays: [] }, select: { id: true } });
+        await prisma.dish.createMany({ data: menu.filter((m) => m.category === cats[ci]).map((m, di) => ({ restaurantId: rid, categoryId: cat.id, name: m.name, price: m.price, description: m.description, photos: m.photo ? [m.photo] : [], position: di, dishDiet: "VEGAN" as const, flavorTags: [], tags: [], txDishType: [], txCuisine: [], txMealSlot: [], txIngredient: [], txEstilo: [] })) });
       }
     }
     const dishRows = await prisma.dish.findMany({ where: { restaurantId: rid, isActive: true, deletedAt: null }, select: { id: true, name: true } });

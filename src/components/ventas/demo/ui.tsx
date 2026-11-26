@@ -111,9 +111,10 @@ export function dishEmoji(name: string): string {
 
 export function LocalLogo({ data, size = 56, radius }: { data: DemoData; size?: number; radius?: number }) {
   const r = radius ?? Math.round(size * 0.24);
-  if (data.logoUrl) {
+  const [broken, setBroken] = useState(false); // si el logo no carga, se muestra la inicial
+  if (data.logoUrl && !broken) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={data.logoUrl} alt={data.name} style={{ width: size, height: size, objectFit: "contain", borderRadius: r, background: "#fff", padding: Math.round(size * 0.08), boxSizing: "border-box" }} />;
+    return <img src={data.logoUrl} alt={data.name} onError={() => setBroken(true)} style={{ width: size, height: size, objectFit: "contain", borderRadius: r, background: "#fff", padding: Math.round(size * 0.08), boxSizing: "border-box" }} />;
   }
   return (
     <div style={{ width: size, height: size, borderRadius: r, background: data.color, color: onColor(data.color), display: "grid", placeItems: "center", fontWeight: 800, fontSize: size * 0.46, letterSpacing: "-.04em" }}>

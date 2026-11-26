@@ -18,8 +18,8 @@ export async function ensureExampleRestaurant() {
   if (!(await prisma.category.count({ where: { restaurantId: r.id } }))) {
     for (let ci = 0; ci < f.categories.length; ci++) {
       const c = f.categories[ci];
-      const cat = await prisma.category.create({ data: { restaurantId: r.id, name: c.name, position: ci }, select: { id: true } });
-      await prisma.dish.createMany({ data: c.dishes.map((d, di) => ({ restaurantId: r.id, categoryId: cat.id, name: d.name, price: d.price, description: d.description ?? null, photos: d.photo ? [d.photo] : [], position: di })) });
+      const cat = await prisma.category.create({ data: { restaurantId: r.id, name: c.name, position: ci, scheduleDays: [] }, select: { id: true } });
+      await prisma.dish.createMany({ data: c.dishes.map((d, di) => ({ restaurantId: r.id, categoryId: cat.id, name: d.name, price: d.price, description: d.description ?? null, photos: d.photo ? [d.photo] : [], position: di, flavorTags: [], tags: [], txDishType: [], txCuisine: [], txMealSlot: [], txIngredient: [], txEstilo: [] })) });
     }
   }
   return r;
