@@ -6,7 +6,7 @@ import { Gift, Check, MapPin } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData } from "../types";
 import { PhoneFrame } from "../frames";
-import { BrandText, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, TryItHint, demoPrize, lighten, onColor, rgba, useViewport } from "../ui";
+import { BrandText, EASE, Eyebrow, Headline, LocalLogo, QrPill, Reveal, Stage, demoPrize, lighten, onColor, rgba, useViewport } from "../ui";
 
 const STAMPS = 5;
 
@@ -16,7 +16,7 @@ const COPY: Record<number, { t1: string; t2: string; sub: string }> = {
   3: { t1: "Su cumpleaños.", t2: "Tu regalo.", sub: "Ese día recibe un saludo con un regalo tuyo. Automático, todos los años. Así se acuerda de ti." },
 };
 
-export default function Loyalty({ data, step }: ChapterProps) {
+export default function Loyalty({ data, step, onQr }: ChapterProps) {
   const { narrow } = useViewport();
   const c = data.color;
   const accent = lighten(c, 0.35);
@@ -35,7 +35,6 @@ export default function Loyalty({ data, step }: ChapterProps) {
   const copy = COPY[k];
   return (
     <>
-      <TryItHint show={k === 1 && !!data.slug && !narrow} color={accent} text="Inscríbete en tu propia tarjeta" />
       <Stage style={{ gap: "clamp(28px, 6vw, 110px)", flexDirection: narrow ? "column" : "row" }}>
         <div style={{ flex: "1 1 0", maxWidth: 520, minWidth: 0 }}>
           <Reveal step={step} at={1}><Eyebrow color={accent}>Fidelización · {data.name}</Eyebrow></Reveal>
@@ -52,6 +51,7 @@ export default function Loyalty({ data, step }: ChapterProps) {
                 style={{ padding: "7px 14px", borderRadius: 99, fontSize: 13, fontWeight: 700 }}>{t}</motion.span>
             ))}
           </div>
+          {k === 1 && data.slug && <QrPill label="Inscríbete tú en tu tarjeta" color={accent} onClick={onQr} dark style={{ marginTop: 22 }} />}
         </div>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <Reveal step={step} at={1} y={60} delay={0.2}>
@@ -91,7 +91,7 @@ function LockScreen({ data, k }: { data: DemoData; k: number }) {
       </div>
 
       {/* Avisos */}
-      <div style={{ position: "absolute", left: 10, right: 10, top: "34%", display: "grid", gap: 8 }}>
+      <div style={{ position: "absolute", left: 10, right: 10, top: "40%", display: "grid", gap: 8 }}>
         <AnimatePresence>
           {k === 2 && (
             <Notif key="near" icon={<MapPin size={16} />} color={c} title={data.name} time="ahora" delay={0.5}>
@@ -107,7 +107,7 @@ function LockScreen({ data, k }: { data: DemoData; k: number }) {
       </div>
 
       {/* Tarjeta en el Wallet */}
-      <motion.div initial={false} animate={{ y: k === 1 ? "-62%" : 0, scale: k === 1 ? 1.04 : 0.94, opacity: k === 1 ? 1 : 0.9 }} transition={{ duration: 0.8, ease: EASE }}
+      <motion.div initial={false} animate={{ y: k === 1 ? "-62%" : 60, scale: k === 1 ? 1.04 : 0.9, opacity: k === 1 ? 1 : 0 }} transition={{ duration: 0.8, ease: EASE }}
         style={{ position: "absolute", left: 10, right: 10, bottom: 14, aspectRatio: "1.45", borderRadius: 16, padding: 12, boxSizing: "border-box", overflow: "hidden", color: onColor(c),
           background: `linear-gradient(135deg, ${lighten(c, 0.12)} 0%, ${c} 60%, ${rgba(c, 0.85)} 100%)`, boxShadow: `0 20px 40px -14px ${rgba(c, 0.8)}` }}>
         <div aria-hidden style={{ position: "absolute", inset: 0, background: "linear-gradient(115deg, transparent 35%, rgba(255,255,255,.2) 48%, transparent 60%)" }} />

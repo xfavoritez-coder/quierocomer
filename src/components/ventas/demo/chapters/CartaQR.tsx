@@ -2,17 +2,17 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Bell, Languages, Sparkles, Leaf, FileText, QrCode } from "lucide-react";
+import { Bell, Languages, Sparkles, Leaf, FileText, X, Eye } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData } from "../types";
 import { PhoneFrame } from "../frames";
-import { BrandText, DishImage, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, TryItHint, clp, featuredDishes, onColor, rgba, useViewport } from "../ui";
+import { BrandText, DishImage, EASE, Eyebrow, Headline, LocalLogo, QrPill, Reveal, Stage, clp, featuredDishes, onColor, rgba, useViewport } from "../ui";
 
 // Una función por paso (paso 1 = la primera). Todas quedan a la vista; la activa se destaca.
 const FEATURES = [
   { id: "idiomas", icon: Languages, title: "Habla el idioma de cada cliente", sub: "Tu carta se traduce sola a inglés, portugués y más. El turista entiende lo que pide." },
   { id: "recomienda", icon: Sparkles, title: "Recomendaciones inteligentes", sub: "En cada plato sugiere con qué acompañarlo. Más platos por mesa, sin que el garzón insista." },
-  { id: "garzon", icon: Bell, title: "Llamar al garzón", sub: "Tocan un botón en la mesa y te llega el aviso al instante." },
+  { id: "garzon", icon: Bell, title: "Llamar al garzón", sub: "Tocan la campana en la mesa y te llega el aviso al instante." },
   { id: "filtros", icon: Leaf, title: "Filtros para cada dieta", sub: "Vegano, vegetariano, sin gluten, picante. Cada uno encuentra lo suyo en segundos." },
   { id: "pdf", icon: FileText, title: "Tu carta impresa, con diseño", sub: "Exporta tu carta en PDF con distintos diseños. Papel y QR, siempre con los mismos precios." },
 ] as const;
@@ -20,94 +20,109 @@ type FeatureId = (typeof FEATURES)[number]["id"];
 
 export const cartaSteps = FEATURES.length + 1;
 
-export default function CartaQR({ data, step }: ChapterProps) {
+/** Foto de portada: el banner del local o, si no tiene, la foto de uno de sus platos. */
+export function coverPhoto(data: DemoData): string | null {
+  return data.bannerUrl || featuredDishes(data, 12).find((d) => d.photo)?.photo || null;
+}
+
+export default function CartaQR({ data, step, onQr }: ChapterProps) {
   const { narrow } = useViewport();
+  const reduce = useReducedMotion();
   const c = data.color;
+  const [preview, setPreview] = useState<string | null>(null); // diseño de carta impresa a mostrar
 
-  if (step === 0) {
-    return (
-      <Stage style={{ flexDirection: "column", textAlign: "center" }}>
-        <Reveal step={step} at={0}><Eyebrow color={c}>Carta QR</Eyebrow></Reveal>
-        <Reveal step={step} at={0} delay={0.15}><Headline style={{ marginTop: 18 }}>Papel y digital.</Headline></Reveal>
-        <Reveal step={step} at={0} delay={0.45}><Headline style={{ marginTop: 6 }}><BrandText color={c}>Mejor juntos.</BrandText></Headline></Reveal>
-        <Reveal step={step} at={0} delay={0.8}>
-          <div style={{ fontSize: "clamp(17px, 1.6vw, 22px)", color: "rgba(0,0,0,.5)", marginTop: 22, maxWidth: 640, lineHeight: 1.45 }}>
-            Tu carta de siempre en la mesa, y una carta que además traduce, recomienda y llama al garzón en el celular de cada cliente.
-          </div>
-        </Reveal>
-      </Stage>
-    );
-  }
-
-  const active: FeatureId = FEATURES[Math.min(step, FEATURES.length) - 1].id;
+  const intro = step === 0;
+  const active: FeatureId = FEATURES[Math.max(1, Math.min(step, FEATURES.length)) - 1].id;
 
   return (
-    <>
-      <TryItHint show={active === "garzon" && !!data.slug && !narrow} color={c} text="Pruébalo: toca la campana en tu celular" />
-      <Stage style={{ gap: "clamp(28px, 5vw, 96px)", flexDirection: narrow ? "column" : "row" }}>
-        <div style={{ flex: "1 1 0", maxWidth: 540, minWidth: 0 }}>
-          <Reveal step={step} at={1}><Eyebrow color={c}>Carta QR · {data.name}</Eyebrow></Reveal>
-          <Reveal step={step} at={1} delay={0.1}><Headline size="md" style={{ marginTop: 12 }}>Tu carta, siempre al día.<br /><BrandText color={c}>Y además vende.</BrandText></Headline></Reveal>
-          <div style={{ marginTop: "clamp(16px, 3vh, 30px)", display: "grid", gap: 2 }}>
-            {FEATURES.map((f, i) => {
-              const on = f.id === active;
-              if (narrow && !on) return null;
-              return (
-                <Reveal key={f.id} step={step} at={1} delay={0.2 + i * 0.07} y={12}>
-                  <motion.div initial={false} animate={{ opacity: on ? 1 : 0.38 }} transition={{ duration: 0.5 }}
-                    style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "10px 0", borderTop: i && !narrow ? "1px solid rgba(0,0,0,.06)" : "none" }}>
-                    <motion.div initial={false} animate={{ background: on ? c : rgba(c, 0.1), color: on ? onColor(c) : c, scale: on ? 1.06 : 1 }} transition={{ duration: 0.5, ease: EASE }}
-                      style={{ width: 40, height: 40, borderRadius: 13, flexShrink: 0, display: "grid", placeItems: "center" }}><f.icon size={19} /></motion.div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: "clamp(17px, 1.5vw, 21px)", fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.25, paddingTop: 8 }}>{f.title}</div>
-                      <AnimatePresence initial={false}>
-                        {on && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease: EASE }} style={{ overflow: "hidden" }}>
-                            <div style={{ fontSize: "clamp(14px, 1.2vw, 16.5px)", color: "rgba(0,0,0,.55)", marginTop: 4, lineHeight: 1.45 }}>{f.sub}</div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </motion.div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          {/* Cartas impresas en PDF (detrás del celular) */}
-          <AnimatePresence>{active === "pdf" && <PaperMenus data={data} narrow={narrow} />}</AnimatePresence>
-          <Reveal step={step} at={1} y={60} delay={0.2} style={{ position: "relative", zIndex: 2 }}>
-            <motion.div initial={false} animate={{ x: active === "pdf" && !narrow ? -70 : 0 }} transition={{ duration: 0.9, ease: EASE }} style={{ position: "relative", zIndex: 2 }}>
-              <PhoneFrame width={narrow ? 210 : 290}>
-                <CartaPhone data={data} active={active} />
-              </PhoneFrame>
-            </motion.div>
-          </Reveal>
-          {/* Aviso al local: llamar al garzón */}
-          <AnimatePresence>
-            {active === "garzon" && (
-              <motion.div key="waiter" initial={{ opacity: 0, x: 40, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.7, ease: EASE, delay: 0.5 }}
-                style={{ position: "absolute", bottom: narrow ? "8%" : "30%", right: narrow ? -10 : -250, width: 236, zIndex: 3, padding: "14px 16px", borderRadius: 20, background: "rgba(255,255,255,.94)", backdropFilter: "blur(20px)", boxShadow: "0 24px 60px -16px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.05)", display: "flex", gap: 12, alignItems: "center" }}>
-                <motion.div animate={{ rotate: [0, -16, 14, -10, 8, 0] }} transition={{ duration: 0.9, delay: 1, repeat: Infinity, repeatDelay: 1.6 }}
-                  style={{ width: 42, height: 42, borderRadius: 14, display: "grid", placeItems: "center", background: c, color: onColor(c), flexShrink: 0 }}><Bell size={20} /></motion.div>
-                <div><div style={{ fontWeight: 800, fontSize: 15 }}>Mesa 4</div><div style={{ fontSize: 13, color: "rgba(0,0,0,.55)" }}>llama al garzón · ahora</div></div>
+    <AnimatePresence mode="wait" initial={false}>
+      {intro ? (
+        <motion.div key="intro" style={{ position: "absolute", inset: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.25, filter: "blur(24px)" }} transition={{ duration: 0.7, ease: EASE }}>
+          <Stage style={{ flexDirection: "column", textAlign: "center" }}>
+            <Reveal step={step} at={0}><Eyebrow color={c}>Carta QR inteligente</Eyebrow></Reveal>
+            <Reveal step={step} at={0} delay={0.15}><Headline style={{ marginTop: 18 }}>Papel y digital.</Headline></Reveal>
+            <Reveal step={step} at={0} delay={0.45}><Headline style={{ marginTop: 6 }}><BrandText color={c}>Mejor juntos.</BrandText></Headline></Reveal>
+            <Reveal step={step} at={0} delay={0.8}>
+              <div style={{ fontSize: "clamp(17px, 1.6vw, 22px)", color: "rgba(0,0,0,.5)", marginTop: 22, maxWidth: 660, lineHeight: 1.45 }}>
+                Tu carta de siempre en la mesa, y una carta digital que además traduce, recomienda y llama al garzón en el celular de cada cliente.
+              </div>
+            </Reveal>
+          </Stage>
+        </motion.div>
+      ) : (
+        <motion.div key="main" style={{ position: "absolute", inset: 0 }} initial={{ opacity: 1 }} animate={{ opacity: 1 }}>
+          <Stage style={{ gap: "clamp(28px, 5vw, 96px)", flexDirection: narrow ? "column" : "row" }}>
+            <div style={{ flex: "1 1 0", maxWidth: 540, minWidth: 0 }}>
+              <motion.div initial={reduce ? false : { opacity: 0, x: -60, filter: "blur(12px)" }} animate={{ opacity: 1, x: 0, filter: "blur(0px)" }} transition={{ duration: 0.9, ease: EASE, delay: 0.35 }}>
+                <Eyebrow color={c}>Carta QR inteligente · {data.name}</Eyebrow>
+                <Headline size="md" style={{ marginTop: 12 }}>Tu carta, siempre al día.<br /><BrandText color={c}>Y además vende.</BrandText></Headline>
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </Stage>
-    </>
+              <div style={{ marginTop: "clamp(16px, 3vh, 30px)", display: "grid", gap: 2 }}>
+                {FEATURES.map((f, i) => {
+                  const on = f.id === active;
+                  if (narrow && !on) return null;
+                  return (
+                    <motion.div key={f.id} initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: on ? 1 : 0.38, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.6 + i * 0.08 }}
+                      style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "10px 0", borderTop: i && !narrow ? "1px solid rgba(0,0,0,.06)" : "none" }}>
+                      <motion.div initial={false} animate={{ background: on ? c : rgba(c, 0.1), color: on ? onColor(c) : c, scale: on ? 1.06 : 1 }} transition={{ duration: 0.5, ease: EASE }}
+                        style={{ width: 40, height: 40, borderRadius: 13, flexShrink: 0, display: "grid", placeItems: "center" }}><f.icon size={19} /></motion.div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: "clamp(17px, 1.5vw, 21px)", fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.25, paddingTop: 8 }}>{f.title}</div>
+                        <AnimatePresence initial={false}>
+                          {on && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease: EASE }} style={{ overflow: "hidden" }}>
+                              <div style={{ fontSize: "clamp(14px, 1.2vw, 16.5px)", color: "rgba(0,0,0,.55)", marginTop: 4, lineHeight: 1.45 }}>{f.sub}</div>
+                              {f.id === "garzon" && data.slug && <QrPill label="Pruébalo: escanea y toca la campana" color={c} onClick={onQr} delay={0.4} style={{ marginTop: 12, fontSize: 14 }} />}
+                              {f.id === "pdf" && <PdfPicker data={data} onShow={setPreview} />}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Celular: entra con fuerza al pasar de la portada a las funciones */}
+            <div style={{ position: "relative", flexShrink: 0, perspective: 1400 }}>
+              <motion.div initial={reduce ? false : { opacity: 0, y: 260, rotateX: 38, rotateZ: -6, scale: 1.35, filter: "blur(16px)" }}
+                animate={{ opacity: 1, y: 0, rotateX: 0, rotateZ: 0, scale: 1, filter: "blur(0px)" }} transition={{ duration: 1.3, ease: EASE, delay: 0.1 }}>
+                <PhoneFrame width={narrow ? 210 : 290}>
+                  <CartaPhone data={data} active={active} />
+                </PhoneFrame>
+              </motion.div>
+              {/* Brillo detrás del celular */}
+              <motion.div aria-hidden initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.6, ease: EASE, delay: 0.4 }}
+                style={{ position: "absolute", inset: "-14%", zIndex: -1, borderRadius: "50%", background: `radial-gradient(closest-side, ${rgba(c, 0.28)}, transparent)` }} />
+            </div>
+          </Stage>
+
+          {/* Vista de la carta impresa del local con el diseño elegido */}
+          <AnimatePresence>{preview && <PrintPreview data={data} template={preview} onChange={setPreview} onClose={() => setPreview(null)} />}</AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
+}
+
+// ── Banderas (SVG: los emojis de bandera no se ven en Windows) ─────────────
+function Flag({ code, size = 14 }: { code: string; size?: number }) {
+  const w = size * 1.45, h = size;
+  const s = { width: w, height: h, borderRadius: 2, display: "block", boxShadow: "0 0 0 .5px rgba(0,0,0,.2)" } as const;
+  if (code === "ES") return (<svg viewBox="0 0 30 20" style={s}><rect width="30" height="20" fill="#d52b1e" /><rect width="30" height="10" fill="#fff" /><rect width="10" height="10" fill="#0039a6" /><path d="M5 2.4l.9 2.6h2.7l-2.2 1.6.9 2.6L5 7.6 2.7 9.2l.9-2.6-2.2-1.6h2.7z" fill="#fff" /></svg>);
+  if (code === "EN") return (<svg viewBox="0 0 30 20" style={s}><rect width="30" height="20" fill="#fff" />{Array.from({ length: 7 }).map((_, i) => <rect key={i} y={i * 2.86} width="30" height="1.43" fill="#b22234" />)}<rect width="13" height="10.7" fill="#3c3b6e" /></svg>);
+  if (code === "PT") return (<svg viewBox="0 0 30 20" style={s}><rect width="30" height="20" fill="#009c3b" /><path d="M15 2.5L27 10 15 17.5 3 10z" fill="#ffdf00" /><circle cx="15" cy="10" r="4.6" fill="#002776" /></svg>);
+  return (<svg viewBox="0 0 30 20" style={s}><rect width="10" height="20" fill="#0055a4" /><rect x="10" width="10" height="20" fill="#fff" /><rect x="20" width="10" height="20" fill="#ef4135" /></svg>);
 }
 
 // ── Celular con la carta del local ─────────────────────────────────────────
 const LANGS = [
-  { code: "ES", flag: "🇨🇱", title: "Nuestra carta", add: "Agregar", rec: "Va perfecto con" },
-  { code: "EN", flag: "🇺🇸", title: "Our menu", add: "Add", rec: "Goes great with" },
-  { code: "PT", flag: "🇧🇷", title: "Nosso cardápio", add: "Adicionar", rec: "Combina com" },
-  { code: "FR", flag: "🇫🇷", title: "Notre carte", add: "Ajouter", rec: "Parfait avec" },
+  { code: "ES", title: "Nuestra carta", add: "Agregar" },
+  { code: "EN", title: "Our menu", add: "Add" },
+  { code: "PT", title: "Nosso cardápio", add: "Adicionar" },
+  { code: "FR", title: "Notre carte", add: "Ajouter" },
 ];
 const DIETS = ["🌱 Vegano", "🥬 Vegetariano", "🌾 Sin gluten", "🌶️ Picante"];
 
@@ -129,20 +144,20 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
   const li = useCycle(active === "idiomas", LANGS.length, 1700);
   const di = useCycle(active === "filtros", DIETS.length, 1600);
   const lang = LANGS[active === "idiomas" ? li : 0];
-  // Filtro: la lista cambia (orden distinto) para mostrar que se filtra.
   const dishes = active === "filtros" ? [...all.slice(di % 3), ...all.slice(0, di % 3)] : all;
   const cats = data.categories.slice(0, 5).map((x) => x.name);
   const hero = dishes[0];
+  const cover = coverPhoto(data);
+  const calling = active === "garzon";
 
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", fontSize: 12, color: "#111", background: "#fff" }}>
-      <div style={{ height: 104, position: "relative", flexShrink: 0, background: data.bannerUrl ? `center/cover url(${data.bannerUrl})` : `linear-gradient(135deg, ${c}, ${rgba(c, 0.7)})` }}>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 30%, rgba(0,0,0,.45))" }} />
+      <div style={{ height: 112, position: "relative", flexShrink: 0, background: cover ? `center/cover url(${cover})` : `linear-gradient(135deg, ${c}, ${rgba(c, 0.7)})` }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,.05) 30%, rgba(0,0,0,.45))" }} />
         <div style={{ position: "absolute", left: 14, bottom: -18, borderRadius: 14, boxShadow: "0 6px 18px rgba(0,0,0,.2)" }}><LocalLogo data={data} size={44} radius={14} /></div>
-        {/* Selector de idioma */}
-        <motion.div initial={false} animate={{ scale: active === "idiomas" ? 1 : 0.9, opacity: active === "idiomas" ? 1 : 0.85 }}
-          style={{ position: "absolute", right: 10, top: 34, display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 99, background: "rgba(255,255,255,.92)", fontWeight: 800, fontSize: 10.5, boxShadow: "0 4px 12px rgba(0,0,0,.15)" }}>
-          <AnimatePresence mode="wait"><motion.span key={lang.code} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>{lang.flag} {lang.code}</motion.span></AnimatePresence>
+        <motion.div initial={false} animate={{ scale: active === "idiomas" ? 1.08 : 1 }}
+          style={{ position: "absolute", right: 10, top: 36, display: "flex", alignItems: "center", gap: 5, padding: "4px 8px 4px 5px", borderRadius: 99, background: "rgba(255,255,255,.94)", fontWeight: 800, fontSize: 10.5, boxShadow: "0 4px 12px rgba(0,0,0,.15)" }}>
+          <AnimatePresence mode="wait"><motion.span key={lang.code} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} style={{ display: "flex", alignItems: "center", gap: 5 }}><Flag code={lang.code} size={11} /> {lang.code}</motion.span></AnimatePresence>
         </motion.div>
       </div>
       <div style={{ padding: "24px 14px 6px", flexShrink: 0 }}>
@@ -154,9 +169,7 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
         </AnimatePresence>
         {active === "filtros" ? (
           <div style={{ display: "flex", gap: 5, marginTop: 9, overflow: "hidden" }}>
-            {DIETS.map((d, i) => (
-              <span key={d} style={{ padding: "4px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap", background: i === di ? c : "#f2f2f2", color: i === di ? onColor(c) : "#555", transition: "all .35s" }}>{d}</span>
-            ))}
+            {DIETS.map((d, i) => <span key={d} style={{ padding: "4px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap", background: i === di ? c : "#f2f2f2", color: i === di ? onColor(c) : "#555", transition: "all .35s" }}>{d}</span>)}
           </div>
         ) : (
           <div style={{ display: "flex", gap: 12, marginTop: 10, overflow: "hidden", whiteSpace: "nowrap", fontWeight: 700, fontSize: 11 }}>
@@ -181,11 +194,25 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
           ))}
         </motion.div>
 
-        {/* Botón llamar al garzón */}
-        <motion.div initial={false} animate={{ scale: active === "garzon" ? [1, 1.14, 1] : 1 }} transition={{ duration: 0.8, repeat: active === "garzon" ? Infinity : 0, repeatDelay: 1 }}
-          style={{ position: "absolute", right: 12, bottom: 12, width: 44, height: 44, borderRadius: 99, background: c, color: onColor(c), display: "grid", placeItems: "center", boxShadow: `0 8px 20px -4px ${rgba(c, 0.6)}` }}>
-          <Bell size={19} />
-        </motion.div>
+        {/* Campana del garzón: al llamar, ondas y "Avisando al garzón" dentro del celular */}
+        <div style={{ position: "absolute", right: 12, bottom: 12 }}>
+          {calling && [0, 1].map((i) => (
+            <motion.span key={i} initial={{ scale: 1, opacity: 0.55 }} animate={{ scale: 2.3, opacity: 0 }} transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.8, ease: "easeOut" }}
+              style={{ position: "absolute", inset: 0, borderRadius: 99, background: c }} />
+          ))}
+          <motion.div initial={false} animate={{ scale: calling ? [1, 1.12, 1] : 1, rotate: calling ? [0, -14, 12, -8, 0] : 0 }} transition={{ duration: 0.9, repeat: calling ? Infinity : 0, repeatDelay: 0.8 }}
+            style={{ position: "relative", width: 44, height: 44, borderRadius: 99, background: c, color: onColor(c), display: "grid", placeItems: "center", boxShadow: `0 8px 20px -4px ${rgba(c, 0.6)}` }}>
+            <Bell size={19} />
+          </motion.div>
+          <AnimatePresence>
+            {calling && (
+              <motion.div initial={{ opacity: 0, y: 8, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.6, duration: 0.5, ease: EASE }}
+                style={{ position: "absolute", right: 0, bottom: 54, whiteSpace: "nowrap", padding: "7px 11px", borderRadius: 12, background: "#111", color: "#fff", fontWeight: 700, fontSize: 10.5, boxShadow: "0 10px 24px -8px rgba(0,0,0,.5)" }}>
+                🔔 Avisando al garzón… <span style={{ color: "rgba(255,255,255,.6)" }}>Mesa 4</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Recomendaciones del plato */}
         <AnimatePresence>
@@ -196,7 +223,7 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
                 <div style={{ width: 54, height: 54, flexShrink: 0 }}><DishImage dish={hero} color={c} radius={12} /></div>
                 <div style={{ minWidth: 0 }}><b style={{ fontSize: 13 }}>{hero.name}</b><div style={{ fontFamily: "var(--demo-mono)", fontSize: 11.5, fontWeight: 700 }}>{hero.price > 0 ? clp(hero.price) : ""}</div></div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 800, fontSize: 11.5, margin: "12px 0 8px", color: c }}><Sparkles size={13} /> {LANGS[0].rec}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 800, fontSize: 11.5, margin: "12px 0 8px", color: c }}><Sparkles size={13} /> Va perfecto con</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 {all.slice(1, 3).map((d, i) => (
                   <motion.div key={d.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 + i * 0.2, duration: 0.5, ease: EASE }} style={{ borderRadius: 12, overflow: "hidden", background: "#f7f7f7" }}>
@@ -208,44 +235,93 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Exportar PDF */}
+        <AnimatePresence>
+          {active === "pdf" && (
+            <motion.div key="pdf" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ duration: 0.6, ease: EASE }}
+              style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "14px 12px 16px", background: "#fff", borderRadius: "22px 22px 0 0", boxShadow: "0 -12px 40px rgba(0,0,0,.16)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 12.5 }}><FileText size={14} color={c} /> Exportar carta en PDF</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginTop: 10 }}>
+                {TEMPLATES.map((t, i) => (
+                  <div key={t.key} style={{ borderRadius: 8, padding: 5, background: i === 0 ? rgba(c, 0.1) : "#f5f5f5", boxShadow: i === 0 ? `inset 0 0 0 1.5px ${c}` : "none", textAlign: "center" }}>
+                    <MiniSheet template={t.key} color={c} />
+                    <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 4 }}>{t.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 10, borderRadius: 10, padding: "8px 0", textAlign: "center", fontWeight: 800, fontSize: 11, background: c, color: onColor(c) }}>Descargar PDF</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 }
 
-// ── Cartas en PDF con distintos diseños ────────────────────────────────────
-function PaperMenus({ data, narrow }: { data: DemoData; narrow: boolean }) {
-  const c = data.color;
-  const dishes = featuredDishes(data, 6);
-  const styles = [
-    { name: "Clásica", bg: "#fbf8f1", ink: "#2b2118", accent: c, serif: true, rot: 12, x: narrow ? 120 : 285, y: 34 },
-    { name: "Moderna", bg: "#111", ink: "#f5f5f5", accent: c, serif: false, rot: 5, x: narrow ? 80 : 180, y: -4 },
-  ];
-  const w = narrow ? 150 : 205;
+// ── Carta impresa: diseños reales de QuieroComer ───────────────────────────
+const TEMPLATES = [
+  { key: "magazine", label: "Magazine", desc: "Fotos grandes, estilo revista" },
+  { key: "bistro", label: "Bistro", desc: "Tarjetas con foto, fondo crema" },
+  { key: "minimal", label: "Minimal", desc: "Destacados y lista elegante" },
+] as const;
+
+function MiniSheet({ template, color }: { template: string; color: string }) {
+  const bg = template === "bistro" ? "#f6efe2" : "#fff";
   return (
-    <>
-      {styles.map((s, i) => (
-        <motion.div key={s.name} initial={{ opacity: 0, x: 0, rotate: 0, y: 20 }} animate={{ opacity: 1, x: s.x, rotate: s.rot, y: s.y }} exit={{ opacity: 0, x: 0, rotate: 0 }} transition={{ duration: 0.9, ease: EASE, delay: 0.15 + i * 0.12 }}
-          style={{ position: "absolute", top: "8%", left: 0, width: w, aspectRatio: "0.707", zIndex: 1, borderRadius: 6, background: s.bg, color: s.ink, padding: w * 0.09, boxSizing: "border-box", boxShadow: "0 30px 60px -20px rgba(0,0,0,.45)", fontFamily: s.serif ? "Georgia, 'Times New Roman', serif" : "var(--demo-sans)", overflow: "hidden" }}>
-          <div style={{ textAlign: "center", borderBottom: `1.5px solid ${s.accent}`, paddingBottom: 6 }}>
-            <div style={{ fontSize: w * 0.075, fontWeight: 800, letterSpacing: s.serif ? 0 : "-.02em" }}>{data.name}</div>
-            <div style={{ fontSize: w * 0.045, color: s.accent, fontWeight: 700, letterSpacing: ".15em", textTransform: "uppercase", marginTop: 2 }}>Carta</div>
-          </div>
-          <div style={{ display: "grid", gap: w * 0.03, marginTop: w * 0.06 }}>
-            {dishes.map((d) => (
-              <div key={d.name} style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: w * 0.05 }}>
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
-                <span style={{ fontWeight: 700, color: s.accent }}>{d.price > 0 ? clp(d.price) : ""}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ position: "absolute", right: w * 0.07, bottom: w * 0.07, display: "flex", alignItems: "center", gap: 4, fontSize: w * 0.04, opacity: 0.7 }}><QrCode size={w * 0.09} /> Escanea</div>
-        </motion.div>
-      ))}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.8 }}
-        style={{ position: "absolute", left: narrow ? 60 : 210, bottom: narrow ? -6 : "2%", zIndex: 3, whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 99, background: "#fff", fontWeight: 700, fontSize: 13, boxShadow: "0 14px 34px -12px rgba(0,0,0,.35)" }}>
-        <FileText size={15} color={c} /> Exportar PDF · elige el diseño
+    <div style={{ aspectRatio: "0.72", borderRadius: 3, background: bg, padding: 4, boxSizing: "border-box", boxShadow: "0 2px 6px rgba(0,0,0,.12)", display: "grid", gap: 3, alignContent: "start" }}>
+      <div style={{ height: 4, width: "60%", margin: "0 auto", borderRadius: 2, background: color }} />
+      {template === "magazine" && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>{[0, 1, 2, 3].map((i) => <div key={i} style={{ height: 10, borderRadius: 2, background: "#ddd" }} />)}</div>}
+      {template === "bistro" && [0, 1, 2].map((i) => <div key={i} style={{ display: "flex", gap: 2 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: "#d9c9ad" }} /><div style={{ flex: 1, height: 3, marginTop: 2, borderRadius: 2, background: "#cdbb9c" }} /></div>)}
+      {template === "minimal" && <><div style={{ height: 12, borderRadius: 2, background: "#e5e5e5" }} />{[0, 1, 2].map((i) => <div key={i} style={{ height: 2, borderRadius: 2, background: "#ccc" }} />)}</>}
+    </div>
+  );
+}
+
+/** Selector de diseño en el texto: elige y "Ver" abre su carta con ese diseño. */
+function PdfPicker({ data, onShow }: { data: DemoData; onShow: (t: string) => void }) {
+  const c = data.color;
+  const [sel, setSel] = useState<string>("magazine");
+  if (!data.slug) return null;
+  return (
+    <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+        {TEMPLATES.map((t) => (
+          <button key={t.key} onClick={() => setSel(t.key)} style={{ border: "none", cursor: "pointer", font: "inherit", textAlign: "left", padding: "8px 10px", borderRadius: 14, background: "#fff",
+            boxShadow: sel === t.key ? `0 0 0 2px ${c}` : "0 0 0 1px rgba(0,0,0,.1)" }}>
+            <div style={{ fontWeight: 750, fontSize: 14 }}>{t.label}</div>
+            <div style={{ fontSize: 11.5, color: "rgba(0,0,0,.5)" }}>{t.desc}</div>
+          </button>
+        ))}
+      </div>
+      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => onShow(sel)}
+        style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 18px", borderRadius: 99, border: "none", cursor: "pointer", font: "inherit", fontWeight: 750, fontSize: 15, background: c, color: onColor(c), boxShadow: `0 14px 34px -12px ${rgba(c, 0.8)}` }}>
+        <Eye size={17} /> Ver mi carta en {TEMPLATES.find((t) => t.key === sel)?.label}
+      </motion.button>
+    </div>
+  );
+}
+
+/** La carta impresa real del local (misma página que se exporta a PDF), a pantalla completa. */
+function PrintPreview({ data, template, onChange, onClose }: { data: DemoData; template: string; onChange: (t: string) => void; onClose: () => void }) {
+  const c = data.color;
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }} onClick={(e) => { e.stopPropagation(); onClose(); }}
+      style={{ position: "absolute", inset: 0, zIndex: 35, background: "rgba(10,10,12,.72)", backdropFilter: "blur(18px)", display: "flex", flexDirection: "column", alignItems: "center", padding: "70px 20px 24px", boxSizing: "border-box" }}>
+      <motion.div onClick={(e) => e.stopPropagation()} initial={{ y: 40, scale: 0.96, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={{ duration: 0.55, ease: EASE }}
+        style={{ width: "min(900px, 100%)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ color: "#fff", fontWeight: 800, fontSize: 18, marginRight: "auto" }}>Carta impresa de {data.name}</div>
+          {TEMPLATES.map((t) => (
+            <button key={t.key} onClick={() => onChange(t.key)} style={{ border: "none", cursor: "pointer", font: "inherit", fontWeight: 700, fontSize: 13, padding: "8px 14px", borderRadius: 99,
+              background: template === t.key ? c : "rgba(255,255,255,.12)", color: template === t.key ? onColor(c) : "#fff" }}>{t.label}</button>
+          ))}
+          <button onClick={onClose} aria-label="Cerrar" style={{ border: "none", cursor: "pointer", width: 38, height: 38, borderRadius: 99, background: "rgba(255,255,255,.12)", color: "#fff", display: "grid", placeItems: "center" }}><X size={18} /></button>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, borderRadius: 18, overflow: "hidden", background: "#e5e5e5", boxShadow: "0 40px 100px -30px rgba(0,0,0,.7)" }}>
+          <iframe key={template} title="Carta impresa" src={`/qr/${data.slug}/carta?template=${template}&embed=1`} style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
+        </div>
       </motion.div>
-    </>
+    </motion.div>
   );
 }

@@ -8,16 +8,15 @@ import type { DemoData } from "../types";
 import { TabletFrame } from "../frames";
 import { BrandText, CountUp, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, avgTicket, clp, featuredDishes, lighten, onColor, rgba, useViewport } from "../ui";
 
-export const posSteps = 8;
+export const posSteps = 7;
 
 const COPY: Record<number, { t1: React.ReactNode; t2: React.ReactNode; sub: string }> = {
   1: { t1: "Mesas, cuentas y cobros.", t2: "Con tus platos ya cargados.", sub: "Toca una mesa libre, agrega platos y cobra." },
   2: { t1: "Se cae el wifi.", t2: "Tú sigues vendiendo.", sub: "Las ventas se guardan y se sincronizan solas cuando vuelve internet." },
   3: { t1: "Cada pedido,", t2: "su comanda.", sub: "Del salón, de tu tienda online o de las apps: todo entra al mismo POS y se imprime en cocina al instante." },
   4: { t1: "Conoce a tus clientes.", t2: "No solo tus ventas.", sub: "Clientes nuevos y recurrentes, tus platos estrella y quiénes dejaron de venir. Reportes que te dicen qué hacer." },
-  5: { t1: "El cliente que se fue,", t2: "vuelve.", sub: "Detectamos a quien dejó de pedir y le enviamos un cupón automático. Tú solo ves cómo regresan." },
-  6: { t1: "Inventario y bodega,", t2: "al día.", sub: "Cada venta descuenta los insumos. Te avisamos antes de que algo se acabe." },
-  7: { t1: "¿Más de un local?", t2: "Todo en un solo lugar.", sub: "Ventas, cajas y reportes de todas tus sucursales, juntos o por separado." },
+  5: { t1: "Inventario y bodega,", t2: "al día.", sub: "Cada venta descuenta los insumos. Te avisamos antes de que algo se acabe." },
+  6: { t1: "¿Más de un local?", t2: "Todo en un solo lugar.", sub: "Ventas, cajas y reportes de todas tus sucursales, juntos o por separado." },
 };
 
 export default function Pos({ data, step }: ChapterProps) {
@@ -42,8 +41,7 @@ export default function Pos({ data, step }: ChapterProps) {
     k === 1 || k === 2 ? <PosRegister key={k === 2 ? "offline" : "online"} data={data} offline={k === 2} />
     : k === 3 ? <PosComandas data={data} />
     : k === 4 ? <PosReports data={data} />
-    : k === 5 ? <PosRecovery data={data} />
-    : k === 6 ? <PosInventory data={data} />
+    : k === 5 ? <PosInventory data={data} />
     : <PosBranches data={data} />;
 
   return (
@@ -58,7 +56,7 @@ export default function Pos({ data, step }: ChapterProps) {
         </AnimatePresence>
         {!narrow && (
           <div style={{ display: "flex", gap: 6, marginTop: 26, flexWrap: "wrap" }}>
-            {["Caja", "Sin internet", "Comandas", "Reportes", "Recuperación", "Inventario", "Sucursales"].map((t, i) => (
+            {["Caja", "Sin internet", "Comandas", "Reportes", "Inventario", "Sucursales"].map((t, i) => (
               <motion.span key={t} initial={false} animate={{ background: i + 1 === k ? accent : "rgba(255,255,255,.07)", color: i + 1 === k ? onColor(accent) : "rgba(255,255,255,.5)" }}
                 style={{ padding: "6px 12px", borderRadius: 99, fontSize: 12.5, fontWeight: 700 }}>{t}</motion.span>
             ))}
@@ -227,10 +225,14 @@ function PosRegister({ data, offline }: { data: DemoData; offline: boolean }) {
 const card: React.CSSProperties = { background: "#fff", borderRadius: 12, padding: "11px 12px" };
 const kpiLabel: React.CSSProperties = { color: "#999", fontSize: 10, fontWeight: 700 };
 
-function Shell({ data, title, children }: { data: DemoData; title?: string; children: React.ReactNode }) {
+function Shell({ data, title, children, store }: { data: DemoData; title?: string; children: React.ReactNode; store?: boolean }) {
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", fontSize: 11, color: "#1a1a1a" }}>
-      <PosTopBar data={data} offline={false} />
+      {store ? (
+        <div style={{ height: 44, display: "flex", alignItems: "center", gap: 10, padding: "0 14px", background: "#fff", borderBottom: "1px solid #e7e4de", flexShrink: 0 }}>
+          <LocalLogo data={data} size={26} /><b style={{ fontSize: 12 }}>{data.name}</b><span style={{ fontSize: 10, color: "#888", fontWeight: 700 }}>Tienda online · Clientes</span>
+        </div>
+      ) : <PosTopBar data={data} offline={false} />}
       {title && <div style={{ padding: "12px 14px 0", fontWeight: 800, fontSize: 13 }}>{title}</div>}
       <div style={{ flex: 1, padding: 14, minHeight: 0, display: "flex", flexDirection: "column" }}>{children}</div>
     </div>
@@ -310,7 +312,7 @@ function PosReports({ data }: { data: DemoData }) {
 }
 
 /** Recuperación de clientes: se va, recibe un cupón, vuelve. */
-function PosRecovery({ data }: { data: DemoData }) {
+export function PosRecovery({ data }: { data: DemoData }) {
   const reduce = useReducedMotion();
   const c = data.color;
   const dish = featuredDishes(data, 1)[0];
@@ -324,17 +326,17 @@ function PosRecovery({ data }: { data: DemoData }) {
     return () => ts.forEach(clearTimeout);
   }, [reduce]);
   return (
-    <Shell data={data} title="Recuperación de clientes">
+    <Shell data={data} title="Recuperación de clientes" store>
       <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 12, minHeight: 0 }}>
         <div style={{ ...card, display: "grid", gap: 8, alignContent: "start" }}>
-          <div style={kpiLabel}>No vuelven hace +45 días</div>
+          <div style={kpiLabel}>No te piden hace +45 días</div>
           {people.map((p, i) => {
             const back = i === 0 && k >= 3;
             const sent = k >= 1;
             return (
               <motion.div key={p.n} layout style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 9px", borderRadius: 10, background: back ? "#f0fdf4" : "#faf9f7" }}>
                 <div style={{ width: 26, height: 26, borderRadius: 99, background: rgba(c, 0.15), color: c, display: "grid", placeItems: "center", fontWeight: 800 }}>{p.n[0]}</div>
-                <div style={{ flex: 1, minWidth: 0 }}><b>{p.n}</b><div style={{ color: "#999", fontSize: 9.5 }}>última visita hace {p.d} días</div></div>
+                <div style={{ flex: 1, minWidth: 0 }}><b>{p.n}</b><div style={{ color: "#999", fontSize: 9.5 }}>último pedido hace {p.d} días</div></div>
                 <AnimatePresence mode="wait">
                   <motion.span key={back ? "b" : sent ? "s" : "w"} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                     style={{ fontSize: 9.5, fontWeight: 800, padding: "3px 8px", borderRadius: 99, background: back ? "#16a34a" : sent ? rgba(c, 0.15) : "#eee", color: back ? "#fff" : sent ? c : "#999" }}>

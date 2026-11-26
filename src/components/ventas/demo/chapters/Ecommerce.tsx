@@ -2,16 +2,17 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Bike, Store, Check, Globe, Users, Wallet, MapPin, Package, Smartphone } from "lucide-react";
+import { Bike, Store, Check, Globe, Users, Wallet, MapPin, Package } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
-import type { DemoData, LiveOrder } from "../types";
+import type { DemoData } from "../types";
 import { LaptopFrame, PhoneFrame, TabletFrame } from "../frames";
-import { BrandText, DishImage, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, clp, featuredDishes, onColor, rgba, useViewport } from "../ui";
+import { BrandText, DishImage, EASE, Eyebrow, Headline, LocalLogo, QrPill, Reveal, Stage, clp, featuredDishes, onColor, rgba, useViewport } from "../ui";
+import { PosRecovery } from "./Pos";
 import OrdersInbox, { sampleOrders } from "./OrdersInbox";
 
-export const ecommerceSteps = 5;
+export const ecommerceSteps = 6;
 
-export default function Ecommerce({ data, step, live }: ChapterProps) {
+export default function Ecommerce({ data, step, live, onQr }: ChapterProps) {
   const { narrow, w } = useViewport();
   const c = data.color;
   const liveOrders = [...(live?.orders ?? [])].reverse();
@@ -41,13 +42,6 @@ export default function Ecommerce({ data, step, live }: ChapterProps) {
               <Headline size="md" style={{ marginTop: 10 }}>{got ? <>¡Llegó tu pedido! <BrandText color={c}>Directo a tu POS.</BrandText></> : <>Tu tienda, con <BrandText color={c}>tu marca.</BrandText></>}</Headline>
             </motion.div>
           </AnimatePresence>
-          {!got && data.slug && (
-            <Reveal step={step} at={1} delay={1}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14, padding: "9px 16px", borderRadius: 99, background: "#111", color: "#fff", fontWeight: 700, fontSize: 14 }}>
-                <Smartphone size={16} /> Haz un pedido de prueba: escanea el QR <span style={{ color: c }}>↘</span>
-              </div>
-            </Reveal>
-          )}
         </div>
         <AnimatePresence mode="wait">
           {got ? (
@@ -65,6 +59,7 @@ export default function Ecommerce({ data, step, live }: ChapterProps) {
             </motion.div>
           )}
         </AnimatePresence>
+        {!got && data.slug && <QrPill label="Haz tu pedido de prueba: escanea el QR" color={c} onClick={onQr} delay={1.2} style={{ marginTop: 6 }} />}
       </Stage>
     );
   }
@@ -98,34 +93,54 @@ export default function Ecommerce({ data, step, live }: ChapterProps) {
     );
   }
 
-  // ── 3 · Motoristas ──
-  if (step === 3) {
+  // ── 4 · Despacho ──
+  if (step === 4) {
     return (
       <Stage style={{ gap: "clamp(28px, 5vw, 90px)", flexDirection: narrow ? "column" : "row" }}>
         <div style={{ flex: "1 1 0", maxWidth: 500, minWidth: 0 }}>
-          <Reveal step={step} at={3}><Eyebrow color={c}>Despacho</Eyebrow></Reveal>
-          <Reveal step={step} at={3} delay={0.1}><Headline size="lg" style={{ marginTop: 14 }}>¿Y quién lo lleva?<br /><BrandText color={c}>Nosotros.</BrandText></Headline></Reveal>
-          <Reveal step={step} at={3} delay={0.3}>
+          <Reveal step={step} at={4}><Eyebrow color={c}>Despacho</Eyebrow></Reveal>
+          <Reveal step={step} at={4} delay={0.1}><Headline size="lg" style={{ marginTop: 14 }}>¿Delivery sin repartidores?<br /><BrandText color={c}>Resuelto.</BrandText></Headline></Reveal>
+          <Reveal step={step} at={4} delay={0.3}>
             <div style={{ fontSize: "clamp(16px, 1.4vw, 20px)", color: "rgba(0,0,0,.55)", marginTop: 20, lineHeight: 1.5 }}>
-              Gracias a nuestra alianza tienes acceso a <b style={{ color: "#111" }}>toda la flota de motoristas de Santiago</b>. Entra un pedido, un motorista lo retira en tu local y se lo entrega a tu cliente. Sin repartidores propios.
+              Tu tienda está integrada con <b style={{ color: "#111" }}>una red de motoristas que cubre todo Santiago</b>. Entra un pedido, se asigna un motorista, lo retira en tu local y se lo entrega a tu cliente. Tú sigues cada paso en tu POS.
             </div>
           </Reveal>
         </div>
-        <Reveal step={step} at={3} y={50} delay={0.25}><DeliveryMap data={data} narrow={narrow} /></Reveal>
+        <Reveal step={step} at={4} y={50} delay={0.25}><DeliveryMap data={data} narrow={narrow} /></Reveal>
       </Stage>
     );
   }
 
-  // ── 4 · Todo llega al POS ──
+  // ── 5 · Recuperación de clientes ──
+  if (step >= 5) {
+    return (
+      <Stage style={{ flexDirection: narrow ? "column" : "row", gap: "clamp(24px, 4vw, 64px)" }}>
+        <div style={{ flex: "0 1 400px", minWidth: 0 }}>
+          <Reveal step={step} at={5}><Eyebrow color={c}>Recuperación de clientes</Eyebrow></Reveal>
+          <Reveal step={step} at={5} delay={0.1}><Headline size="md" style={{ marginTop: 14 }}>El cliente que dejó de pedir,<br /><BrandText color={c}>vuelve.</BrandText></Headline></Reveal>
+          <Reveal step={step} at={5} delay={0.25}>
+            <div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "rgba(0,0,0,.55)", marginTop: 16, lineHeight: 1.5 }}>
+              Detectamos a quien dejó de pedirte en tu tienda, le preguntamos por qué y le enviamos un cupón automático. Tú solo ves cómo regresan.
+            </div>
+          </Reveal>
+        </div>
+        <Reveal step={step} at={5} y={60} delay={0.2}>
+          <TabletFrame width={Math.min(narrow ? w - 40 : 740, 740)}><PosRecovery data={data} /></TabletFrame>
+        </Reveal>
+      </Stage>
+    );
+  }
+
+  // ── 3 · Todo llega al POS ──
   const orders = liveOrders.length ? [...liveOrders, ...samples] : samples;
   return (
     <Stage style={{ flexDirection: "column", gap: 22 }}>
       <div style={{ textAlign: "center" }}>
-        <Reveal step={step} at={4}><Eyebrow color={c}>Pedidos</Eyebrow></Reveal>
-        <Reveal step={step} at={4} delay={0.1}><Headline size="md" style={{ marginTop: 10 }}>Cada pedido, <BrandText color={c}>directo a tu POS.</BrandText></Headline></Reveal>
-        <Reveal step={step} at={4} delay={0.2}><div style={{ fontSize: 16, color: "rgba(0,0,0,.5)", marginTop: 8 }}>Tócalos: ves el cliente, el detalle y lo avanzas a cocina.</div></Reveal>
+        <Reveal step={step} at={3}><Eyebrow color={c}>Pedidos</Eyebrow></Reveal>
+        <Reveal step={step} at={3} delay={0.1}><Headline size="md" style={{ marginTop: 10 }}>Cada pedido, <BrandText color={c}>directo a tu POS.</BrandText></Headline></Reveal>
+        <Reveal step={step} at={3} delay={0.2}><div style={{ fontSize: 16, color: "rgba(0,0,0,.5)", marginTop: 8 }}>Tócalos: ves el cliente, el detalle y lo avanzas a cocina.</div></Reveal>
       </div>
-      <Reveal step={step} at={4} y={60} delay={0.3}>
+      <Reveal step={step} at={3} y={60} delay={0.3}>
         <TabletFrame width={Math.min(narrow ? w - 40 : 780, 780)}><OrdersInbox data={data} orders={orders} highlightId={liveOrders[0]?.id ?? null} /></TabletFrame>
       </Reveal>
     </Stage>
@@ -250,4 +265,3 @@ function Pin({ x, y, color, label, children }: { x: number; y: number; color: st
   );
 }
 
-export type { LiveOrder };

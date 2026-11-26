@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Bell, ChevronLeft, ChevronRight, CreditCard, Handshake, Heart, Maximize2, Minimize2, QrCode, ShoppingBag, StickyNote, X } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, CreditCard, Handshake, Heart, Maximize2, Minimize2, ShoppingBag, StickyNote, X } from "lucide-react";
 import type { ChapterId, DemoData, LiveOrder } from "./types";
 import { SELLER_NOTES } from "./notes";
 import { EASE, LocalLogo, clp } from "./ui";
@@ -17,7 +17,7 @@ import Planes, { planesSteps } from "./chapters/Planes";
 import CloseBar from "./CloseBar";
 import { recommendPlanId, withRecommendation, type InterestModule } from "./recommend";
 
-export type ChapterProps = { data: DemoData; step: number; onStart?: () => void; live?: { orders: LiveOrder[] } };
+export type ChapterProps = { data: DemoData; step: number; onStart?: () => void; onQr?: () => void; live?: { orders: LiveOrder[] } };
 
 /** Datos del lead que solo ve el vendedor (cierre e intereses). */
 export type SellerContext = { email: string; whatsapp: string; interests: string[] };
@@ -93,7 +93,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
     if (mode === "seller" && data.leadId && data.slug) {
       fetch(`/api/ventas/leads/${data.leadId}/prepare`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color: data.color, prize: demoPrize(data)?.name ?? null }) }).catch(() => {});
     }
-  }, [track]);
+  }, [track, mode, data]);
   useEffect(() => {
     const prev = lastChapter.current;
     if (prev !== chapter.id) {
@@ -226,7 +226,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
             transition={{ duration: reduce ? 0.2 : 0.85, ease: EASE }}
             style={{ position: "absolute", inset: 0 }}
           >
-            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} live={{ orders: liveOrders }} />
+            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} live={{ orders: liveOrders }} onQr={data.slug ? () => setQrOpen(true) : undefined} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -272,13 +272,6 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
           </div>
         ))}
       </div>
-
-      {/* ── QR flotante ── */}
-      <motion.button initial={false} animate={{ opacity: hideChrome || closeOpen ? 0 : 1, scale: hideChrome || closeOpen ? 0.9 : 1 }}
-        onClick={(e) => { e.stopPropagation(); setQrOpen(true); }} aria-label="Mostrar QR (Q)"
-        style={{ position: "absolute", right: 22, bottom: 30, zIndex: 11, width: 56, height: 56, borderRadius: 18, border: "none", cursor: "pointer", display: "grid", placeItems: "center", background: data.color, color: "#fff", boxShadow: `0 12px 30px -8px ${data.color}`, pointerEvents: hideChrome || closeOpen ? "none" : "auto" }}>
-        <QrCode size={24} />
-      </motion.button>
 
       <AnimatePresence>
         {qrOpen && (

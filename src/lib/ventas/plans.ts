@@ -50,7 +50,9 @@ export async function getDemoPlans(): Promise<{ sections: DemoPlanSection[]; sto
       id: s.id, title: s.title, subtitle: s.subtitle,
       plans: items.filter(({ p, pool }) => ((p.categoryId && valid.has(p.categoryId)) ? p.categoryId : pool === "plans" ? "__plans" : "__addons") === s.id).map(({ p }) => toDemo(p, s.accent)),
     }))
-    .filter((s) => s.plans.length > 0);
+    // Los "combos" de /admin/planes no se muestran en la demo.
+    .map((s) => ({ ...s, plans: s.plans.filter((p) => !/combo/i.test(p.name)) }))
+    .filter((s) => s.plans.length > 0 && !/combo/i.test(s.title));
 
   // Plan de tienda para la calculadora de comisiones: el destacado de la sección principal (o el más caro).
   const main = sections.find((s) => s.id === "__plans")?.plans ?? [];

@@ -30,6 +30,7 @@ export default function OrdersInbox({ data, orders, highlightId }: { data: DemoD
   const [selected, setSelected] = useState<string | null>(orders[0]?.id ?? null);
   const [stages, setStages] = useState<Record<string, Stage>>({});
   const [now] = useState(() => Date.now());
+  const [ticket, setTicket] = useState(false);
   const sel = orders.find((o) => o.id === selected) ?? orders[0] ?? null;
   const stageOf = (id: string) => stages[id] ?? "nuevo";
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -102,7 +103,7 @@ export default function OrdersInbox({ data, orders, highlightId }: { data: DemoD
                 </div>
                 <div style={{ borderTop: "1px dashed #ddd", paddingTop: 8, marginTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 13 }}><span>Total</span><span style={{ fontFamily: "var(--demo-mono)" }}>{clp(sel.total)}</span></div>
                 <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                  <button onClick={() => {}} style={{ flex: "0 0 auto", borderRadius: 10, padding: "9px 10px", border: "1px solid #e7e4de", background: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><Printer size={13} /> Comanda</button>
+                  <button onClick={() => setTicket(true)} style={{ flex: "0 0 auto", borderRadius: 10, padding: "9px 10px", border: "1px solid #e7e4de", background: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><Printer size={13} /> Comanda</button>
                   {STAGE[stageOf(sel.id)].next ? (
                     <motion.button whileTap={{ scale: 0.97 }} onClick={() => setStages((s) => ({ ...s, [sel.id]: stageOf(sel.id) === "nuevo" ? "preparando" : "listo" }))}
                       style={{ flex: 1, borderRadius: 10, padding: "9px 0", border: "none", font: "inherit", fontWeight: 800, fontSize: 12, background: c, color: onColor(c), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
@@ -119,6 +120,35 @@ export default function OrdersInbox({ data, orders, highlightId }: { data: DemoD
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Comanda impresa (vista digital) */}
+      <AnimatePresence>
+        {ticket && sel && (
+          <motion.div key="ticket" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setTicket(false)}
+            style={{ position: "absolute", inset: 0, zIndex: 5, background: "rgba(20,20,22,.55)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 18, cursor: "pointer" }}>
+            <div style={{ width: 250, height: 18, borderRadius: "10px 10px 4px 4px", background: "#2b2b2e", boxShadow: "inset 0 -4px 0 #111", flexShrink: 0 }} />
+            <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} transition={{ duration: 1.2, ease: EASE }} onClick={(e) => e.stopPropagation()}
+              style={{ width: 220, overflow: "hidden", background: "#fffefa", boxShadow: "0 18px 40px -12px rgba(0,0,0,.5)", fontFamily: "var(--demo-mono)", fontSize: 10.5, color: "#111", cursor: "default" }}>
+              <div style={{ padding: "12px 14px 14px" }}>
+                <div style={{ textAlign: "center", fontWeight: 800, fontSize: 12 }}>{data.name.toUpperCase()}</div>
+                <div style={{ textAlign: "center", color: "#666" }}>COMANDA · TIENDA ONLINE</div>
+                <div style={{ borderTop: "1px dashed #999", margin: "8px 0" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 13 }}><span>#{sel.number ?? "—"}</span><span>RETIRO</span></div>
+                <div style={{ color: "#444" }}>{sel.customer || "Cliente"}</div>
+                <div style={{ color: "#444" }}>{new Date(sel.at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" })}</div>
+                <div style={{ borderTop: "1px dashed #999", margin: "8px 0" }} />
+                {sel.lines.map((l, i) => <div key={i} style={{ fontWeight: 800, fontSize: 12, marginBottom: 3 }}>{l.qty} x {l.name.toUpperCase()}</div>)}
+                {sel.note && <div style={{ marginTop: 6, padding: "4px 6px", border: "1.5px solid #111", fontWeight: 800 }}>NOTA: {sel.note}</div>}
+                <div style={{ borderTop: "1px dashed #999", margin: "8px 0" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}><span>TOTAL</span><span>{clp(sel.total)}</span></div>
+                <div style={{ textAlign: "center", color: "#666", marginTop: 6 }}>Pago: {(sel.payment || "efectivo").toUpperCase()}</div>
+              </div>
+              <div style={{ height: 8, background: "repeating-linear-gradient(135deg, #fffefa 0 6px, transparent 6px 12px)" }} />
+            </motion.div>
+            <div style={{ color: "#fff", fontWeight: 700, fontSize: 11, marginTop: 10 }}>Así se imprime en cocina · toca para cerrar</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

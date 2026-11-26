@@ -1,22 +1,39 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Check, Star, ArrowRight, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+import { Check, Star, ArrowRight, X, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
-import type { DemoData, DemoPlan } from "../types";
+import type { DemoData, DemoPlan, DemoPlanSection } from "../types";
 import { BrandText, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, clp, onColor, rgba, useViewport } from "../ui";
 
 const MAX_FEATURES = 6;
 
-/** Pasos del capítulo: uno por sección de /admin/planes + el cierre. */
-export const planesSteps = (data: DemoData) => Math.max(1, data.plans.length) + 1;
+/** Páginas del capítulo: planes principales, la Tienda online (por tramos) en su propia página,
+ *  los módulos (add-ons) y el cierre. */
+type Page = { kind: "plans"; s: DemoPlanSection } | { kind: "tiers"; plan: DemoPlan } | { kind: "modules"; s: DemoPlanSection } | { kind: "end" };
+export function planesPages(data: DemoData): Page[] {
+  const pages: Page[] = [];
+  for (const s of data.plans) {
+    const tiered = s.plans.find((p) => tiersOf(p).tiers.length >= 2);
+    if (tiered) pages.push({ kind: "tiers", plan: tiered });
+    const rest = { ...s, plans: s.plans.filter((p) => p !== tiered) };
+    if (!rest.plans.length) continue;
+    pages.push(s.id === "__plans" ? { kind: "plans", s: rest } : { kind: "modules", s: rest });
+  }
+  pages.push({ kind: "end" });
+  return pages;
+}
+export const planesSteps = (data: DemoData) => planesPages(data).length;
 
 export default function Planes({ data, step, onStart }: ChapterProps) {
   const { narrow } = useViewport();
   const c = data.color;
-  const last = planesSteps(data) - 1;
+  const pages = planesPages(data);
+  const page = pages[Math.min(step, pages.length - 1)];
+  const label = `Planes · ${Math.min(step, pages.length - 2) + 1} de ${pages.length - 1}`;
 
-  if (step >= last) {
+  if (page.kind === "end") {
     return (
       <Stage style={{ flexDirection: "column", textAlign: "center" }}>
         <Reveal step={1} at={1}><LocalLogo data={data} size={96} radius={28} /></Reveal>
@@ -36,24 +53,15 @@ export default function Planes({ data, step, onStart }: ChapterProps) {
     );
   }
 
-  const section = data.plans[step];
-  if (!section) {
-    return (
-      <Stage style={{ flexDirection: "column", textAlign: "center" }}>
-        <Eyebrow color={c}>Planes</Eyebrow>
-        <Headline size="md" style={{ marginTop: 12 }}>Aún no hay planes configurados.</Headline>
-        <div style={{ color: "rgba(0,0,0,.5)", marginTop: 10, fontSize: 17 }}>Agrégalos en /admin/planes.</div>
-      </Stage>
-    );
-  }
-
-  if (section.id !== "__plans") return <ModulesStep data={data} step={step} sectionIndex={step} narrow={narrow} />;
+  if (page.kind === "tiers") return <TierPage data={data} plan={page.plan} step={step} label={label} narrow={narrow} />;
+  if (page.kind === "modules") return <ModulesStep data={data} step={step} section={page.s} label={label} narrow={narrow} />;
+  const section = page.s;
 
   const cols = Math.min(section.plans.length, narrow ? 1 : 4);
   return (
     <Stage style={{ flexDirection: "column" }}>
       <div style={{ textAlign: "center", maxWidth: 820 }}>
-        <Reveal key={`h${step}`} step={0} at={0}><Eyebrow color={c}>Planes{data.plans.length > 1 ? ` · ${step + 1} de ${data.plans.length}` : ""}</Eyebrow></Reveal>
+        <Reveal key={`h${step}`} step={0} at={0}><Eyebrow color={c}>{label}</Eyebrow></Reveal>
         <Reveal key={`t${step}`} step={0} at={0} delay={0.1}><Headline size={section.plans.length > 3 ? "md" : "lg"} style={{ marginTop: 12 }}>{section.title}</Headline></Reveal>
         {section.subtitle && <Reveal key={`s${step}`} step={0} at={0} delay={0.18}><div style={{ fontSize: "clamp(15px, 1.4vw, 19px)", color: "rgba(0,0,0,.5)", marginTop: 10 }}>{section.subtitle}</div></Reveal>}
       </div>
@@ -109,9 +117,9 @@ const ICONS: [RegExp, typeof Heart][] = [
   [/kds|cocina|pantalla/i, ChefHat], [/repartidor|motorist|flota/i, Bike], [/mesa|sal[oó]n/i, LayoutGrid], [/recupera/i, RefreshCcw],
   [/boleta|factura|electr[oó]nica/i, Receipt], [/inventario|bodega|stock/i, Boxes], [/genio|inteligen|ia\b/i, Sparkles], [/sucursal/i, Store],
 ];
-function ModuleIcon({ name }: { name: string }) {
+function ModuleIcon({ name, size = 19 }: { name: string; size?: number }) {
   const I = ICONS.find(([re]) => re.test(name))?.[1] ?? Puzzle;
-  return <I size={19} />;
+  return <I size={size} />;
 }
 
 // "Hasta 100 pedidos", "Hasta 499 pedidos 49.900", "Mas de 500 pedidos 79.900"
@@ -125,32 +133,73 @@ function tiersOf(p: DemoPlan) {
   return { tiers, rest };
 }
 
-function ModulesStep({ data, step, sectionIndex, narrow }: { data: DemoData; step: number; sectionIndex: number; narrow: boolean }) {
+function ModulesStep({ data, step, section, label, narrow }: { data: DemoData; step: number; section: DemoPlanSection; label: string; narrow: boolean }) {
   const c = data.color;
-  const section = data.plans[sectionIndex];
-  const tiered = section.plans.find((p) => tiersOf(p).tiers.length >= 2) ?? null;
-  const others = section.plans.filter((p) => p !== tiered);
-  const cols = narrow ? 1 : 4;
+  const [open, setOpen] = useState<DemoPlan | null>(null);
+  const cols = narrow ? 1 : section.plans.length > 6 ? 4 : 3;
   return (
     <Stage style={{ flexDirection: "column", justifyContent: "center" }}>
       <div style={{ textAlign: "center", maxWidth: 820 }}>
-        <Reveal key={`h${step}`} step={0} at={0}><Eyebrow color={c}>Planes · {step + 1} de {data.plans.length}</Eyebrow></Reveal>
+        <Reveal key={`h${step}`} step={0} at={0}><Eyebrow color={c}>{label}</Eyebrow></Reveal>
         <Reveal key={`t${step}`} step={0} at={0} delay={0.1}><Headline size="md" style={{ marginTop: 10 }}>{section.title}</Headline></Reveal>
-        <Reveal key={`s${step}`} step={0} at={0} delay={0.18}><div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "rgba(0,0,0,.5)", marginTop: 8 }}>{section.subtitle || "Módulos que se suman a tu plan cuando los necesites."}</div></Reveal>
+        <Reveal key={`s${step}`} step={0} at={0} delay={0.18}><div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "rgba(0,0,0,.5)", marginTop: 8 }}>{section.subtitle || "Módulos que se suman a tu plan cuando los necesites."} Toca uno para ver el detalle.</div></Reveal>
       </div>
-      <div style={{ width: "min(1180px, 100%)", marginTop: "clamp(18px, 3vh, 32px)", display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 12, overflowY: narrow ? "auto" : "visible", maxHeight: narrow ? "64vh" : undefined }}>
-        {tiered && (
-          <Reveal key={`${step}-tier`} step={0} at={0} delay={0.2} style={{ gridColumn: narrow ? "auto" : "span 2", gridRow: narrow ? "auto" : "span 2" }}>
-            <TierCard plan={tiered} color={c} />
-          </Reveal>
-        )}
-        {others.map((p, i) => (
+      <div style={{ width: `min(${cols === 4 ? 1180 : 980}px, 100%)`, marginTop: "clamp(18px, 3vh, 32px)", display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 12, overflowY: narrow ? "auto" : "visible", maxHeight: narrow ? "64vh" : undefined }}>
+        {section.plans.map((p, i) => (
           <Reveal key={`${step}-${p.id}`} step={0} at={0} delay={0.25 + i * 0.05}>
-            <ModuleTile plan={p} color={c} />
+            <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25 }} onClick={(e) => { e.stopPropagation(); setOpen(p); }} style={{ height: "100%", cursor: "pointer" }}>
+              <ModuleTile plan={p} color={c} />
+            </motion.div>
           </Reveal>
         ))}
       </div>
+      <AnimatePresence>{open && <ModuleModal plan={open} color={c} onClose={() => setOpen(null)} />}</AnimatePresence>
     </Stage>
+  );
+}
+
+// Para qué sirve cada módulo (texto del detalle); si no hay coincidencia, se usan sus características.
+const MODULE_INFO: [RegExp, string][] = [
+  [/loyal|fideliz/i, "Tarjeta de sellos en Apple y Google Wallet. Tus clientes juntan sellos, reciben avisos al pasar cerca y un regalo en su cumpleaños."],
+  [/carta|qr/i, "Tu carta digital que traduce, recomienda platos, filtra por dieta y llama al garzón. Y la exportas en PDF con diseño."],
+  [/apps? delivery|integraci/i, "Los pedidos de Uber Eats, PedidosYa y Rappi entran directo a tu POS. Sin tablets extra ni tipear pedidos."],
+  [/kds|pantalla/i, "Una pantalla en cocina con los pedidos en orden y sus tiempos. Adiós a las comandas perdidas."],
+  [/repartidor/i, "App para tus propios repartidores: el cliente sigue su pedido en tiempo real y tú ves propinas y entregas."],
+  [/mesa|sal[oó]n/i, "Arma tus salones, abre mesas, divide cuentas y registra propinas desde el POS."],
+  [/recupera/i, "Detecta a los clientes que dejaron de pedir, les pregunta por qué y les envía un cupón para que vuelvan."],
+  [/boleta|factura|electr/i, "Emite boletas electrónicas válidas ante el SII directamente desde tu POS."],
+  [/inventario|bodega/i, "Cada venta descuenta insumos y te avisa antes de que algo se acabe."],
+  [/genio|inteligen/i, "Recomendaciones inteligentes para vender más en cada pedido."],
+];
+const moduleInfo = (name: string) => MODULE_INFO.find(([re]) => re.test(name))?.[1] ?? null;
+
+function ModuleModal({ plan: p, color: c, onClose }: { plan: DemoPlan; color: string; onClose: () => void }) {
+  const info = moduleInfo(p.name);
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => { e.stopPropagation(); onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 30, background: "rgba(10,10,12,.5)", backdropFilter: "blur(16px)", display: "grid", placeItems: "center", padding: 20 }}>
+      <motion.div onClick={(e) => e.stopPropagation()} initial={{ y: 40, scale: 0.94, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }} exit={{ y: 20, opacity: 0 }} transition={{ duration: 0.5, ease: EASE }}
+        style={{ width: "min(520px, 100%)", maxHeight: "86vh", overflowY: "auto", borderRadius: 30, background: "#fff", boxShadow: "0 50px 120px -30px rgba(0,0,0,.6)", position: "relative" }}>
+        <div style={{ padding: "28px 28px 22px", background: `radial-gradient(120% 120% at 0% 0%, ${rgba(c, 0.18)} 0%, transparent 60%)` }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: 99, border: "none", cursor: "pointer", background: "rgba(0,0,0,.06)", display: "grid", placeItems: "center" }}><X size={17} /></button>
+          <div style={{ width: 56, height: 56, borderRadius: 18, display: "grid", placeItems: "center", background: c, color: onColor(c), boxShadow: `0 14px 30px -10px ${rgba(c, 0.7)}` }}><ModuleIcon name={p.name} size={26} /></div>
+          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-.03em", marginTop: 16 }}>{p.name}</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 6 }}>
+            {p.priceFrom && <span style={{ fontSize: 13, color: "rgba(0,0,0,.45)", fontWeight: 700 }}>Desde</span>}
+            <span style={{ fontFamily: "var(--demo-mono)", fontSize: 30, fontWeight: 700, color: c }}>{clp(p.price)}</span>
+            <span style={{ fontSize: 14, color: "rgba(0,0,0,.45)" }}>/ mes</span>
+          </div>
+          {p.subtitle && <div style={{ fontSize: 13, color: "rgba(0,0,0,.5)", marginTop: 4 }}>{p.subtitle}</div>}
+          {info && <p style={{ fontSize: 16, color: "rgba(0,0,0,.65)", lineHeight: 1.5, margin: "16px 0 0" }}>{info}</p>}
+        </div>
+        {p.features.length > 0 && (
+          <div style={{ padding: "6px 28px 28px", display: "grid", gap: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "rgba(0,0,0,.4)" }}>Incluye</div>
+            {p.features.map((f) => <div key={f} style={{ display: "flex", gap: 10, fontSize: 15, lineHeight: 1.4 }}><span style={{ width: 22, height: 22, borderRadius: 99, flexShrink: 0, display: "grid", placeItems: "center", background: rgba(c, 0.12), color: c }}><Check size={13} strokeWidth={3} /></span>{f}</div>)}
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -183,37 +232,53 @@ function ModuleTile({ plan: p, color: c }: { plan: DemoPlan; color: string }) {
   );
 }
 
-/** Tienda online: el precio depende de cuántos pedidos recibe al mes. */
-function TierCard({ plan: p, color: c }: { plan: DemoPlan; color: string }) {
+/** Tienda online: página propia con sus planes según los pedidos del mes. */
+function TierPage({ data, plan: p, step, label, narrow }: { data: DemoData; plan: DemoPlan; step: number; label: string; narrow: boolean }) {
+  const c = data.color;
   const { tiers, rest } = tiersOf(p);
+  const names = ["Para empezar", "Para crecer", "Alto volumen", "Cadena"];
   return (
-    <div style={{ height: "100%", boxSizing: "border-box", borderRadius: 26, padding: "22px 22px 20px", color: "#fff", position: "relative", overflow: "hidden",
-      background: `radial-gradient(120% 120% at 0% 0%, ${rgba(c, 0.55)} 0%, #141416 55%)`, boxShadow: "0 30px 70px -30px rgba(0,0,0,.55)", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 42, height: 42, borderRadius: 14, display: "grid", placeItems: "center", background: c, color: onColor(c) }}><ShoppingBag size={20} /></div>
-        <div><div style={{ fontSize: 21, fontWeight: 800, letterSpacing: "-.02em" }}>{p.name}</div><div style={{ fontSize: 13, color: "rgba(255,255,255,.6)" }}>Pagas según los pedidos que recibes al mes · 0% comisión</div></div>
+    <Stage style={{ flexDirection: "column" }}>
+      <div style={{ textAlign: "center", maxWidth: 820 }}>
+        <Reveal key={`h${step}`} step={0} at={0}><Eyebrow color={c}>{label}</Eyebrow></Reveal>
+        <Reveal key={`t${step}`} step={0} at={0} delay={0.1}><Headline size="lg" style={{ marginTop: 10 }}>{p.name}. <BrandText color={c}>0% comisión.</BrandText></Headline></Reveal>
+        <Reveal key={`s${step}`} step={0} at={0} delay={0.18}><div style={{ fontSize: "clamp(15px, 1.4vw, 19px)", color: "rgba(0,0,0,.5)", marginTop: 10 }}>Pagas según los pedidos que recibes al mes. Nunca un porcentaje de tus ventas.</div></Reveal>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${tiers.length}, minmax(0, 1fr))`, gap: 8, marginTop: 18 }}>
-        {tiers.map((t, i) => (
-          <div key={t.label} style={{ borderRadius: 16, padding: "14px 12px", background: i === 0 ? "rgba(255,255,255,.14)" : "rgba(255,255,255,.06)", boxShadow: i === 0 ? `inset 0 0 0 1.5px ${c}` : "none" }}>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,.6)", fontWeight: 700 }}>{t.label}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,.6)" }}>pedidos al mes</div>
-            <div style={{ fontFamily: "var(--demo-mono)", fontSize: "clamp(18px, 1.7vw, 24px)", fontWeight: 700, marginTop: 8 }}>{clp(t.price)}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,.5)" }}>/ mes</div>
-          </div>
-        ))}
-      </div>
-      {/* Barra de tramos */}
-      <div style={{ display: "flex", gap: 4, marginTop: 12 }}>
-        {tiers.map((t, i) => <div key={t.label} style={{ flex: 1, height: 5, borderRadius: 3, background: c, opacity: 0.35 + i * 0.3 }} />)}
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${narrow ? 1 : tiers.length}, minmax(0, 1fr))`, gap: 14, width: "min(1040px, 100%)", marginTop: "clamp(22px, 3.5vh, 40px)", alignItems: "stretch" }}>
+        {tiers.map((t, i) => {
+          const hl = i === 0;
+          return (
+            <Reveal key={`${step}-${t.label}`} step={0} at={0} delay={0.25 + i * 0.1} style={{ height: "100%" }}>
+              <div style={{ height: "100%", boxSizing: "border-box", borderRadius: 28, padding: "26px 24px", position: "relative", overflow: "hidden",
+                background: hl ? `radial-gradient(130% 130% at 0% 0%, ${rgba(c, 0.6)} 0%, #141416 60%)` : "#fff", color: hl ? "#fff" : "#111",
+                boxShadow: hl ? `0 34px 80px -30px ${rgba(c, 0.8)}` : "0 0 0 1px rgba(0,0,0,.07), 0 20px 50px -30px rgba(0,0,0,.25)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 13, display: "grid", placeItems: "center", background: hl ? c : rgba(c, 0.12), color: hl ? onColor(c) : c }}><ShoppingBag size={19} /></div>
+                  <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: hl ? "rgba(255,255,255,.7)" : "rgba(0,0,0,.45)" }}>{names[i] ?? "Plan"}</div>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", marginTop: 18 }}>{t.label} pedidos</div>
+                <div style={{ fontSize: 14, color: hl ? "rgba(255,255,255,.6)" : "rgba(0,0,0,.45)" }}>al mes</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 18 }}>
+                  <span style={{ fontFamily: "var(--demo-mono)", fontSize: "clamp(32px, 3vw, 44px)", fontWeight: 700, letterSpacing: "-.03em", color: hl ? "#fff" : c }}>{clp(t.price)}</span>
+                  <span style={{ fontSize: 14, color: hl ? "rgba(255,255,255,.6)" : "rgba(0,0,0,.45)" }}>/ mes</span>
+                </div>
+                {/* Medidor de volumen */}
+                <div style={{ display: "flex", gap: 4, marginTop: 18 }}>
+                  {tiers.map((_, j) => <div key={j} style={{ flex: 1, height: 6, borderRadius: 3, background: j <= i ? (hl ? "#fff" : c) : hl ? "rgba(255,255,255,.18)" : "rgba(0,0,0,.08)" }} />)}
+                </div>
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
       {rest.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 16 }}>
-          {rest.slice(0, 10).map((f) => <span key={f} style={{ fontSize: 12, padding: "5px 10px", borderRadius: 99, background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.8)" }}>{f}</span>)}
-          {rest.length > 10 && <span style={{ fontSize: 12, padding: "5px 10px", color: "rgba(255,255,255,.5)" }}>+ {rest.length - 10} más</span>}
-        </div>
+        <Reveal key={`${step}-inc`} step={0} at={0} delay={0.6}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 22, maxWidth: 1040 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "rgba(0,0,0,.45)", padding: "7px 4px" }}>Todos incluyen:</span>
+            {rest.map((f) => <span key={f} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, padding: "7px 12px", borderRadius: 99, background: "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,.07)" }}><Check size={13} color={c} strokeWidth={3} />{f}</span>)}
+          </div>
+        </Reveal>
       )}
-      {p.subtitle && <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)", marginTop: "auto", paddingTop: 12 }}>{p.subtitle}</div>}
-    </div>
+    </Stage>
   );
 }

@@ -156,3 +156,21 @@ export function TryItHint({ show, color, text = "Pruébalo en tu celular" }: { s
     </motion.div>
   );
 }
+
+/** Botón para abrir el QR y probar en el celular (reemplaza al botón flotante). */
+export function QrPill({ label, color, onClick, dark = false, delay = 0.8, style }: { label: string; color: string; onClick?: () => void; dark?: boolean; delay?: number; style?: CSSProperties }) {
+  const reduce = useReducedMotion();
+  if (!onClick) return null;
+  return (
+    <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay }} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "11px 18px 11px 12px", borderRadius: 99, border: "none", cursor: "pointer", font: "inherit", fontWeight: 700, fontSize: 15,
+        background: dark ? "#fff" : "#111", color: dark ? "#111" : "#fff", boxShadow: "0 16px 40px -14px rgba(0,0,0,.5)", ...style }}>
+      <span style={{ width: 30, height: 30, borderRadius: 99, display: "grid", placeItems: "center", background: color, color: onColor(color) }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 17h3v3"/></svg>
+      </span>
+      {label}
+      <motion.span animate={reduce ? {} : { y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.3 }} style={{ color }}>↑</motion.span>
+    </motion.button>
+  );
+}
