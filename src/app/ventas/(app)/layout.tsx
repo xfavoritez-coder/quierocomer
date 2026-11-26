@@ -14,7 +14,6 @@ export default async function VentasAppLayout({ children }: { children: React.Re
       <header className="ventas-bar">
         <Link href="/ventas" className="ventas-brand"><span className="mk">Q</span><span className="t">Ventas</span></Link>
         <nav className="ventas-nav">
-          <Link href="/ventas">Inicio</Link>
           <Link href="/ventas/nuevo">Nuevo local</Link>
           {seller.role === "ADMIN" && <Link href="/ventas/equipo">Mi equipo</Link>}
         </nav>
