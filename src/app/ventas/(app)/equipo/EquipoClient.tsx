@@ -36,6 +36,8 @@ export default function EquipoClient({ meId, initial }: { meId: string; initial:
     <div style={{ display: "grid", gap: 18 }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Mi equipo</h1>
 
+      <ShowcaseAdmin />
+
       <div className="ventas-card" style={{ overflow: "hidden" }}>
         {rows.map((s, i) => (
           <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "13px 18px", borderTop: i ? "1px solid var(--line)" : "none", opacity: s.active ? 1 : 0.5 }}>
@@ -65,6 +67,31 @@ export default function EquipoClient({ meId, initial }: { meId: string; initial:
         {msg && <p style={{ fontSize: 13, margin: 0, color: msg.startsWith("Listo") ? "#16a34a" : "#dc2626" }}>{msg}</p>}
         <button className="ventas-btn" disabled={busy}>{busy ? "Agregando…" : "Agregar"}</button>
       </form>
+    </div>
+  );
+}
+
+/** Crear o regenerar el local de muestra (panel y POS con datos para mostrar en las demos). */
+function ShowcaseAdmin() {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const run = async () => {
+    setBusy(true); setMsg("Generando… puede tardar hasta un par de minutos.");
+    try {
+      const r = await fetch("/api/ventas/showcase/seed", { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      setMsg(r.ok ? `Listo: ${d.restaurants} sucursales, ${Number(d.orders).toLocaleString("es-CL")} pedidos y ${d.customers} clientes. Carta: ${d.source}.` : d.error || "No se pudo generar");
+    } catch { setMsg("Error de conexión"); } finally { setBusy(false); }
+  };
+  return (
+    <div className="ventas-card" style={{ padding: 18, display: "grid", gap: 10 }}>
+      <div style={{ fontWeight: 800 }}>Local de muestra</div>
+      <p style={{ margin: 0, fontSize: 14, color: "var(--ink-2)", lineHeight: 1.5 }}>
+        Una marca vegana ficticia con 3 sucursales y un año de datos (ventas, mesas, clientes, fidelización y recuperación) con la carta y fotos de Horus Vegan.
+        En la demo, la página <b>Accesos</b> abre su panel y su POS. Se actualiza solo cada día; no aparece en el sitio público.
+      </p>
+      <div><button className="ventas-btn" onClick={run} disabled={busy}>{busy ? "Generando…" : "Crear / regenerar local de muestra"}</button></div>
+      {msg && <p style={{ margin: 0, fontSize: 14, color: "var(--ink-2)" }}>{msg}</p>}
     </div>
   );
 }

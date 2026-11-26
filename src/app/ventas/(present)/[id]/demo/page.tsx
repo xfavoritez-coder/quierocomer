@@ -14,6 +14,7 @@ export default async function VentasDemoPage({ params }: { params: Promise<{ id:
   const data = await buildDemoData(lead);
   // La tarjeta, la tienda y el garzón de la demo se preparan al abrirla (POST .../prepare, desde DemoShell).
   // Ya registrado: la demo se puede volver a mostrar, pero sin barra de cierre.
-  const closed = ["registrado", "activo"].includes(lead.crmStatus || "");
-  return <DemoShell data={data} mode="seller" exitHref={`/ventas/${id}`} seller={closed ? undefined : { email: lead.email ?? "", whatsapp: lead.whatsapp ?? "", interests: lead.interestModules ?? [] }} />;
+  // Ya registrado o local de ejemplo: la demo se muestra sin barra de cierre.
+  const closed = ["registrado", "activo"].includes(lead.crmStatus || "") || lead.captureSource === "example";
+  return <DemoShell data={data} mode="seller" exitHref={lead.captureSource === "example" ? "/ventas" : `/ventas/${id}`} seller={closed ? undefined : { email: lead.email ?? "", whatsapp: lead.whatsapp ?? "", interests: lead.interestModules ?? [] }} />;
 }

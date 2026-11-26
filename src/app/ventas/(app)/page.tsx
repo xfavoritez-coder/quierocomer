@@ -11,7 +11,7 @@ export default async function VentasHomePage() {
 
   // SELLER ve solo sus leads; ADMIN ve todos los de terreno (los que tienen vendedor).
   const leads = await prisma.lead.findMany({
-    where: isAdmin ? { sellerId: { not: null } } : { sellerId: seller.id },
+    where: { ...(isAdmin ? { sellerId: { not: null } } : { sellerId: seller.id }), NOT: { captureSource: "example" } },
     select: { id: true, localName: true, commune: true, cuisine: true, crmStatus: true, crmFollowUpAt: true, createdAt: true, updatedAt: true, seller: { select: { name: true } } },
     orderBy: { updatedAt: "desc" },
     take: 200,

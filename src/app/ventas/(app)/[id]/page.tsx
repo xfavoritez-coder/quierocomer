@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSeller } from "@/lib/ventas/session";
 import { getSellerLead, getLeadRestaurant } from "@/lib/ventas/leads";
 import { statusInfo } from "@/lib/ventas/status";
+import DeleteLead from "./DeleteLead";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
+      {!lead.convertedToOwnerId && !["registrado", "activo"].includes(lead.crmStatus || "") && <DeleteLead id={id} name={restaurant?.name ?? lead.localName} />}
     </div>
   );
 }

@@ -18,6 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const lead = await getSellerLead(seller, id);
   if (!lead) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
+  if (lead.captureSource === "example") return NextResponse.json({ error: "El local de ejemplo no se puede cerrar ni registrar" }, { status: 409 });
   const b = await req.json().catch(() => ({}));
   const result = String(b?.result || "");
   const email = String(b?.email || "").trim().toLowerCase();

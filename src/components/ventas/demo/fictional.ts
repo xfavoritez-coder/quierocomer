@@ -8,11 +8,11 @@ const d = (name: string, price: number, emoji: string, description: string) => (
 export function fictionalDemo(name?: string | null): DemoData {
   return {
     leadId: null,
-    name: name?.trim() || "Café Ejemplo",
+    name: name?.trim() || "Dulce Aroma",
     logoUrl: null,
     color: "#B4532A",
     bannerUrl: null,
-    cuisine: "Cocina chilena de autor",
+    cuisine: "Cocina chilena & café",
     commune: "Providencia",
     slug: null,
     isFictional: true,
