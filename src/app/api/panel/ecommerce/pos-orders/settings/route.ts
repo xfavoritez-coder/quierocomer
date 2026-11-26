@@ -60,6 +60,7 @@ export async function PUT(req: NextRequest) {
   if (typeof incoming.customerAbsorbsSurcharge === "boolean") merged.customerAbsorbsSurcharge = incoming.customerAbsorbsSurcharge;
   if (typeof incoming.alertOpenOrdersOnClose === "boolean") merged.alertOpenOrdersOnClose = incoming.alertOpenOrdersOnClose;
   if (typeof incoming.uberEatsAutoAccept === "boolean") merged.uberEatsAutoAccept = incoming.uberEatsAutoAccept;
+  if (incoming.boardView === "list" || incoming.boardView === "grouped") merged.boardView = incoming.boardView;
   if (typeof incoming.prepAlertMinutes === "number" && Number.isFinite(incoming.prepAlertMinutes)) {
     merged.prepAlertMinutes = Math.min(600, Math.max(0, Math.round(incoming.prepAlertMinutes)));
   }
