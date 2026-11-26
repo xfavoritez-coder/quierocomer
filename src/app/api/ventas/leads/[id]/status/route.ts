@@ -15,6 +15,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const lead = await getSellerLead(seller, id);
   if (!lead) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
+  // Si el proceso quedó "procesando" más de 6 min (se cortó), se marca como fallido para poder reintentar.
+  if (lead.cartaStatus === "PROCESSING") {
+    const row = await prisma.lead.findUnique({ where: { id }, select: { updatedAt: true } });
+    if (row && Date.now() - row.updatedAt.getTime() > 6 * 60_000) {
+      await prisma.lead.update({ where: { id }, data: { cartaStatus: "FAILED", errorLog: "El proceso se cortó antes de terminar (tardó demasiado). Prueba reintentar." } });
+      lead.cartaStatus = "FAILED"; lead.errorLog = "El proceso se cortó antes de terminar (tardó demasiado). Prueba reintentar.";
+    }
+  }
   const restaurant = await getLeadDemoRestaurant(lead.generatedSlug);
   const categories = restaurant
     ? await prisma.category.findMany({

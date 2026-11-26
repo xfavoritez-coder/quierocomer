@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
   const lead = await prisma.lead.create({
     data: {
       // Lead de terreno: sin correo → el motor de extracción NO crea cuenta ni envía correos.
-      localName: localName || "Local sin nombre",
+      // Vacío si el vendedor no lo escribió: así el motor usa el nombre que trae la carta (igual que /subircarta).
+      localName,
       ownerName: clean(b.contactName, 80),
       email: "",
       cartaType: source === "photo" ? "PHOTO" : "LINK",

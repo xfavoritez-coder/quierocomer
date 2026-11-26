@@ -47,7 +47,7 @@ export default async function VentasHomePage() {
             return (
               <Link key={l.id} href={`/ventas/${l.id}`} className="ventas-row" style={{ borderTop: i ? "1px solid var(--line)" : "none", color: "inherit", textDecoration: "none" }}>
                 <div className="who">
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{l.localName}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{l.localName || "Leyendo su carta…"}</div>
                   <div style={{ fontSize: 13, color: "var(--ink-3)" }}>
                     {[l.cuisine, l.commune].filter(Boolean).join(" · ") || "Sin datos"}
                     {isAdmin && l.seller ? ` · ${l.seller.name}` : ""}

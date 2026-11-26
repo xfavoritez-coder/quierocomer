@@ -29,6 +29,8 @@ export default function ArmandoPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    // Igual que /subircarta: vista previa rápida + carta completa en paralelo.
+    fetch(`/api/ventas/leads/${id}/preview`, { method: "POST" }).catch(() => {});
     fetch(`/api/ventas/leads/${id}/process`, { method: "POST" }).catch(() => {});
   }, [id]);
 
@@ -95,7 +97,7 @@ export default function ArmandoPage({ params }: { params: Promise<{ id: string }
 
       <h1 style={{ fontSize: "clamp(26px, 5vw, 40px)", fontWeight: 800, letterSpacing: "-.03em", margin: "14px 0 4px" }}>{name || "Armando su local…"}</h1>
       <p style={{ color: "var(--ink-3)", margin: 0, fontSize: 15 }}>
-        {failed ? "No pudimos leer esta carta. A veces es pasajero: prueba reintentar." : done ? "¡Listo! Su carta ya está en QuieroComer" : "Leyendo la carta y armando su local…"}
+        {failed ? "No pudimos leer esta carta. A veces es pasajero: prueba reintentar." : done ? "¡Listo! Su carta ya está en QuieroComer" : elapsed > 25000 ? `Armando la carta completa… ${Math.floor(elapsed / 60000)}:${String(Math.floor(elapsed / 1000) % 60).padStart(2, "0")} · las cartas grandes tardan 1 a 3 minutos` : "Leyendo la carta y armando su local…"}
       </p>
 
       {failed && st?.error && (

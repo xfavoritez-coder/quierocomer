@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processLead } from "@/lib/extractors/pipeline";
+import { prisma } from "@/lib/prisma";
 import { getSellerFromRequest } from "@/lib/ventas/session";
 import { getSellerLead, addLeadEvent } from "@/lib/ventas/leads";
 
@@ -14,8 +15,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const lead = await getSellerLead(seller, id);
   if (!lead) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   if (lead.captureSource === "none") return NextResponse.json({ ok: true, skipped: true });
+  // Locales capturados antes con el nombre provisorio: que el motor use el nombre de la carta.
+  if (lead.localName === "Local sin nombre") { await prisma.lead.update({ where: { id }, data: { localName: "" } }); lead.localName = ""; }
   try {
     const r = await processLead(id);
+    if (!lead.localName?.trim() && r.slug) {
+      const rest = await prisma.restaurant.findUnique({ where: { slug: r.slug }, select: { name: true } });
+      if (rest?.name) await prisma.lead.update({ where: { id }, data: { localName: rest.name } });
+    }
     await addLeadEvent(id, "menu_extracted", "system", seller.id, { payload: { slug: r.slug } });
     return NextResponse.json({ ok: true, slug: r.slug });
   } catch (e) {

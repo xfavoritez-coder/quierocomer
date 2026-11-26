@@ -28,7 +28,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {restaurant?.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ width: 64, height: 64, objectFit: "contain", borderRadius: 16, background: "#fff", border: "1px solid var(--line)" }} />}
         <div style={{ flex: 1, minWidth: 200 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{restaurant?.name ?? lead.localName}</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{restaurant?.name ?? (lead.localName || "Local sin nombre")}</h1>
           <div style={{ color: "var(--ink-3)", fontSize: 14, marginTop: 2 }}>{[lead.cuisine, lead.commune, lead.ownerName && `Contacto: ${lead.ownerName}`].filter(Boolean).join(" · ") || "Sin datos"}</div>
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: `${st.color}18`, color: st.color }}>{st.label}</span>
@@ -65,7 +65,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {!lead.convertedToOwnerId && !["registrado", "activo"].includes(lead.crmStatus || "") && <DeleteLead id={id} name={restaurant?.name ?? lead.localName} />}
+      {!lead.convertedToOwnerId && !["registrado", "activo"].includes(lead.crmStatus || "") && <DeleteLead id={id} name={restaurant?.name ?? (lead.localName || "este local")} />}
     </div>
   );
 }
