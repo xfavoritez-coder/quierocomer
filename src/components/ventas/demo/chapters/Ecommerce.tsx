@@ -7,10 +7,9 @@ import type { ChapterProps } from "../DemoShell";
 import type { DemoData } from "../types";
 import { LaptopFrame, PhoneFrame, TabletFrame } from "../frames";
 import { BrandText, DishImage, EASE, Eyebrow, Headline, LocalLogo, QrPill, Reveal, Stage, clp, featuredDishes, onColor, rgba, useViewport } from "../ui";
-import { PosRecovery } from "./Pos";
 import OrdersInbox, { sampleOrders } from "./OrdersInbox";
 
-export const ecommerceSteps = 6;
+export const ecommerceSteps = 5;
 
 /** Cada paso entra con una transición corta (fundido, leve zoom y desenfoque). */
 export default function Ecommerce(props: ChapterProps) {
@@ -123,26 +122,6 @@ function EcommerceStep({ data, step, live, onQr }: ChapterProps) {
           </Reveal>
         </div>
         <Reveal step={step} at={4} y={50} delay={0.25}><DeliveryMap data={data} narrow={narrow} /></Reveal>
-      </Stage>
-    );
-  }
-
-  // ── 5 · Recuperación de clientes ──
-  if (step >= 5) {
-    return (
-      <Stage style={{ flexDirection: narrow ? "column" : "row", gap: "clamp(24px, 4vw, 64px)" }}>
-        <div style={{ flex: "0 1 400px", minWidth: 0 }}>
-          <Reveal step={step} at={5}><Eyebrow color={c}>Recuperación de clientes</Eyebrow></Reveal>
-          <Reveal step={step} at={5} delay={0.1}><Headline size="md" style={{ marginTop: 14 }}>El cliente que dejó de pedir,<br /><BrandText color={c}>vuelve.</BrandText></Headline></Reveal>
-          <Reveal step={step} at={5} delay={0.25}>
-            <div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "rgba(0,0,0,.55)", marginTop: 16, lineHeight: 1.5 }}>
-              Detectamos a quien dejó de pedirte en tu tienda, le preguntamos por qué y le enviamos un cupón automático. Tú solo ves cómo regresan.
-            </div>
-          </Reveal>
-        </div>
-        <Reveal step={step} at={5} y={60} delay={0.2}>
-          <TabletFrame width={Math.min(narrow ? w - 40 : 740, 740)}><PosRecovery data={data} /></TabletFrame>
-        </Reveal>
       </Stage>
     );
   }

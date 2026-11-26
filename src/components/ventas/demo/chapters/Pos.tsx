@@ -311,59 +311,6 @@ function PosReports({ data }: { data: DemoData }) {
   );
 }
 
-/** Recuperación de clientes: se va, recibe un cupón, vuelve. */
-export function PosRecovery({ data }: { data: DemoData }) {
-  const reduce = useReducedMotion();
-  const c = data.color;
-  const dish = featuredDishes(data, 1)[0];
-  const people = [
-    { n: "María González", d: 52 }, { n: "Jorge Pérez", d: 47 }, { n: "Valentina Díaz", d: 61 },
-  ];
-  const [k, setK] = useState(reduce ? 3 : 0);
-  useEffect(() => {
-    if (reduce) return;
-    const ts = [setTimeout(() => setK(1), 900), setTimeout(() => setK(2), 2300), setTimeout(() => setK(3), 3900)];
-    return () => ts.forEach(clearTimeout);
-  }, [reduce]);
-  return (
-    <Shell data={data} title="Recuperación de clientes" store>
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 12, minHeight: 0 }}>
-        <div style={{ ...card, display: "grid", gap: 8, alignContent: "start" }}>
-          <div style={kpiLabel}>No te piden hace +45 días</div>
-          {people.map((p, i) => {
-            const back = i === 0 && k >= 3;
-            const sent = k >= 1;
-            return (
-              <motion.div key={p.n} layout style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 9px", borderRadius: 10, background: back ? "#f0fdf4" : "#faf9f7" }}>
-                <div style={{ width: 26, height: 26, borderRadius: 99, background: rgba(c, 0.15), color: c, display: "grid", placeItems: "center", fontWeight: 800 }}>{p.n[0]}</div>
-                <div style={{ flex: 1, minWidth: 0 }}><b>{p.n}</b><div style={{ color: "#999", fontSize: 9.5 }}>último pedido hace {p.d} días</div></div>
-                <AnimatePresence mode="wait">
-                  <motion.span key={back ? "b" : sent ? "s" : "w"} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                    style={{ fontSize: 9.5, fontWeight: 800, padding: "3px 8px", borderRadius: 99, background: back ? "#16a34a" : sent ? rgba(c, 0.15) : "#eee", color: back ? "#fff" : sent ? c : "#999" }}>
-                    {back ? "¡Volvió!" : sent ? "Cupón enviado" : "En riesgo"}
-                  </motion.span>
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </div>
-        <div style={{ display: "grid", gap: 10, alignContent: "start" }}>
-          <motion.div initial={false} animate={{ opacity: k >= 2 ? 1 : 0.25, y: k >= 2 ? 0 : 8 }} transition={{ duration: 0.6, ease: EASE }} style={{ ...card, border: `1.5px dashed ${c}` }}>
-            <div style={kpiLabel}>Correo automático</div>
-            <div style={{ fontWeight: 800, fontSize: 12.5, marginTop: 4 }}>María, te extrañamos 💛</div>
-            <div style={{ color: "#666", marginTop: 4, lineHeight: 1.35 }}>Vuelve a {data.name} con <b style={{ color: c }}>15% de descuento</b>{dish ? ` en tu ${dish.name}` : ""}. Válido 7 días.</div>
-            <div style={{ marginTop: 8, display: "inline-block", fontFamily: "var(--demo-mono)", fontWeight: 800, padding: "4px 10px", borderRadius: 8, background: rgba(c, 0.12), color: c }}>VUELVE15</div>
-          </motion.div>
-          <motion.div initial={false} animate={{ opacity: k >= 3 ? 1 : 0.25 }} transition={{ duration: 0.6 }} style={{ ...card, background: "#111", color: "#fff" }}>
-            <div style={{ ...kpiLabel, color: "rgba(255,255,255,.5)" }}>Recuperados este mes</div>
-            <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{k >= 3 ? <CountUp value={14} run money={false} /> : 0} <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.55)" }}>clientes volvieron</span></div>
-          </motion.div>
-        </div>
-      </div>
-    </Shell>
-  );
-}
-
 /** Inventario y bodega: stock que baja con cada venta y alerta de reposición. */
 function PosInventory({ data }: { data: DemoData }) {
   const reduce = useReducedMotion();
