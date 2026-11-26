@@ -128,6 +128,55 @@ export function usePosCash(restaurantId?: string, pollMs = 12000): PosCashState 
   return { shift, caja, shiftClosedCajas, step: computeStep(shift, caja, shiftClosedCajas), loading: state === undefined, refresh }
 }
 
+/**
+ * Para la cinta de aviso "caja +24h abierta": devuelve el `openedAt` de la caja
+ * ABIERTA de cada sucursal pasada (map restaurantId → openedAt). Útil en cuentas
+ * multi-sucursal (una sola o todas en vista), donde usePosCash sólo mira la
+ * primaria. Poll lento (60s) porque la granularidad es en horas.
+ */
+export function usePosOpenCajas(restaurantIds: string[], pollMs = 60000): { openedAt: Record<string, string>; loading: boolean } {
+  const [openedAt, setOpenedAt] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const idsKey = Array.from(new Set(restaurantIds.filter(Boolean))).sort().join(',')
+
+  useEffect(() => {
+    const ids = idsKey ? idsKey.split(',') : []
+    if (!ids.length) { setOpenedAt({}); setLoading(false); return }
+    let alive = true
+    async function run() {
+      try {
+        const results = await Promise.all(ids.map(async (rid) => {
+          try {
+            const r = await fetch(`/api/pos/cash?restaurantId=${rid}`, { cache: 'no-store' })
+            if (!r.ok) return [rid, null] as const
+            const j = await r.json()
+            const caja = j.caja as ServerCaja | null | undefined
+            return [rid, caja && caja.isOpen && caja.openedAt ? caja.openedAt : null] as const
+          } catch { return [rid, null] as const }
+        }))
+        if (!alive) return
+        const next: Record<string, string> = {}
+        for (const [rid, oa] of results) if (oa) next[rid] = oa
+        setOpenedAt(next)
+        setLoading(false)
+      } catch { if (alive) setLoading(false) }
+    }
+    run()
+    const id = setInterval(run, pollMs)
+    const onWake = () => { if (document.visibilityState === 'visible') run() }
+    window.addEventListener('focus', run)
+    document.addEventListener('visibilitychange', onWake)
+    return () => {
+      alive = false
+      clearInterval(id)
+      window.removeEventListener('focus', run)
+      document.removeEventListener('visibilitychange', onWake)
+    }
+  }, [idsKey, pollMs])
+
+  return { openedAt, loading }
+}
+
 // Adapta la caja del servidor a la forma que espera useSessionSummary (Dexie).
 export function toLegacyCashSession(caja: ServerCaja | null | undefined, restaurantId?: string) {
   if (!caja) return undefined

@@ -338,7 +338,7 @@ function OrderCard({
   stageBusy: string | null
   blocked: boolean
   branchLabel?: string
-  cols?: 1 | 2 | 3
+  cols?: 1 | 2 | 3 | 4
   waitTimeDriver: number
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
@@ -1357,8 +1357,8 @@ export function OrderDetailPanel({
   )
 }
 
-// Ícono del botón de vista: refleja el modo actual (filas / 2 col / 3 col).
-function ViewIcon({ cols }: { cols: 1 | 2 | 3 }) {
+// Ícono del botón de vista: refleja el modo actual (filas / 2 col / 3 col / 4 col).
+function ViewIcon({ cols }: { cols: 1 | 2 | 3 | 4 }) {
   if (cols === 1) {
     return (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1373,9 +1373,16 @@ function ViewIcon({ cols }: { cols: 1 | 2 | 3 }) {
       </svg>
     )
   }
+  if (cols === 3) {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="3" y="4" width="4.5" height="16" rx="1" /><rect x="9.75" y="4" width="4.5" height="16" rx="1" /><rect x="16.5" y="4" width="4.5" height="16" rx="1" />
+      </svg>
+    )
+  }
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <rect x="3" y="4" width="4.5" height="16" rx="1" /><rect x="9.75" y="4" width="4.5" height="16" rx="1" /><rect x="16.5" y="4" width="4.5" height="16" rx="1" />
+      <rect x="3" y="4" width="3.3" height="16" rx="1" /><rect x="8.23" y="4" width="3.3" height="16" rx="1" /><rect x="13.46" y="4" width="3.3" height="16" rx="1" /><rect x="18.7" y="4" width="3.3" height="16" rx="1" />
     </svg>
   )
 }
@@ -1485,24 +1492,25 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   // Vista del tablero: 1 = filas, 2/3 = columnas. Se recuerda POR DISPOSITIVO
   // en localStorage. Arranca en 1 para no romper la hidratación y se carga el
   // valor guardado tras montar.
-  const [viewCols, setViewCols] = useState<1 | 2 | 3>(1)
+  const [viewCols, setViewCols] = useState<1 | 2 | 3 | 4>(1)
   useEffect(() => {
     try {
       // v2: nuevo default = 2 columnas en desktop. Clave distinta para ignorar
       // la preferencia anterior (que arrancaba en 1).
       const v = parseInt(localStorage.getItem('pos:boardCols:v2') || '', 10)
-      if (v === 1 || v === 2 || v === 3) setViewCols(v)
-      else setViewCols(window.innerWidth >= 900 ? 3 : window.innerWidth >= 600 ? 2 : 1)
+      if (v === 1 || v === 2 || v === 3 || v === 4) setViewCols(v)
+      else setViewCols(window.innerWidth >= 1280 ? 4 : window.innerWidth >= 900 ? 3 : window.innerWidth >= 600 ? 2 : 1)
     } catch { }
   }, [])
   // Máximo de columnas que caben bien según el ancho del dispositivo: teléfono
   // = 1 (en móvil 2/3 columnas se ven apretadas y cortan el texto), tablet = 2,
-  // desktop = 3. Arranca en 1 para que el SSR no choque con la hidratación.
-  const [maxCols, setMaxCols] = useState<1 | 2 | 3>(1)
+  // desktop = 3, pantalla ancha = 4. Arranca en 1 para que el SSR no choque con
+  // la hidratación.
+  const [maxCols, setMaxCols] = useState<1 | 2 | 3 | 4>(1)
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth
-      setMaxCols(w >= 900 ? 3 : w >= 600 ? 2 : 1)
+      setMaxCols(w >= 1280 ? 4 : w >= 900 ? 3 : w >= 600 ? 2 : 1)
     }
     compute()
     window.addEventListener('resize', compute)
@@ -1510,13 +1518,13 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   }, [])
   const cycleView = useCallback(() => {
     setViewCols(prev => {
-      const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3
+      const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3 | 4
       try { localStorage.setItem('pos:boardCols:v2', String(next)) } catch { }
       return next
     })
   }, [maxCols])
   // Columnas efectivas: la preferencia guardada, acotada a lo que cabe.
-  const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3
+  const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3 | 4
   // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
   // Ordenamiento: campo + dirección. Se recuerda en localStorage.
   type SortField = 'hora' | 'total' | 'estado'
@@ -1816,7 +1824,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     setStageBusy(null)
   }
 
-  const newOrderLabel = type === 'delivery' ? 'Nuevo delivery' : type === 'retiro' ? 'Nuevo retiro' : 'Nuevo pedido'
+  const newOrderLabel = 'Nuevo pedido'
 
   const listSection = (
     <div className="pos-scroll">
@@ -1857,7 +1865,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                     <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--line)' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Vista</div>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {([1, 2, 3] as const).filter(c => c <= maxCols).map(c => (
+                        {([1, 2, 3, 4] as const).filter(c => c <= maxCols).map(c => (
                           <button key={c} onClick={() => { setViewCols(c); try { localStorage.setItem('pos:boardCols:v2', String(c)) } catch {} }}
                             style={{
                               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
