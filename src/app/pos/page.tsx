@@ -726,6 +726,36 @@ export default function PosHomePage() {
         </div>
       )})()}
 
+      {/* ── Caja abierta +24h — recordatorio de cierre ──
+          Aparece cuando la caja lleva 24 h o más abierta (olvido de cierre).
+          Mismo gating que la cinta de "caja cerrada" (cajero de una sola sucursal). */}
+      {!isOwner && restaurants.length <= 1 && cashSession && syncReady && !cashLoading && (() => {
+        const openedMs = cashSession.openedAt ? new Date(cashSession.openedAt).getTime() : 0
+        const hoursOpen = openedMs ? Math.floor((Date.now() - openedMs) / 3600000) : 0
+        if (hoursOpen < 24) return null
+        return (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 12, flexWrap: 'wrap',
+          background: '#FEF2F2',
+          borderBottom: '1px solid #FECACA',
+          padding: '9px 18px', flexShrink: 0,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+          </svg>
+          <span style={{ color: '#B91C1C', fontWeight: 700, fontSize: 13, fontFamily: 'var(--sans)' }}>
+            La caja tiene {hoursOpen} horas abierta. Debes cerrar caja y turno.
+          </span>
+          <button
+            onClick={() => openInnerPage('caja')}
+            style={{ border: 'none', background: '#DC2626', color: '#fff', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+          >
+            Cerrar caja →
+          </button>
+        </div>
+      )})()}
+
       {/* Branch pills moved to top bar above header */}
 
       {/* ── Inner page (carta, caja, impresora, etc.) ── */}
