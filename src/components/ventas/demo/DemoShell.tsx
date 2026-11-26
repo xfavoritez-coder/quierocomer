@@ -132,7 +132,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
           setToasts((t) => [...t.slice(-2), ev]);
           if (ev.type === "test_order" && ev.order) {
             const o = ev.order;
-            setLiveOrders((list) => [...list, { id: ev.id, number: o.number, customer: o.customer, phone: o.phone, payment: o.payment, note: o.note, lines: o.lines, total: o.total, at: ev.at }]);
+            setLiveOrders((list) => [...list, { id: ev.id, onlineId: o.onlineId, status: o.status, number: o.number, customer: o.customer, phone: o.phone, payment: o.payment, note: o.note, lines: o.lines, total: o.total, at: ev.at }]);
           }
           setTimeout(() => setToasts((t) => t.filter((x) => x.id !== ev.id)), 7000);
           chime();
@@ -382,7 +382,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
 
 type LiveEvent = {
   id: string; type: "waiter_called" | "loyalty_enrolled" | "test_order"; label: string; at: string; detail?: string; total?: number;
-  order?: { number: number | null; customer: string; phone: string; payment: string; note: string | null; lines: { name: string; qty: number; price: number }[]; total: number };
+  order?: { onlineId?: string; status?: string; number: number | null; customer: string; phone: string; payment: string; note: string | null; lines: { name: string; qty: number; price: number }[]; total: number };
 };
 
 /** Sonido corto de dos tonos (sin archivos). Requiere una interacción previa (tecla o clic). */

@@ -6,12 +6,16 @@ import { BellRing, Phone, Store, CreditCard, StickyNote, Printer, ChevronRight }
 import type { DemoData, LiveOrder } from "../types";
 import { EASE, LocalLogo, clp, featuredDishes, onColor, rgba } from "../ui";
 
-type Stage = "nuevo" | "preparando" | "listo";
-const STAGE: Record<Stage, { label: string; color: string; next: string | null }> = {
-  nuevo: { label: "Nuevo", color: "#f59e0b", next: "Aceptar y preparar" },
-  preparando: { label: "En preparación", color: "#3b82f6", next: "Marcar listo" },
-  listo: { label: "Listo para retiro", color: "#16a34a", next: null },
+type Stage = "nuevo" | "aceptado" | "preparando" | "listo" | "entregado";
+// Etapas del pedido (las mismas del seguimiento del cliente) y el siguiente paso.
+const STAGE: Record<Stage, { label: string; color: string; next: string | null; to: Stage | null; status: string }> = {
+  nuevo: { label: "Nuevo", color: "#f59e0b", next: "Aceptar pedido", to: "aceptado", status: "PENDING" },
+  aceptado: { label: "Aceptado", color: "#8b5cf6", next: "Empezar a preparar", to: "preparando", status: "ACCEPTED" },
+  preparando: { label: "En preparación", color: "#3b82f6", next: "Marcar listo", to: "listo", status: "PREPARING" },
+  listo: { label: "Listo para retiro", color: "#16a34a", next: "Entregar", to: "entregado", status: "READY" },
+  entregado: { label: "Entregado", color: "#6b7280", next: null, to: null, status: "DONE" },
 };
+const FROM_STATUS: Record<string, Stage> = { PENDING: "nuevo", ACCEPTED: "aceptado", PREPARING: "preparando", READY: "listo", IN_DELIVERY: "listo", DONE: "entregado" };
 
 /** Pedidos de ejemplo cuando el dueño aún no hizo el suyo. */
 export function sampleOrders(data: DemoData, now: number): LiveOrder[] {
@@ -26,13 +30,24 @@ export function sampleOrders(data: DemoData, now: number): LiveOrder[] {
 
 /** Bandeja de pedidos online como en el POS de QuieroComer: los pedidos llegan, se abren y se avanzan. */
 export default function OrdersInbox({ data, orders, highlightId }: { data: DemoData; orders: LiveOrder[]; highlightId?: string | null }) {
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const c = data.color;
   const [selected, setSelected] = useState<string | null>(orders[0]?.id ?? null);
   const [stages, setStages] = useState<Record<string, Stage>>({});
   const [now] = useState(() => Date.now());
   const [ticket, setTicket] = useState(false);
   const sel = orders.find((o) => o.id === selected) ?? orders[0] ?? null;
-  const stageOf = (id: string) => stages[id] ?? "nuevo";
+  const stageOf = (id: string): Stage => stages[id] ?? FROM_STATUS[orders.find((o) => o.id === id)?.status ?? ""] ?? "nuevo";
+  // Avanza el pedido; si es el pedido real de prueba, el cliente lo ve en vivo en su seguimiento.
+  const advance = (o: LiveOrder) => {
+    const to = STAGE[stageOf(o.id)].to;
+    if (!to) return;
+    setStages((s) => ({ ...s, [o.id]: to }));
+    if (o.onlineId && data.leadId) {
+      fetch(`/api/ventas/leads/${data.leadId}/order-stage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: o.onlineId, status: STAGE[to].status }) })
+        .then((r) => setSyncMsg(r.ok ? "Actualizado en el seguimiento del cliente" : null)).catch(() => {});
+    }
+  };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const ago = (iso: string) => { const m = Math.max(0, Math.round((now - Date.parse(iso)) / 60000)); return m < 1 ? "recién" : `hace ${m} min`; };
 
@@ -105,14 +120,15 @@ export default function OrdersInbox({ data, orders, highlightId }: { data: DemoD
                 <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                   <button onClick={() => setTicket(true)} style={{ flex: "0 0 auto", borderRadius: 10, padding: "9px 10px", border: "1px solid #e7e4de", background: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><Printer size={13} /> Comanda</button>
                   {STAGE[stageOf(sel.id)].next ? (
-                    <motion.button whileTap={{ scale: 0.97 }} onClick={() => setStages((s) => ({ ...s, [sel.id]: stageOf(sel.id) === "nuevo" ? "preparando" : "listo" }))}
+                    <motion.button whileTap={{ scale: 0.97 }} onClick={() => advance(sel)}
                       style={{ flex: 1, borderRadius: 10, padding: "9px 0", border: "none", font: "inherit", fontWeight: 800, fontSize: 12, background: c, color: onColor(c), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                       {STAGE[stageOf(sel.id)].next} <ChevronRight size={14} />
                     </motion.button>
                   ) : (
-                    <div style={{ flex: 1, borderRadius: 10, padding: "9px 0", textAlign: "center", fontWeight: 800, fontSize: 12, background: "#f0fdf4", color: "#16a34a" }}>✓ Avisamos al cliente</div>
+                    <div style={{ flex: 1, borderRadius: 10, padding: "9px 0", textAlign: "center", fontWeight: 800, fontSize: 12, background: "#f3f4f6", color: "#374151" }}>✓ Pedido entregado</div>
                   )}
                 </div>
+                {sel.onlineId && syncMsg && <div style={{ marginTop: 6, textAlign: "center", fontSize: 10, fontWeight: 700, color: "#16a34a" }}>● {syncMsg}</div>}
               </motion.div>
             ) : (
               <div style={{ margin: "auto", color: "#999", textAlign: "center" }}>Esperando pedidos…</div>

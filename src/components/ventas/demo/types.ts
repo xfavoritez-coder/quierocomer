@@ -27,7 +27,7 @@ export type DemoPlanSection = { id: string; title: string; subtitle: string; pla
 
 /** Pedido de prueba hecho por el dueño desde su celular (tienda demo). */
 export type LiveOrder = {
-  id: string; number: number | null; customer: string; phone: string; payment: string; note: string | null;
+  id: string; onlineId?: string; status?: string; number: number | null; customer: string; phone: string; payment: string; note: string | null;
   lines: { name: string; qty: number; price: number }[]; total: number; at: string;
 };
 

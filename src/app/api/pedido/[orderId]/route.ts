@@ -39,6 +39,7 @@ export async function GET(
           orderingWaitTime: true,
           whatsapp: true,
           phone: true,
+          address: true,
           cartaColorMode: true,
           cartaAccentColor: true,
           ecommerceStoreConfig: true,
@@ -96,6 +97,7 @@ export async function GET(
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
     restaurantPhone: order.restaurant.whatsapp || order.restaurant.phone || null,
+    restaurantAddress: order.restaurant.address ?? null,
     colorMode: order.restaurant.cartaColorMode ?? "LIGHT",
     accentColor: order.restaurant.cartaAccentColor ?? null,
   });
