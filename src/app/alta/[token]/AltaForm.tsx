@@ -43,11 +43,19 @@ export default function AltaForm({ token, initial, color, logoUrl, cartaUrl, dis
   const [done, setDone] = useState<{ panelUrl: string | null; slug: string } | null>(null);
   const fg = onColor(color);
   const plans = sections.flatMap((s) => s.plans);
-  // El plan recomendado va primero (su sección arriba y él al inicio).
+  // Planes principales primero; en cada sección, el recomendado al inicio.
   const ordered = [...sections]
-    .sort((a, b) => Number(b.plans.some((p) => p.recommended)) - Number(a.plans.some((p) => p.recommended)))
+    .sort((a, b) => Number(b.id === "__plans") - Number(a.id === "__plans"))
     .map((s) => ({ ...s, plans: [...s.plans].sort((a, b) => Number(b.recommended) - Number(a.recommended)) }));
   const plan = plans.find((p) => p.id === f.planId) ?? null;
+  const addons = plans.filter((p) => f.addonIds?.includes(p.id));
+  const monthly = (plan?.price ?? 0) + addons.reduce((s, a) => s + a.price, 0);
+  // Planes principales: se elige uno (se puede desmarcar). Paquetes y add-ons: varios.
+  const isMain = (secId: string) => secId === "__plans";
+  const toggle = (secId: string, id: string) => {
+    if (isMain(secId)) set("planId", f.planId === id ? "" : id);
+    else set("addonIds", f.addonIds?.includes(id) ? f.addonIds.filter((x) => x !== id) : [...(f.addonIds ?? []), id]);
+  };
 
   // ── Autoguardado (se puede cerrar y volver a abrir el enlace) ──
   const dirty = useRef(false);
@@ -73,7 +81,7 @@ export default function AltaForm({ token, initial, color, logoUrl, cartaUrl, dis
       if (!f.ownerPhone || f.ownerPhone.replace(/\D/g, "").length < 8) return "Revisa tu teléfono o WhatsApp";
       if (f.rut && !rutOk(f.rut)) return "Revisa el RUT (ej: 76.123.456-7) o déjalo vacío";
     }
-    if (i === 4 && !f.planId) return "Elige un plan";
+    if (i === 4 && !f.planId && !f.addonIds?.length) return "Elige un plan o al menos un módulo";
     return null;
   };
 
@@ -170,16 +178,16 @@ export default function AltaForm({ token, initial, color, logoUrl, cartaUrl, dis
               </Fields>
             )}
             {step === 4 && (
-              <Fields hint={plans.some((p) => p.recommended) ? "Te recomendamos el plan que cubre lo que más te gustó de la demo." : "Elige el plan con el que quieres partir."}>
+              <Fields hint={plans.some((p) => p.recommended) ? "Te recomendamos lo que más te gustó de la demo. Elige un plan y suma los módulos que quieras." : "Elige un plan y suma los módulos que quieras."}>
                 {ordered.map((sec) => (
                   <div key={sec.id} style={{ display: "grid", gap: 10 }}>
-                    {sections.length > 1 && <div style={{ ...lbl, marginTop: 6 }}>{sec.title}</div>}
+                    {sections.length > 1 && <div style={{ ...lbl, marginTop: 6 }}>{sec.title}{!isMain(sec.id) && <span style={{ fontWeight: 500, color: "#8a8a8e" }}> · puedes elegir varios</span>}</div>}
                     {sec.plans.map((p) => {
-                      const on = f.planId === p.id;
+                      const on = isMain(sec.id) ? f.planId === p.id : !!f.addonIds?.includes(p.id);
                       return (
-                        <button key={p.id} onClick={() => set("planId", p.id)} style={{ textAlign: "left", font: "inherit", color: "#111", cursor: "pointer", border: "none", padding: "16px 18px", borderRadius: 20, background: "#fff", position: "relative", boxShadow: on ? `0 0 0 2px ${color}, 0 18px 40px -20px ${color}` : card, transition: "box-shadow .25s" }}>
+                        <button key={p.id} onClick={() => toggle(sec.id, p.id)} style={{ textAlign: "left", font: "inherit", color: "#111", cursor: "pointer", border: "none", padding: "16px 18px", borderRadius: 20, background: "#fff", position: "relative", boxShadow: on ? `0 0 0 2px ${color}, 0 18px 40px -20px ${color}` : card, transition: "box-shadow .25s" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ width: 24, height: 24, borderRadius: 99, flexShrink: 0, display: "grid", placeItems: "center", background: on ? color : "transparent", boxShadow: on ? "none" : "inset 0 0 0 2px rgba(0,0,0,.15)", color: fg }}>{on && <Check size={15} strokeWidth={3} />}</div>
+                            <div style={{ width: 24, height: 24, borderRadius: isMain(sec.id) ? 99 : 7, flexShrink: 0, display: "grid", placeItems: "center", background: on ? color : "transparent", boxShadow: on ? "none" : "inset 0 0 0 2px rgba(0,0,0,.15)", color: fg }}>{on && <Check size={15} strokeWidth={3} />}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                                 <span style={{ fontWeight: 750, fontSize: 17 }}>{p.name}</span>
@@ -218,7 +226,7 @@ export default function AltaForm({ token, initial, color, logoUrl, cartaUrl, dis
                   <Row label="Dueño" value={[f.ownerName, f.email].filter(Boolean).join(" · ")} onEdit={() => go(1)} />
                   <Row label="Sistema actual" value={f.currentSystem || "—"} onEdit={() => go(2)} />
                   <Row label="Carta" value={dishCount ? `${dishCount} platos${f.cartaNote ? " · con nota" : ""}` : f.cartaNote ? "Con nota" : "La cargamos nosotros"} onEdit={() => go(3)} />
-                  <Row label="Plan" value={plan ? `${plan.name} · ${clp(plan.price)}/mes` : "—"} onEdit={() => go(4)} last />
+                  <Row label="Plan" value={[plan?.name, ...addons.map((a) => a.name)].filter(Boolean).join(" + ") + (monthly ? ` · ${clp(monthly)}/mes` : "") || "—"} onEdit={() => go(4)} last />
                 </div>
                 <label style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer", fontSize: 15, lineHeight: 1.45 }}>
                   <input type="checkbox" checked={!!f.acceptTerms} onChange={(e) => set("acceptTerms", e.target.checked)} style={{ width: 22, height: 22, accentColor: color, flexShrink: 0, marginTop: 1 }} />

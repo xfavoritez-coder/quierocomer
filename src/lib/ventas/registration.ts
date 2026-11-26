@@ -81,6 +81,8 @@ export type RegistrationForm = {
   currentSystem?: string; currentSystemLink?: string;
   cartaNote?: string;
   planId?: string;
+  /** Módulos (paquetes y add-ons) elegidos además del plan. */
+  addonIds?: string[];
   acceptTerms?: boolean;
   step?: number;
 };
@@ -93,6 +95,7 @@ export function cleanForm(o: unknown): RegistrationForm {
     ownerName: str(r.ownerName, 80), ownerPhone: str(r.ownerPhone, 30), email: str(r.email, 120)?.toLowerCase(), rut: str(r.rut, 20), businessName: str(r.businessName, 120),
     currentSystem: str(r.currentSystem, 40), currentSystemLink: str(r.currentSystemLink, 500),
     cartaNote: str(r.cartaNote, 500), planId: str(r.planId, 60),
+    addonIds: Array.isArray(r.addonIds) ? [...new Set((r.addonIds as unknown[]).map((x) => String(x).slice(0, 60)).filter(Boolean))].slice(0, 20) : undefined,
     acceptTerms: r.acceptTerms === true, step: Number.isFinite(Number(r.step)) ? Math.max(0, Math.min(5, Number(r.step))) : undefined,
   };
 }
@@ -105,7 +108,7 @@ export function validateForm(f: RegistrationForm): string | null {
   if (!f.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) return "Revisa tu correo";
   if (!f.ownerPhone || f.ownerPhone.replace(/\D/g, "").length < 8) return "Revisa tu teléfono o WhatsApp";
   if (f.rut && !rutOk(f.rut)) return "Revisa el RUT (ej: 76.123.456-7)";
-  if (!f.planId) return "Elige un plan";
+  if (!f.planId && !f.addonIds?.length) return "Elige un plan o al menos un módulo";
   if (!f.acceptTerms) return "Debes aceptar los términos";
   return null;
 }
@@ -185,7 +188,7 @@ export async function promoteRegistration(regId: string, f: RegistrationForm): P
     await tx.leadRegistration.update({ where: { id: regId }, data: { completedAt: now, formData: f as object } });
     await tx.leadEvent.createMany({
       data: [
-        { leadId: lead.id, type: "registered", actor: "owner", payload: { planId: f.planId, currentSystem: f.currentSystem ?? null, createdOwner } as object },
+        { leadId: lead.id, type: "registered", actor: "owner", payload: { planId: f.planId, addonIds: f.addonIds ?? [], currentSystem: f.currentSystem ?? null, createdOwner } as object },
         { leadId: lead.id, type: "onboarding_task", actor: "system", payload: { tasks: ["Configurar plan y cobro", f.currentSystem && f.currentSystem !== "ninguno" ? `Importar datos de ${f.currentSystem}` : null, "Imprimir QR", "Capacitación"].filter(Boolean) } as object },
       ],
     });

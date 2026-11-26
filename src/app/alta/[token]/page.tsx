@@ -35,7 +35,11 @@ export default async function AltaPage({ params }: { params: Promise<{ token: st
   const initial: RegistrationForm = {
     localName: lead.localName, address: demo?.address || leadContact(lead).address, commune: lead.commune ?? "", localPhone: demo?.phone ?? "",
     ownerName: lead.ownerName && lead.ownerName !== lead.localName ? lead.ownerName : "", ownerPhone: lead.whatsapp ?? "", email: lead.email || reg.sentTo || leadContact(lead).email,
-    rut: "", businessName: "", currentSystem: lead.detectedProvider?.name ?? "", currentSystemLink: "", cartaNote: "", planId: planId ?? "", acceptTerms: false, step: 0,
+    // El recomendado va como plan si es de los planes principales; si es un módulo, queda marcado como módulo.
+    rut: "", businessName: "", currentSystem: lead.detectedProvider?.name ?? "", currentSystemLink: "", cartaNote: "",
+    planId: planId && sections.find((s) => s.id === "__plans")?.plans.some((p) => p.id === planId) ? planId : "",
+    addonIds: planId && !sections.find((s) => s.id === "__plans")?.plans.some((p) => p.id === planId) ? [planId] : [],
+    acceptTerms: false, step: 0,
     ...Object.fromEntries(Object.entries(saved).filter(([, v]) => v !== undefined && v !== null)),
   };
 

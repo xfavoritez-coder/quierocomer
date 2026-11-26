@@ -19,8 +19,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const f = cleanForm(await req.json().catch(() => ({})));
   const invalid = validateForm(f);
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
-  const plan = (await getDemoPlans()).sections.flatMap((s) => s.plans).find((p) => p.id === f.planId);
-  if (!plan) return NextResponse.json({ error: "Elige un plan" }, { status: 400 });
+  const all = (await getDemoPlans()).sections.flatMap((s) => s.plans);
+  const plan = f.planId ? all.find((p) => p.id === f.planId) ?? null : null;
+  const addons = (f.addonIds ?? []).map((id) => all.find((p) => p.id === id)).filter(Boolean) as typeof all;
+  if (!plan && !addons.length) return NextResponse.json({ error: "Elige un plan o al menos un módulo" }, { status: 400 });
+  f.addonIds = addons.map((a) => a.id);
 
   let res;
   try { res = await promoteRegistration(reg.id, f); }
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const origin = req.nextUrl.origin;
   await sendRegistrationFollowups({
     origin, ownerId: res.ownerId, ownerEmail: f.email!, ownerName: f.ownerName!, localName: f.localName!, slug: res.slug,
-    planName: plan.name, seller: reg.lead.seller ? { name: reg.lead.seller.name, email: reg.lead.seller.email } : null,
+    planName: [plan?.name, ...addons.map((a) => a.name)].filter(Boolean).join(" + "), seller: reg.lead.seller ? { name: reg.lead.seller.name, email: reg.lead.seller.email } : null,
     leadId: reg.lead.id, currentSystem: [f.currentSystem, f.currentSystemLink].filter(Boolean).join(" · ") || undefined,
   }).catch((e) => console.error("[alta] followups", e));
   await addLeadEvent(reg.lead.id, "email_sent", "system", null, { payload: { kind: "welcome", to: f.email } });
