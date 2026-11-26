@@ -97,13 +97,14 @@ export function cleanForm(o: unknown): RegistrationForm {
   };
 }
 
-const RUT_RE = /^\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]$/;
+/** RUT válido escrito con o sin puntos/guion (ej: 76.123.456-7, 761234567, 12.345.678-k). */
+export const rutOk = (rut: string) => /^\d{7,8}[\dk]$/i.test(rut.replace(/[\s.\-]/g, ""));
 export function validateForm(f: RegistrationForm): string | null {
   if (!f.localName) return "Falta el nombre del local";
   if (!f.ownerName) return "Falta tu nombre";
   if (!f.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) return "Revisa tu correo";
   if (!f.ownerPhone || f.ownerPhone.replace(/\D/g, "").length < 8) return "Revisa tu teléfono o WhatsApp";
-  if (f.rut && !RUT_RE.test(f.rut.replace(/\s/g, ""))) return "Revisa el RUT (ej: 76.123.456-7)";
+  if (f.rut && !rutOk(f.rut)) return "Revisa el RUT (ej: 76.123.456-7)";
   if (!f.planId) return "Elige un plan";
   if (!f.acceptTerms) return "Debes aceptar los términos";
   return null;

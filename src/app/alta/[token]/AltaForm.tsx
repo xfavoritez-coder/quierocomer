@@ -24,7 +24,8 @@ const STEPS = [
 ] as const;
 
 const SYSTEMS = ["Ninguno", "Toteat", "Fudo", "Justo", "Bsale", "Jumpseller", "Otro"];
-const RUT_RE = /^\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]$/;
+// RUT con o sin puntos/guion (ej: 76.123.456-7, 761234567).
+const rutOk = (rut: string) => /^\d{7,8}[\dk]$/i.test(rut.replace(/[\s.\-]/g, ""));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Props = {
@@ -70,7 +71,7 @@ export default function AltaForm({ token, initial, color, logoUrl, cartaUrl, dis
       if (!f.ownerName?.trim()) return "Escribe tu nombre";
       if (!f.email || !EMAIL_RE.test(f.email)) return "Revisa tu correo";
       if (!f.ownerPhone || f.ownerPhone.replace(/\D/g, "").length < 8) return "Revisa tu teléfono o WhatsApp";
-      if (f.rut && !RUT_RE.test(f.rut.replace(/\s/g, ""))) return "Revisa el RUT (ej: 76.123.456-7)";
+      if (f.rut && !rutOk(f.rut)) return "Revisa el RUT (ej: 76.123.456-7) o déjalo vacío";
     }
     if (i === 4 && !f.planId) return "Elige un plan";
     return null;
@@ -228,19 +229,20 @@ export default function AltaForm({ token, initial, color, logoUrl, cartaUrl, dis
           </motion.div>
         </AnimatePresence>
 
-        <AnimatePresence>
-          {error && (
-            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 16, padding: "12px 14px", borderRadius: 14, background: "#fef2f2", color: "#b91c1c", fontSize: 14, fontWeight: 600 }}>
-              <AlertCircle size={17} /> {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {sellerName && step === 0 && <div style={{ marginTop: 22, fontSize: 13, color: "#8a8a8e", textAlign: "center" }}>Te acompaña {sellerName} · QuieroComer</div>}
       </div>
 
       {/* Botones fijos abajo (pulgar) */}
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, padding: "12px 18px calc(12px + env(safe-area-inset-bottom))", background: "rgba(251,250,247,.86)", backdropFilter: "blur(18px)", borderTop: "1px solid rgba(0,0,0,.06)" }}>
+        {/* El error va aquí, siempre a la vista (antes quedaba bajo la barra y parecía que el botón no hacía nada) */}
+        <AnimatePresence>
+          {error && (
+            <motion.div role="alert" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ maxWidth: 520, margin: "0 auto 10px", display: "flex", gap: 8, alignItems: "center", padding: "11px 14px", borderRadius: 14, background: "#fef2f2", color: "#b91c1c", fontSize: 14, fontWeight: 600 }}>
+              <AlertCircle size={17} style={{ flexShrink: 0 }} /> {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div style={{ maxWidth: 520, margin: "0 auto", display: "flex", gap: 10 }}>
           {step > 0 && <button onClick={() => go(step - 1)} aria-label="Atrás" style={{ ...btn, background: "#ececec", color: "#111", flex: "0 0 56px", padding: 0 }}><ArrowLeft size={20} /></button>}
           {step < STEPS.length - 1 ? (
