@@ -14,7 +14,7 @@ import {
 } from '@/lib/pos'
 import type { PosTable } from '@/lib/pos'
 import { toast } from 'sonner'
-import { usePosCash } from '@/lib/pos/cashApi'
+import { usePosCash, usePosOpenCajas } from '@/lib/pos/cashApi'
 import PosHeader from './components/PosHeader'
 import PosMenuDrawer from './components/PosMenuDrawer'
 import { usePosNav } from './lib/usePosNav'
@@ -221,6 +221,12 @@ export default function PosHomePage() {
 
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const { caja: cashSession, step: cajaStep, loading: cashLoading } = usePosCash(restaurantId)
+  // Sucursales en vista para la cinta de "caja +24h": la seleccionada, o todas en modo "todas".
+  const ribbonBranchIds = useMemo(
+    () => effectiveBranchMode === 'todas' ? restaurants.map(r => r.id) : [effectiveBranchMode].filter(Boolean),
+    [effectiveBranchMode, restaurants]
+  )
+  const { openedAt: openCajaOpenedAt } = usePosOpenCajas(ribbonBranchIds)
   const tables = useTables(restaurantId)
   const sectors = useSectors(restaurantId)
   const configLoaded = usePosConfigLoaded(restaurantId)
@@ -727,12 +733,42 @@ export default function PosHomePage() {
       )})()}
 
       {/* ── Caja abierta +24h — recordatorio de cierre ──
-          Aparece cuando la caja lleva 24 h o más abierta (olvido de cierre).
-          Mismo gating que la cinta de "caja cerrada" (cajero de una sola sucursal). */}
-      {!isOwner && restaurants.length <= 1 && cashSession && syncReady && !cashLoading && (() => {
-        const openedMs = cashSession.openedAt ? new Date(cashSession.openedAt).getTime() : 0
-        const hoursOpen = openedMs ? Math.floor((Date.now() - openedMs) / 3600000) : 0
-        if (hoursOpen < 24) return null
+          Aparece cuando la caja de la(s) sucursal(es) en vista lleva 24 h o más
+          abierta (olvido de cierre). Es consciente de multi-sucursal: mira la
+          sucursal seleccionada, o TODAS en modo "todas". */}
+      {(() => {
+        const now = Date.now()
+        const warn = ribbonBranchIds
+          .map(id => {
+            const oa = openCajaOpenedAt[id]
+            if (!oa) return null
+            const h = Math.floor((now - new Date(oa).getTime()) / 3600000)
+            return h >= 24 ? { id, h } : null
+          })
+          .filter((w): w is { id: string; h: number } => w !== null)
+          .sort((a, b) => b.h - a.h)
+        if (!warn.length) return null
+        const multi = restaurants.length > 1
+        const nameOf = (id: string) => restaurants.find(r => r.id === id)?.branchName ?? restaurants.find(r => r.id === id)?.name ?? ''
+        let msg: string
+        if (warn.length === 1) {
+          msg = multi
+            ? `La caja de ${nameOf(warn[0].id)} tiene ${warn[0].h} horas abierta. Debes cerrar caja y turno.`
+            : `La caja tiene ${warn[0].h} horas abierta. Debes cerrar caja y turno.`
+        } else {
+          msg = `${warn.length} cajas llevan más de 24 h abiertas (${warn.map(w => nameOf(w.id)).filter(Boolean).join(', ')}). Debes cerrar caja y turno.`
+        }
+        // CTA: lleva a cerrar la caja de la primera sucursal en aviso. Si no es la
+        // que está en vista, cambia a esa sucursal y restaura la página de caja.
+        const target = warn[0].id
+        const goClose = () => {
+          if (effectiveBranchMode !== 'todas' && effectiveBranchMode === target) {
+            openInnerPage('caja')
+          } else {
+            try { localStorage.setItem('pos:restoreInnerPage', 'caja') } catch { /* noop */ }
+            handleBranchSelect(target)
+          }
+        }
         return (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -745,10 +781,10 @@ export default function PosHomePage() {
             <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
           </svg>
           <span style={{ color: '#B91C1C', fontWeight: 700, fontSize: 13, fontFamily: 'var(--sans)' }}>
-            La caja tiene {hoursOpen} horas abierta. Debes cerrar caja y turno.
+            {msg}
           </span>
           <button
-            onClick={() => openInnerPage('caja')}
+            onClick={goClose}
             style={{ border: 'none', background: '#DC2626', color: '#fff', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}
           >
             Cerrar caja →
