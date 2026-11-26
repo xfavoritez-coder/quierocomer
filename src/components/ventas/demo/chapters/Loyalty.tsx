@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { Send } from "lucide-react";
 import { Gift, Check, MapPin } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData } from "../types";
@@ -52,6 +53,7 @@ export default function Loyalty({ data, step, onQr }: ChapterProps) {
             ))}
           </div>
           {k === 1 && data.slug && <QrPill label="Inscríbete tú en tu tarjeta" color={accent} onClick={onQr} dark style={{ marginTop: 22 }} />}
+          {k >= 2 && data.leadId && data.slug && <PushTest key={k} leadId={data.leadId} kind={k === 2 ? "near" : "birthday"} color={accent} />}
         </div>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <Reveal step={step} at={1} y={60} delay={0.2}>
@@ -161,6 +163,31 @@ function NearbyMap({ color }: { color: string }) {
       <motion.div initial={{ x: -60, y: 70, opacity: 0 }} animate={{ x: 18, y: 18, opacity: 1 }} transition={{ duration: 1.6, ease: EASE, delay: 0.2 }}
         style={{ position: "absolute", left: "50%", top: "50%", width: 16, height: 16, borderRadius: 99, background: "#fff", boxShadow: "0 0 0 4px rgba(255,255,255,.25)" }} />
       <div style={{ position: "absolute", left: 0, right: 0, bottom: -26, textAlign: "center", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,.6)" }}>a 100 m de tu local</div>
+    </motion.div>
+  );
+}
+
+/** Envía a la tarjeta del que se inscribió (en su Wallet) el aviso de este paso, para verlo llegar en vivo. */
+function PushTest({ leadId, kind, color }: { leadId: string; kind: "near" | "birthday"; color: string }) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [msg, setMsg] = useState("");
+  const send = async () => {
+    setState("sending"); setMsg("");
+    try {
+      const r = await fetch(`/api/ventas/leads/${leadId}/loyalty-push`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setState("error"); setMsg(d.error || "No se pudo enviar"); return; }
+      setState("sent"); setMsg("Enviado. Mira tu celular 📱");
+    } catch { setState("error"); setMsg("Error de conexión"); }
+  };
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.8 }} onClick={(e) => e.stopPropagation()} style={{ marginTop: 22 }}>
+      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={send} disabled={state === "sending"}
+        style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "11px 18px 11px 12px", borderRadius: 99, border: "none", cursor: "pointer", font: "inherit", fontWeight: 700, fontSize: 15, background: "#fff", color: "#111", boxShadow: "0 16px 40px -14px rgba(0,0,0,.5)", opacity: state === "sending" ? 0.7 : 1 }}>
+        <span style={{ width: 30, height: 30, borderRadius: 99, display: "grid", placeItems: "center", background: color, color: onColor(color) }}><Send size={15} /></span>
+        {state === "sending" ? "Enviando…" : kind === "near" ? "Envíalo a tu celular: aviso de cercanía" : "Envíalo a tu celular: saludo de cumpleaños"}
+      </motion.button>
+      {msg && <div style={{ marginTop: 10, fontSize: 14, fontWeight: 600, color: state === "error" ? "#fca5a5" : color, maxWidth: 440 }}>{msg}</div>}
     </motion.div>
   );
 }
