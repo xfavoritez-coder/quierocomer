@@ -21,13 +21,22 @@ export default function EquipoClient({ meId, initial }: { meId: string; initial:
     if (!r.ok) { setMsg(d.error || "No se pudo agregar"); return; }
     setRows((x) => [...x, { ...d.seller, leads: 0, lastLoginAt: null }]);
     setName(""); setEmail(""); setRole("SELLER");
-    setMsg(`Listo. ${d.seller.name} ya puede entrar en quierocomer.com/ventas con su correo.`);
+    setMsg(d.invited ? `Listo. Le enviamos a ${d.seller.email} un correo con su enlace para entrar.` : `Quedó agregado, pero no pudimos enviar el correo. Usa “Reenviar invitación” o pídele que entre en quierocomer.com/ventas con su correo.`);
   };
 
   const toggle = async (row: Row) => {
     const r = await fetch("/api/ventas/sellers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: row.id, active: !row.active }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) setRows((x) => x.map((s) => (s.id === row.id ? { ...s, active: d.seller.active } : s)));
+  };
+
+  const [sent, setSent] = useState<string | null>(null);
+  const resend = async (row: Row) => {
+    setSent(null);
+    const r = await fetch("/api/ventas/sellers", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: row.id }) });
+    const d = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Invitación reenviada a ${row.email}.` : d.error || "No se pudo reenviar");
+    if (r.ok) setSent(row.id);
   };
 
   const fmt = (iso: string | null) => iso ? new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short" }) : "nunca";
@@ -47,6 +56,11 @@ export default function EquipoClient({ meId, initial }: { meId: string; initial:
             </div>
             <div style={{ fontSize: 13, color: "var(--ink-2)" }}><span className="ventas-mono">{s.leads}</span> locales</div>
             <div style={{ fontSize: 12, color: "var(--ink-3)", minWidth: 110 }}>último ingreso: {fmt(s.lastLoginAt)}</div>
+            {s.id !== meId && s.active && (
+              <button className="ventas-btn ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => resend(s)}>
+                {sent === s.id ? "✓ Enviada" : "Reenviar invitación"}
+              </button>
+            )}
             {s.id !== meId && (
               <button className="ventas-btn ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => toggle(s)}>
                 {s.active ? "Desactivar" : "Activar"}
@@ -64,7 +78,7 @@ export default function EquipoClient({ meId, initial }: { meId: string; initial:
           <option value="SELLER">Vendedor (ve solo sus locales)</option>
           <option value="ADMIN">Administrador (ve todo)</option>
         </select>
-        {msg && <p style={{ fontSize: 13, margin: 0, color: msg.startsWith("Listo") ? "#16a34a" : "#dc2626" }}>{msg}</p>}
+        {msg && <p style={{ fontSize: 13, margin: 0, color: msg.startsWith("Listo") || msg.startsWith("Invitación") ? "#16a34a" : "#dc2626" }}>{msg}</p>}
         <button className="ventas-btn" disabled={busy}>{busy ? "Agregando…" : "Agregar"}</button>
       </form>
     </div>
