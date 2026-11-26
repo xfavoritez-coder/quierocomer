@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { Check, Star, ArrowRight, X, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store } from "lucide-react";
+import { Check, Star, ArrowRight, X, Heart, ShoppingBag, QrCode, Bike, ChefHat, LayoutGrid, RefreshCcw, Receipt, Boxes, Sparkles, Puzzle, Truck, Store, MessageCircle } from "lucide-react";
 import type { ChapterProps } from "../DemoShell";
 import type { DemoData, DemoPlan, DemoPlanSection } from "../types";
 import { BrandText, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, clp, lighten, onColor, rgba, useViewport } from "../ui";
@@ -113,6 +113,7 @@ function PlanCard({ plan: p, color: c, compact }: { plan: DemoPlan; color: strin
 
 // ── Módulos (add-ons): grilla compacta; la tienda online, por tramos de pedidos ──
 const ICONS: [RegExp, typeof Heart][] = [
+  [/whats ?app/i, MessageCircle],
   [/loyal|fideliz|tarjeta/i, Heart], [/tienda|ecommerce|online/i, ShoppingBag], [/carta|qr/i, QrCode], [/apps? delivery|integraci/i, Truck],
   [/kds|cocina|pantalla/i, ChefHat], [/repartidor|motorist|flota/i, Bike], [/mesa|sal[oó]n/i, LayoutGrid], [/recupera/i, RefreshCcw],
   [/boleta|factura|electr[oó]nica/i, Receipt], [/inventario|bodega|stock/i, Boxes], [/genio|inteligen|ia\b/i, Sparkles], [/sucursal/i, Store],
@@ -162,6 +163,7 @@ function ModulesStep({ data, step, section, label, narrow }: { data: DemoData; s
 
 // Para qué sirve cada módulo (texto del detalle); si no hay coincidencia, se usan sus características.
 const MODULE_INFO: [RegExp, string][] = [
+  [/whats ?app/i, "Tus clientes arman su pedido en una página con tu carta y, con un toque, te llega listo al WhatsApp del local: productos, cantidades, total, dirección y forma de pago. Sin apps ni comisiones; tú lo confirmas por el chat."],
   [/loyal|fideliz/i, "Tarjeta de sellos en Apple y Google Wallet. Tus clientes juntan sellos, reciben avisos al pasar cerca y un regalo en su cumpleaños."],
   [/carta|qr/i, "Tu carta digital que traduce, recomienda platos, filtra por dieta y llama al garzón. Y la exportas en PDF con diseño."],
   [/apps? delivery|integraci/i, "Los pedidos de Uber Eats, PedidosYa y Rappi entran directo a tu POS. Sin tablets extra ni tipear pedidos."],
@@ -221,6 +223,27 @@ function ModuleModal({ plan: p, color: c, narrow, onClose }: { plan: DemoPlan; c
 function ModuleArt({ name, color: c }: { name: string; color: string }) {
   const card: React.CSSProperties = { background: "#fff", borderRadius: 18, boxShadow: "0 24px 50px -18px rgba(0,0,0,.45)", color: "#111" };
   const line = (w: string | number, o = 0.15) => <div style={{ height: 7, width: w, borderRadius: 4, background: `rgba(0,0,0,${o})` }} />;
+  if (/whats ?app/i.test(name)) return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      {/* La página de pedido */}
+      <div style={{ ...card, width: 112, height: 200, borderRadius: 22, padding: 7, background: "#111" }}>
+        <div style={{ background: "#fff", borderRadius: 16, height: "100%", padding: 9, boxSizing: "border-box", display: "grid", gap: 6, alignContent: "start" }}>
+          {[0, 1, 2].map((i) => <div key={i} style={{ display: "flex", gap: 5, alignItems: "center" }}><div style={{ width: 20, height: 20, borderRadius: 6, background: rgba(c, 0.2) }} /><div style={{ flex: 1, display: "grid", gap: 3 }}>{line("85%")}{line("45%", 0.08)}</div></div>)}
+          <div style={{ marginTop: 34, borderRadius: 99, padding: "6px 0", textAlign: "center", fontSize: 8.5, fontWeight: 800, background: "#25D366", color: "#fff" }}>Enviar por WhatsApp</div>
+        </div>
+      </div>
+      <div style={{ color: "#fff", fontSize: 24, fontWeight: 800 }}>→</div>
+      {/* El chat del local con el pedido listo */}
+      <div style={{ ...card, width: 150, padding: 0, overflow: "hidden", background: "#efeae2" }}>
+        <div style={{ background: "#075E54", color: "#fff", padding: "8px 10px", fontSize: 10.5, fontWeight: 800, display: "flex", alignItems: "center", gap: 6 }}><MessageCircle size={12} /> Tu local</div>
+        <div style={{ padding: 8 }}>
+          <div style={{ marginLeft: "auto", width: "92%", background: "#d9fdd3", borderRadius: "10px 10px 2px 10px", padding: "7px 8px", fontSize: 8.5, lineHeight: 1.45, color: "#111", boxShadow: "0 1px 1px rgba(0,0,0,.1)" }}>
+            <b>🛒 Nuevo pedido</b><br />2× Burger clásica<br />1× Papas rústicas<br /><b>Total: $21.890</b><br />📍 Retiro · 💵 Efectivo
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   if (/loyal|fideliz|tarjeta/i.test(name)) return (
     <div style={{ ...card, width: 220, padding: 16, background: `linear-gradient(135deg, ${lighten(c, 0.15)}, ${c})`, color: onColor(c) }}>
       <div style={{ fontWeight: 800, fontSize: 14 }}>Tarjeta de cliente</div>
