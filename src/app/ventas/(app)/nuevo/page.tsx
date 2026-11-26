@@ -21,6 +21,9 @@ export default function VentasNuevoPage() {
   const [cuisine, setCuisine] = useState("");
   const [commune, setCommune] = useState("");
   const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [address, setAddress] = useState("");
   const [cartaUrl, setCartaUrl] = useState("");
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -54,7 +57,7 @@ export default function VentasNuevoPage() {
       setBusy("Creando el local…");
       const r = await fetch("/api/ventas/leads", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, localName, cuisine, commune, contactName, cartaUrl, photoUrls }),
+        body: JSON.stringify({ source, localName, cuisine, commune, contactName, whatsapp: contactPhone, email: contactEmail, address, cartaUrl, photoUrls }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "No se pudo crear el local");
@@ -137,9 +140,23 @@ export default function VentasNuevoPage() {
             <datalist id="ventas-comunas">{COMMUNES.map((c) => <option key={c} value={c} />)}</datalist>
           </div>
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+          <div>
+            <label style={label}>Nombre de contacto</label>
+            <input className="ventas-input" placeholder="Con quién hablaste" autoComplete="off" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+          </div>
+          <div>
+            <label style={label}>Teléfono / WhatsApp</label>
+            <input className="ventas-input" inputMode="tel" placeholder="9 1234 5678" autoComplete="off" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+          </div>
+          <div>
+            <label style={label}>Correo</label>
+            <input className="ventas-input" type="email" inputMode="email" placeholder="dueno@milocal.cl" autoComplete="off" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+          </div>
+        </div>
         <div>
-          <label style={label}>Nombre de contacto</label>
-          <input className="ventas-input" placeholder="Con quién hablaste" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+          <label style={label}>Dirección del local</label>
+          <input className="ventas-input" placeholder="Ej: Av. Italia 1450, Providencia" autoComplete="off" value={address} onChange={(e) => setAddress(e.target.value)} />
         </div>
         </div>
         </details>

@@ -40,7 +40,7 @@ export async function findRegistration(token: string) {
       lead: {
         select: {
           id: true, localName: true, ownerName: true, email: true, whatsapp: true, cuisine: true, commune: true, generatedSlug: true, recommendedPlan: true,
-          interestModules: true, crmStatus: true, crmStatusHistory: true, sellerId: true, createdAt: true,
+          interestModules: true, crmStatus: true, crmStatusHistory: true, crmNotes: true, sellerId: true, createdAt: true,
           detectedProvider: { select: { name: true } }, seller: { select: { name: true, email: true } },
         },
       },

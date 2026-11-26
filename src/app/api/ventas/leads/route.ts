@@ -28,6 +28,16 @@ export async function POST(req: NextRequest) {
   if (source === "photo" && !photoUrls.length) return NextResponse.json({ error: "Sube al menos una foto de la carta" }, { status: 400 });
   if (source === "none" && !localName) return NextResponse.json({ error: "Escribe al menos el nombre del local" }, { status: 400 });
 
+  const whatsapp = clean(b.whatsapp, 30);
+  const contactEmail = clean(b.email, 120).toLowerCase();
+  if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return NextResponse.json({ error: "Revisa el correo del contacto" }, { status: 400 });
+  const address = clean(b.address, 200);
+  const ts = new Date().toISOString();
+  const contactNotes = [
+    ...(address ? [{ kind: "address", value: address, text: `Dirección: ${address}`, ts }] : []),
+    ...(contactEmail ? [{ kind: "email", value: contactEmail, text: `Correo de contacto: ${contactEmail}`, ts }] : []),
+  ];
+
   let detectedProviderId: string | null = null;
   if (source === "link") {
     const providers = await prisma.menuProvider.findMany({ select: { id: true, domainPatterns: true, htmlSignatures: true } });
@@ -42,6 +52,8 @@ export async function POST(req: NextRequest) {
       // Vacío si el vendedor no lo escribió: así el motor usa el nombre que trae la carta (igual que /subircarta).
       localName,
       ownerName: clean(b.contactName, 80),
+      whatsapp: whatsapp || null,
+      ...(contactNotes.length ? { crmNotes: contactNotes } : {}),
       email: "",
       cartaType: source === "photo" ? "PHOTO" : "LINK",
       cartaUrl: source === "link" ? cartaUrl : null,

@@ -5,7 +5,7 @@ import type { CurrentSeller } from "@/lib/ventas/session";
 export async function getSellerLead(seller: CurrentSeller, leadId: string) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, sellerId: true, localName: true, captureSource: true, cartaStatus: true, errorLog: true, preview: true, generatedSlug: true, crmStatus: true, cuisine: true, commune: true, ownerName: true, cartaUrl: true, createdAt: true, convertedToOwnerId: true, email: true, whatsapp: true, interestModules: true, recommendedPlan: true },
+    select: { id: true, sellerId: true, localName: true, captureSource: true, cartaStatus: true, errorLog: true, preview: true, generatedSlug: true, crmStatus: true, cuisine: true, commune: true, ownerName: true, cartaUrl: true, createdAt: true, convertedToOwnerId: true, crmNotes: true, email: true, whatsapp: true, interestModules: true, recommendedPlan: true },
   });
   if (!lead || !lead.sellerId) return null;
   if (seller.role !== "ADMIN" && lead.sellerId !== seller.id) return null;
@@ -27,6 +27,14 @@ export async function getLeadRestaurant(lead: { generatedSlug: string | null; co
   if (!r) return null;
   if (r.isDemo || (lead.convertedToOwnerId && r.ownerId === lead.convertedToOwnerId)) return r;
   return null;
+}
+
+/** Datos de contacto capturados en terreno. La dirección y el correo van en las notas del lead
+ *  (no en lead.email: el motor de extracción crearía la cuenta y enviaría correos antes de tiempo). */
+export function leadContact(lead: { email?: string | null; crmNotes?: unknown }) {
+  const notes = (Array.isArray(lead.crmNotes) ? lead.crmNotes : []) as { kind?: string; value?: string }[];
+  const val = (k: string) => [...notes].reverse().find((n) => n?.kind === k && n.value)?.value ?? "";
+  return { address: val("address"), email: lead.email || val("email") };
 }
 
 export async function addLeadEvent(leadId: string, type: string, actor: "seller" | "owner" | "system", sellerId?: string | null, extra?: { chapter?: string; durationMs?: number; payload?: object }) {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSeller } from "@/lib/ventas/session";
-import { getSellerLead, getLeadRestaurant } from "@/lib/ventas/leads";
+import { getSellerLead, getLeadRestaurant, leadContact } from "@/lib/ventas/leads";
 import { statusInfo } from "@/lib/ventas/status";
 import DeleteLead from "./DeleteLead";
 import VisitResult from "./VisitResult";
@@ -20,6 +20,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
   const dishCount = restaurant ? await prisma.dish.count({ where: { restaurantId: restaurant.id, deletedAt: null } }) : 0;
   const reg = await prisma.leadRegistration.findUnique({ where: { leadId: id }, select: { sentTo: true, expiresAt: true, completedAt: true, remindedAt: true, createdAt: true } });
   const st = statusInfo(lead.crmStatus);
+  const contact = leadContact(lead);
   const fmt = (d: Date) => d.toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" });
 
   return (
@@ -31,6 +32,13 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         <div style={{ flex: 1, minWidth: 200 }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{restaurant?.name ?? (lead.localName || "Local sin nombre")}</h1>
           <div style={{ color: "var(--ink-3)", fontSize: 14, marginTop: 2 }}>{[lead.cuisine, lead.commune, lead.ownerName && `Contacto: ${lead.ownerName}`].filter(Boolean).join(" · ") || "Sin datos"}</div>
+          {(lead.whatsapp || contact.email || contact.address) && (
+            <div style={{ color: "var(--ink-3)", fontSize: 13, marginTop: 4, display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {lead.whatsapp && <a href={`https://wa.me/${lead.whatsapp.replace(/\D/g, "").replace(/^(9\d{8})$/, "56$1")}`} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>📱 {lead.whatsapp}</a>}
+              {contact.email && <a href={`mailto:${contact.email}`} style={{ color: "inherit" }}>✉️ {contact.email}</a>}
+              {contact.address && <span>📍 {contact.address}</span>}
+            </div>
+          )}
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: `${st.color}18`, color: st.color }}>{st.label}</span>
       </div>
@@ -57,7 +65,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
             <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>Después de la demo, anota cómo terminó. “Aceptó” le envía el enlace de registro por correo y WhatsApp.</div>
           </div>
           <VisitResult leadId={id} color={restaurant?.cartaAccentColor && /^#[0-9a-fA-F]{6}$/.test(restaurant.cartaAccentColor) ? restaurant.cartaAccentColor : "#DE7C00"}
-            email={lead.email ?? ""} whatsapp={lead.whatsapp ?? ""} planId={lead.recommendedPlan ?? null} localName={restaurant?.name ?? (lead.localName || "este local")} />
+            email={contact.email} whatsapp={lead.whatsapp ?? ""} planId={lead.recommendedPlan ?? null} localName={restaurant?.name ?? (lead.localName || "este local")} />
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { findRegistration, type RegistrationForm } from "@/lib/ventas/registration";
-import { addLeadEvent } from "@/lib/ventas/leads";
+import { addLeadEvent, leadContact } from "@/lib/ventas/leads";
 import { getDemoPlans } from "@/lib/ventas/plans";
 import { recommendPlanId, withRecommendation } from "@/components/ventas/demo/recommend";
 import AltaForm, { AltaMessage } from "./AltaForm";
@@ -33,8 +33,8 @@ export default async function AltaPage({ params }: { params: Promise<{ token: st
   const planId = lead.recommendedPlan && sections.some((s) => s.plans.some((p) => p.id === lead.recommendedPlan)) ? lead.recommendedPlan : recommendPlanId(sections, lead.interestModules);
   const saved = (reg.formData && typeof reg.formData === "object" ? reg.formData : {}) as RegistrationForm;
   const initial: RegistrationForm = {
-    localName: lead.localName, address: demo?.address ?? "", commune: lead.commune ?? "", localPhone: demo?.phone ?? "",
-    ownerName: lead.ownerName && lead.ownerName !== lead.localName ? lead.ownerName : "", ownerPhone: lead.whatsapp ?? "", email: lead.email || reg.sentTo || "",
+    localName: lead.localName, address: demo?.address || leadContact(lead).address, commune: lead.commune ?? "", localPhone: demo?.phone ?? "",
+    ownerName: lead.ownerName && lead.ownerName !== lead.localName ? lead.ownerName : "", ownerPhone: lead.whatsapp ?? "", email: lead.email || reg.sentTo || leadContact(lead).email,
     rut: "", businessName: "", currentSystem: lead.detectedProvider?.name ?? "", currentSystemLink: "", cartaNote: "", planId: planId ?? "", acceptTerms: false, step: 0,
     ...Object.fromEntries(Object.entries(saved).filter(([, v]) => v !== undefined && v !== null)),
   };
