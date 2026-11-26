@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 
 type Source = "photo" | "link" | "none";
 
-const CUISINES = ["Sushi", "Pizzería", "Hamburguesas", "Cafetería", "Cocina chilena", "Cocina de autor", "Peruana", "Mexicana", "Italiana", "Vegana / vegetariana", "Pastelería", "Comida rápida", "Bar", "Otra"];
-const COMMUNES = ["Santiago", "Providencia", "Las Condes", "Vitacura", "Lo Barnechea", "Ñuñoa", "La Reina", "Macul", "Peñalolén", "La Florida", "Puente Alto", "Maipú", "San Miguel", "Recoleta", "Independencia", "Estación Central", "Quilicura", "Huechuraba", "Viña del Mar", "Valparaíso", "Concepción"];
 
 const SOURCES: { id: Source; title: string; desc: string; icon: string }[] = [
   { id: "photo", title: "Foto de la carta", desc: "Saca una o varias fotos", icon: "📷" },
@@ -18,8 +16,6 @@ export default function VentasNuevoPage() {
   const router = useRouter();
   const [source, setSource] = useState<Source>("photo");
   const [localName, setLocalName] = useState("");
-  const [cuisine, setCuisine] = useState("");
-  const [commune, setCommune] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -57,7 +53,7 @@ export default function VentasNuevoPage() {
       setBusy("Creando el local…");
       const r = await fetch("/api/ventas/leads", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, localName, cuisine, commune, contactName, whatsapp: contactPhone, email: contactEmail, address, cartaUrl, photoUrls }),
+        body: JSON.stringify({ source, localName, contactName, whatsapp: contactPhone, email: contactEmail, address, cartaUrl, photoUrls }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "No se pudo crear el local");
@@ -126,20 +122,6 @@ export default function VentasNuevoPage() {
         <details style={{ border: "1px solid var(--line)", borderRadius: 14, padding: "12px 14px", background: "var(--surface)" }}>
           <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14, color: "var(--ink-2)" }}>Más datos <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>(opcional)</span></summary>
         <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
-          <div>
-            <label style={label}>Tipo de cocina</label>
-            <select className="ventas-input" value={cuisine} onChange={(e) => setCuisine(e.target.value)}>
-              <option value="">Elegir…</option>
-              {CUISINES.map((c) => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={label}>Comuna</label>
-            <input className="ventas-input" list="ventas-comunas" placeholder="Ej: Providencia" value={commune} onChange={(e) => setCommune(e.target.value)} />
-            <datalist id="ventas-comunas">{COMMUNES.map((c) => <option key={c} value={c} />)}</datalist>
-          </div>
-        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
           <div>
             <label style={label}>Nombre de contacto</label>
