@@ -31,7 +31,7 @@ export type LiveOrder = {
   lines: { name: string; qty: number; price: number }[]; total: number; at: string;
 };
 
-export type ChapterId = "inicio" | "carta" | "loyalty" | "ecommerce" | "pos" | "planes";
+export type ChapterId = "inicio" | "carta" | "loyalty" | "ecommerce" | "pos" | "planes" | "accesos";
 
 /** Comisión de referencia de las apps de delivery (calculadora de la tienda). */
 export const DEFAULT_APP_COMMISSION = 0.28;

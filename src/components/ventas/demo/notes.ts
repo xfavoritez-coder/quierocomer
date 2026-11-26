@@ -27,6 +27,11 @@ export const SELLER_NOTES: Record<ChapterId, { frases: string[]; preguntas: stri
     preguntas: ["¿Qué sistema usan hoy para cobrar?", "¿Cuánto se demoran en cuadrar la caja?"],
     objeciones: [{ o: "Ya tengo un POS", r: "Importamos tus datos y lo dejamos funcionando; además se conecta solo con tu tienda y tu carta." }],
   },
+  accesos: {
+    frases: ["Escanea la carta y la tienda: son las de tu local.", "Te muestro el panel y el POS de un local que ya lo usa todos los días."],
+    preguntas: ["¿Qué te gustaría ver en el POS?"],
+    objeciones: [],
+  },
   planes: {
     frases: ["Partimos por lo que más te sirve hoy.", "Lo dejamos funcionando nosotros."],
     preguntas: ["¿Con cuál te gustaría partir?"],

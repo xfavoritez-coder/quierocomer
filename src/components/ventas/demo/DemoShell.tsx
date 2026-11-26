@@ -14,6 +14,7 @@ import Loyalty from "./chapters/Loyalty";
 import Ecommerce, { ecommerceSteps } from "./chapters/Ecommerce";
 import Pos, { posSteps } from "./chapters/Pos";
 import Planes, { planesSteps } from "./chapters/Planes";
+import Accesos from "./chapters/Accesos";
 import CloseBar from "./CloseBar";
 import { recommendPlanId, withRecommendation, type InterestModule } from "./recommend";
 
@@ -28,6 +29,7 @@ const CHAPTER_MODULE: Partial<Record<ChapterId, InterestModule>> = { carta: "car
 // QR por capítulo: abre en el celular del dueño la versión real de ese módulo.
 type ChapterQr = { path: (slug: string) => string; kicker: string; title: (name: string) => string; hint: string };
 // QR de la página del local (carta, pedir online, valoraciones…): botón flotante solo en Carta QR.
+// (Se declara antes de CHAPTERS porque el capítulo Accesos lo usa.)
 const QR_LANDING: ChapterQr = { path: (s) => `/${s}`, kicker: "Su página", title: (n) => `La página de ${n}`, hint: "Carta, pedidos online, valoraciones y más, en un solo lugar." };
 // El QR de la carta abre directo la carta (?carta=1), sin pasar por la portada del local.
 const QR_CARTA: ChapterQr = { path: (s) => `/qr/${s}?carta=1`, kicker: "Pruébalo en tu celular", title: (n) => `Escanea y abre la carta de ${n}`, hint: "Toca la campana para llamar al garzón y mira esta pantalla." };
@@ -42,6 +44,7 @@ const CHAPTERS: Chapter[] = [
   { id: "ecommerce", title: "Tienda online", steps: ecommerceSteps, dark: false, Comp: Ecommerce, qr: QR_STORE },
   { id: "pos", title: "POS", steps: posSteps, dark: true, Comp: Pos, qr: QR_CARTA },
   { id: "planes", title: "Planes", steps: planesSteps, dark: false, Comp: Planes, qr: QR_CARTA },
+  { id: "accesos", title: "Accesos", steps: 1, dark: false, Comp: Accesos, qr: QR_LANDING },
 ];
 
 const IDLE_MS = 3000;
@@ -145,7 +148,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
   }, [mode, data.leadId, data.slug, track]);
 
   // Al llegar al cierre de Planes aparece la barra de cierre.
-  const atEnd = ci === CHAPTERS.length - 1 && step === chapterSteps - 1;
+  const atEnd = chapter.id === "planes" && step === chapterSteps - 1; // cierre de Planes
   const [autoShown, setAutoShown] = useState(false);
   if (atEnd && canClose && !autoShown) { setAutoShown(true); setCloseOpen(true); }
 
@@ -181,7 +184,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
       else if ((e.key === "c" || e.key === "C") && canClose) setCloseOpen((v) => !v);
       else if ((e.key === "i" || e.key === "I") && chapterModule) toggleInterest(chapterModule);
       else if (e.key === "Escape") { setNotesOpen(false); setQrOpen(false); setCloseOpen(false); }
-      else if (/^[1-6]$/.test(e.key)) goTo(Number(e.key) - 1);
+      else if (/^[1-7]$/.test(e.key)) goTo(Number(e.key) - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -370,7 +373,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
                 ))}
               </div>
             )}
-            <div style={{ marginTop: 16, fontSize: 12, color: "#8e8e93" }}>← → avanzar · 1–6 capítulos · F pantalla completa · Q código QR · I le interesó · C cierre</div>
+            <div style={{ marginTop: 16, fontSize: 12, color: "#8e8e93" }}>← → avanzar · 1–7 capítulos · F pantalla completa · Q código QR · I le interesó · C cierre</div>
           </motion.aside>
         )}
       </AnimatePresence>
