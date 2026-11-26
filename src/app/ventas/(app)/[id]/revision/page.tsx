@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Dish = { id: string; name: string; price: number; photo: string | null };
@@ -32,7 +32,6 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
     });
   }, [id]);
 
-  const photos = useMemo(() => [...new Set((data?.categories ?? []).flatMap((c) => c.dishes.map((d) => d.photo)).filter(Boolean) as string[])].slice(0, 24), [data]);
   const suggested = data?.restaurant?.suggestedColor;
   const swatches = [...new Set([suggested, ...PRESETS].filter(Boolean) as string[])];
 
@@ -84,22 +83,6 @@ export default function RevisionPage({ params }: { params: Promise<{ id: string 
           <input type="color" value={color} onChange={(e) => setColor(e.target.value.toUpperCase())} aria-label="Otro color" style={{ width: 44, height: 38, border: "none", background: "none", cursor: "pointer" }} />
           <span className="ventas-mono" style={{ fontSize: 13, color: "var(--ink-3)" }}>{color}</span>
         </div>
-      </div>
-
-      <div className="ventas-card" style={section}>
-        <div style={{ fontWeight: 800 }}>Foto de portada</div>
-        {photos.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>La carta no trae fotos. Se usará la portada por defecto.</p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 8 }}>
-            {photos.map((p) => (
-              <button key={p} type="button" onClick={() => setBanner(banner === p ? null : p)} style={{ padding: 0, border: banner === p ? `3px solid ${color}` : "1px solid var(--line)", borderRadius: 11, overflow: "hidden", cursor: "pointer", background: "none", height: 80 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="ventas-card" style={section}>

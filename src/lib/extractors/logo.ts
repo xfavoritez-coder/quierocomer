@@ -7,7 +7,7 @@ import sharp from "sharp";
 const UA = { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer-Bot/1.0)" };
 
 /** Brillo medio de los píxeles visibles (0-1) y qué fracción del logo es visible. null si no se pudo leer. */
-async function logoStats(url: string): Promise<{ lum: number; visible: number; aspect: number } | null> {
+async function logoStats(url: string): Promise<{ lum: number; visible: number; aspect: number; photo: boolean } | null> {
   try {
     const res = await fetch(url, { headers: UA, signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
@@ -16,12 +16,16 @@ async function logoStats(url: string): Promise<{ lum: number; visible: number; a
     const meta = await img.metadata();
     const { data, info } = await img.resize(48, 48, { fit: "inside" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     let sum = 0, n = 0;
+    const colors = new Set<number>();
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] < 40) continue;
       sum += (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255; n++;
+      colors.add(((data[i] >> 4) << 8) | ((data[i + 1] >> 4) << 4) | (data[i + 2] >> 4));
     }
     const total = info.width * info.height;
-    return { lum: n ? sum / n : 1, visible: n / total, aspect: meta.width && meta.height ? Math.max(meta.width / meta.height, meta.height / meta.width) : 1 };
+    // Una foto (ej. un plato) no tiene transparencia y tiene cientos de colores; un logo, pocos o fondo transparente.
+    const photo = n / total > 0.98 && colors.size > 150;
+    return { lum: n ? sum / n : 1, visible: n / total, aspect: meta.width && meta.height ? Math.max(meta.width / meta.height, meta.height / meta.width) : 1, photo };
   } catch { return null; }
 }
 
@@ -30,7 +34,7 @@ const visibleCache = new Map<string, boolean | null>();
 export async function isVisibleOnWhite(url: string): Promise<boolean | null> {
   if (visibleCache.has(url)) return visibleCache.get(url)!;
   const s = await logoStats(url);
-  const v = s ? !(s.visible < 0.03 || s.lum > 0.9) : null;
+  const v = s ? !(s.visible < 0.03 || s.lum > 0.9 || s.photo) : null;
   if (visibleCache.size > 500) visibleCache.clear();
   visibleCache.set(url, v);
   return v;
@@ -51,10 +55,12 @@ function candidates(html: string, base: string): string[] {
   const attr = (re: RegExp) => { for (const m of html.matchAll(re)) push(abs(m[1], base)); };
   attr(/<link[^>]+rel=["']apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/gi);
   attr(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']apple-touch-icon[^"']*["']/gi);
+  attr(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+\.(?:png|jpg|jpeg|webp|svg)[^"']*)["']/gi);
+  attr(/<link[^>]+href=["']([^"']+\.(?:png|jpg|jpeg|webp|svg)[^"']*)["'][^>]+rel=["'][^"']*icon[^"']*["']/gi);
+  attr(/<img[^>]+(?:class|id|alt)=["'][^"']*logo[^"']*["'][^>]+src=["']([^"']+)["']/gi);
+  // La imagen para compartir suele ser una foto (ej. un plato): al final, y se descarta si parece foto.
   attr(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/gi);
   attr(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/gi);
-  attr(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+\.(?:png|jpg|jpeg|webp|svg)[^"']*)["']/gi);
-  attr(/<img[^>]+(?:class|id|alt)=["'][^"']*logo[^"']*["'][^>]+src=["']([^"']+)["']/gi);
   return out;
 }
 
@@ -74,7 +80,8 @@ export async function improveLogo(logoUrl: string | null, pageUrl: string | null
   for (const c of candidates(html, pageUrl).slice(0, 8)) {
     if (c === logoUrl) continue;
     const s = await logoStats(c);
-    if (s && s.visible >= 0.03 && s.lum <= 0.9 && s.aspect <= 3.2) return c;
+    if (s && s.visible >= 0.03 && s.lum <= 0.9 && s.aspect <= 3.2 && !s.photo) return c;
   }
-  return logoUrl;
+  // Sin un logo visible: mejor ninguno (se muestra la inicial) que uno blanco o una foto.
+  return logoUrl && (await isVisibleOnWhite(logoUrl)) === false ? null : logoUrl;
 }
