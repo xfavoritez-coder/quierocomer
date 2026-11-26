@@ -765,7 +765,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             name: dish.name.trim(),
             description: dish.description || null,
             price: dish.price,
-            photos: [],
+            // La foto original queda visible de inmediato; luego se reemplaza por la copia optimizada.
+            photos: dish.imageUrl ? [dish.imageUrl] : [],
             position: j,
             dishDiet,
             isSpicy: (dish as any).isSpicy || detected.isSpicy,
@@ -828,6 +829,37 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }).catch(() => {});
     }
 
+    // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
+    // Van antes de la clasificación: en cartas grandes (100+ platos) es lo que más se nota si la función se corta.
+    const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
+    if (dishesWithPhotos.length > 0) {
+      const BATCH = 20;
+      for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
+        const batch = dishesWithPhotos.slice(i, i + BATCH);
+        await Promise.allSettled(
+          batch.map(async (dish) => {
+            const credit = dish.credit;
+            const isUnsplash = !!credit; // has credit = came from Unsplash
+            let finalUrl: string;
+
+            if (isUnsplash) {
+              // Unsplash: store rawUrl, components apply size params at render time
+              finalUrl = dish.externalPhoto!;
+            } else {
+              // Restaurant's own photo: re-upload to Supabase for optimization
+              const dishSlug = slugify(dish.name);
+              const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
+              finalUrl = supabaseUrl || dish.externalPhoto!;
+            }
+
+            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
+            if (credit) updateData.photoCredits = [credit];
+            await prisma.dish.update({ where: { id: dish.id }, data: updateData });
+          }),
+        );
+      }
+    }
+
     // Taxonomy classification — corre DESPUÉS de READY en el mismo pipeline
     // El usuario ya ve el restaurante como importado; reporta progreso por batch
     if (taxonomyInputs.length > 0) {
@@ -869,36 +901,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         console.log(`[Pipeline] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos clasificados`);
       } catch (e) {
         console.error("[Pipeline] Taxonomy failed (non-fatal):", e);
-      }
-    }
-
-    // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
-    const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
-    if (dishesWithPhotos.length > 0) {
-      const BATCH = 10;
-      for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
-        const batch = dishesWithPhotos.slice(i, i + BATCH);
-        await Promise.allSettled(
-          batch.map(async (dish) => {
-            const credit = dish.credit;
-            const isUnsplash = !!credit; // has credit = came from Unsplash
-            let finalUrl: string;
-
-            if (isUnsplash) {
-              // Unsplash: store rawUrl, components apply size params at render time
-              finalUrl = dish.externalPhoto!;
-            } else {
-              // Restaurant's own photo: re-upload to Supabase for optimization
-              const dishSlug = slugify(dish.name);
-              const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
-              finalUrl = supabaseUrl || dish.externalPhoto!;
-            }
-
-            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
-            if (credit) updateData.photoCredits = [credit];
-            await prisma.dish.update({ where: { id: dish.id }, data: updateData });
-          }),
-        );
       }
     }
 
