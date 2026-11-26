@@ -61,6 +61,10 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
   const headerDark = isDarkHex(tenant.headerBgColor);
+  // Logo del encabezado: si no carga, o es blanco/vacío sobre un encabezado claro (quedaría
+  // un espacio en blanco), se usa el mismo respaldo que cuando no hay logo (nombre del local).
+  const [logoBroken, setLogoBroken] = useState(false);
+  const showHeaderLogo = !!tenant.logoUrl && !logoBroken && !(tenant.logoOnWhite === false && !headerDark);
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
 
   const [activeCat, setActiveCat] = useState<string | null>(null);
@@ -577,8 +581,8 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
             <MenuIcon className="w-[22px] h-[22px]" />
           </button>
           <a href={storeBase || "/"} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center" onClick={(e) => { e.preventDefault(); setActiveView("carta"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-            {tenant.logoUrl ? (
-              <img src={tenant.logoUrl} alt={tenant.name} className="w-auto object-contain" style={{ height: 48 }} />
+            {showHeaderLogo ? (
+              <img src={tenant.logoUrl!} alt={tenant.name} className="w-auto object-contain" style={{ height: 48 }} onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             ) : (
               <span className={`font-black text-xl ${headerDark ? "text-white" : "text-gray-900"}`}>{tenant.name}</span>
             )}
@@ -600,8 +604,8 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
         <div className="hidden lg:flex max-w-5xl mx-auto px-0 h-16 items-center gap-5">
           {/* Logo */}
           <a href={storeBase || "/"} className="shrink-0" onClick={(e) => { e.preventDefault(); setActiveView("carta"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-            {tenant.logoUrl ? (
-              <img src={tenant.logoUrl} alt={tenant.name} className="w-auto object-contain" style={{ height: 44 }} />
+            {showHeaderLogo ? (
+              <img src={tenant.logoUrl!} alt={tenant.name} className="w-auto object-contain" style={{ height: 44 }} onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             ) : (
               <span className={`font-black text-lg ${headerDark ? "text-white" : "text-gray-900"}`}>{tenant.name}</span>
             )}

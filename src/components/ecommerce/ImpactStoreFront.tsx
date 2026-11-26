@@ -38,6 +38,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   const communeSlug = tenant.commune ? slugify(tenant.commune) : "";
   const openCart = () => setCartDrawerOpen(true);
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
+  const [logoBroken, setLogoBroken] = useState(false); // si el logo no carga, se muestra la inicial
 
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
@@ -252,8 +253,8 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(16,16,16,0.45)", backdropFilter: "blur(22px) saturate(180%)", WebkitBackdropFilter: "blur(22px) saturate(180%)", borderBottom: "1px solid rgba(255,255,255,0.10)" }}>
         <div className="imp-menu-grid" style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(10px + env(safe-area-inset-top)) 16px 10px" }}>
           <button onClick={() => setMenuOpen(true)} aria-label="Menú" style={glassBtn}><MenuIcon size={18} color="#eaeaea" /></button>
-          {tenant.logoUrl
-            ? <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
+          {tenant.logoUrl && !logoBroken
+            ? <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             : <div style={{ width: 36, height: 36, borderRadius: 10, background: accent, display: "grid", placeItems: "center", fontWeight: 800, color: "#0e0e0e" }}>{tenant.name.charAt(0).toUpperCase()}</div>}
           <span style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 18, color: "#fff", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</span>
           <button onClick={openCart} aria-label="Carrito" style={{

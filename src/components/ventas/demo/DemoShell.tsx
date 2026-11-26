@@ -288,15 +288,16 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
       <AnimatePresence>
         {qrOpen && (
           <motion.div key="qr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setQrOpen(false)}
-            style={{ position: "absolute", inset: 0, zIndex: 30, background: "rgba(0,0,0,.6)", backdropFilter: "blur(18px)", display: "grid", placeItems: "center", padding: 20 }}>
+            style={{ position: "absolute", inset: 0, zIndex: 30, background: "rgba(0,0,0,.6)", backdropFilter: "blur(18px)", display: "grid", placeItems: "center", padding: 16, overflowY: "auto" }}>
             <motion.div initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.45, ease: EASE }} onClick={(e) => e.stopPropagation()}
-              style={{ background: "#fff", color: "#111", borderRadius: 32, padding: "36px 40px", textAlign: "center", maxWidth: 440, width: "100%", boxShadow: "0 40px 120px -20px rgba(0,0,0,.6)" }}>
+              style={{ background: "#fff", color: "#111", borderRadius: "clamp(24px, 7vw, 32px)", padding: "clamp(22px, 6vw, 36px) clamp(18px, 6vw, 40px)", textAlign: "center", maxWidth: 440, width: "100%", boxSizing: "border-box", boxShadow: "0 40px 120px -20px rgba(0,0,0,.6)" }}>
               {qrUrl ? (
                 <>
                   <div style={{ fontSize: 15, fontWeight: 700, color: data.color, letterSpacing: ".08em", textTransform: "uppercase" }}>{qrCfg.kicker}</div>
-                  <div style={{ fontSize: 26, fontWeight: 750, letterSpacing: "-.03em", margin: "6px 0 22px" }}>{qrCfg.title(data.name)}</div>
-                  <div style={{ display: "inline-block", padding: 16, borderRadius: 22, background: "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,.08)" }}>
-                    <QRCodeSVG value={qrUrl} size={280} level="M" fgColor="#111" />
+                  <div style={{ fontSize: "clamp(20px, 6vw, 26px)", fontWeight: 750, letterSpacing: "-.03em", margin: "6px 0 clamp(14px, 4vw, 22px)" }}>{qrCfg.title(data.name)}</div>
+                  {/* En celular el QR se achica al ancho disponible (antes se salía de la pantalla y no se podía escanear). */}
+                  <div style={{ display: "inline-block", maxWidth: "100%", boxSizing: "border-box", padding: "clamp(10px, 3vw, 16px)", borderRadius: 22, background: "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,.08)" }}>
+                    <QRCodeSVG value={qrUrl} size={280} level="M" fgColor="#111" style={{ display: "block", width: "min(280px, 100%)", height: "auto" }} />
                   </div>
                   <div style={{ fontSize: 15, color: "#666", marginTop: 18 }}>{qrCfg.hint}</div>
                 </>
@@ -365,7 +366,9 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
         )}
       </AnimatePresence>
 
-      <style>{`.demo-only-sm{display:none}@media (max-width: 700px){.demo-hide-sm{display:none !important}.demo-only-sm{display:block}}`}</style>
+      <style>{`.demo-only-sm{display:none}@media (max-width: 700px){.demo-hide-sm{display:none !important}.demo-only-sm{display:block}}
+.demo-stage::-webkit-scrollbar{display:none}
+@media (max-width: 700px), (max-height: 560px){.demo-stage{top:60px !important;padding-top:20px !important;padding-bottom:96px !important;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)}}`}</style>
     </div>
   );
 }

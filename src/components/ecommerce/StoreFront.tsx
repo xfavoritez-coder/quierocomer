@@ -87,6 +87,9 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const categoryColor = tenant.categoryColor;
   // Si el fondo del header es oscuro, los íconos sobre él (menú) deben ir en blanco.
   const headerDark = isDarkHex(tenant.headerBgColor);
+  // Logo: si no carga o es blanco/vacío sobre encabezado claro, se usa el respaldo (nombre).
+  const [logoBroken, setLogoBroken] = useState(false);
+  const showHeaderLogo = !!tenant.logoUrl && !logoBroken && !(tenant.logoOnWhite === false && !headerDark);
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -435,8 +438,8 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       <header ref={headerRef} className="shadow-sm" style={{ background: tenant.headerBgColor }}>
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-center relative">
           <div className="flex items-center">
-            {tenant.logoUrl ? (
-              <img src={tenant.logoUrl} alt={tenant.name} className="h-16 w-auto object-contain" />
+            {showHeaderLogo ? (
+              <img src={tenant.logoUrl!} alt={tenant.name} className="h-16 w-auto object-contain" onError={() => setLogoBroken(true)} ref={(el) => { if (el && el.complete && el.naturalWidth === 0) setLogoBroken(true); }} />
             ) : (
               <span className="font-black text-xl text-gray-900">{tenant.name}</span>
             )}

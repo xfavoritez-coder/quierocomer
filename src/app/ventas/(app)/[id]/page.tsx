@@ -6,6 +6,8 @@ import { getSellerLead, getLeadRestaurant, leadContact } from "@/lib/ventas/lead
 import { statusInfo } from "@/lib/ventas/status";
 import DeleteLead from "./DeleteLead";
 import VisitResult from "./VisitResult";
+import LeadLogo from "@/components/ventas/LeadLogo";
+import { isVisibleOnWhite } from "@/lib/extractors/logo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +21,8 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
   const restaurant = await getLeadRestaurant(lead);
   const dishCount = restaurant ? await prisma.dish.count({ where: { restaurantId: restaurant.id, deletedAt: null } }) : 0;
   const reg = await prisma.leadRegistration.findUnique({ where: { leadId: id }, select: { sentTo: true, expiresAt: true, completedAt: true, remindedAt: true, createdAt: true } });
+  // ¿El logo se ve sobre blanco? (logos blancos quedaban como un recuadro vacío)
+  const logoVisible = restaurant?.logoUrl && /^https?:\/\//.test(restaurant.logoUrl) ? await isVisibleOnWhite(restaurant.logoUrl).catch(() => null) : null;
   const st = statusInfo(lead.crmStatus);
   const contact = leadContact(lead);
   const fmt = (d: Date) => d.toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" });
@@ -27,8 +31,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
     <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gap: 16 }}>
       <Link href="/ventas" style={{ color: "var(--ink-3)", fontSize: 14, textDecoration: "none" }}>← Inicio</Link>
       <div className="ventas-card" style={{ padding: 20, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {restaurant?.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ width: 64, height: 64, objectFit: "contain", borderRadius: 16, background: "#fff", border: "1px solid var(--line)" }} />}
+        <LeadLogo url={restaurant?.logoUrl ?? null} visible={logoVisible} name={restaurant?.name ?? (lead.localName || "")} color={restaurant?.cartaAccentColor ?? null} />
         <div style={{ flex: 1, minWidth: 200 }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{restaurant?.name ?? (lead.localName || "Local sin nombre")}</h1>
           <div style={{ color: "var(--ink-3)", fontSize: 14, marginTop: 2 }}>{[lead.cuisine, lead.commune, lead.ownerName && `Contacto: ${lead.ownerName}`].filter(Boolean).join(" · ") || "Sin datos"}</div>

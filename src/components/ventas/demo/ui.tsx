@@ -139,9 +139,14 @@ export function useViewport() {
 
 /** Contenedor centrado de un capítulo (deja espacio para la barra y el progreso). */
 export function Stage({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  // Si el contenido cabe, queda centrado como siempre (margin: auto). Si es más alto que
+  // la pantalla (celular), empieza bajo la barra superior y se puede desplazar, en vez de
+  // salirse por arriba (encima del menú) y cortarse abajo.
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "clamp(92px, 12vh, 118px) clamp(20px, 5vw, 80px) 64px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", ...style }}>
-      {children}
+    <div className="demo-stage" style={{ position: "absolute", inset: 0, padding: "clamp(92px, 12vh, 118px) clamp(20px, 5vw, 80px) 64px", display: "flex", boxSizing: "border-box", overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+      <div style={{ margin: "auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", ...style }}>
+        {children}
+      </div>
     </div>
   );
 }

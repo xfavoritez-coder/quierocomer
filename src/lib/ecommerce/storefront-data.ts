@@ -4,6 +4,13 @@
 //  usa el diseño clásico 1.0 (portado de Servio).
 // ═══════════════════════════════════════════════════════════
 import { unstable_cache } from "next/cache";
+import { isVisibleOnWhite } from "@/lib/extractors/logo";
+
+/** Revisa si el logo se ve sobre blanco (mismo criterio que la demo de ventas). Nunca lanza. */
+async function logoVisibleOnWhite(url: string | null): Promise<boolean | null> {
+  if (!url || !/^https?:\/\//.test(url)) return null;
+  try { return await isVisibleOnWhite(url); } catch { return null; }
+}
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryZones, parseDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
@@ -19,6 +26,9 @@ export interface StoreTenant {
   name: string;
   branchName: string | null; // nombre de sucursal dentro de la marca (ej. "Recoleta")
   logoUrl: string | null;
+  /** ¿El logo se ve sobre fondo blanco? false = logo blanco/vacío (invisible en encabezado claro);
+   *  null = sin logo o no se pudo revisar. Se calcula dentro del catálogo cacheado. */
+  logoOnWhite?: boolean | null;
   bannerUrl: string | null;
   appAndroidUrl: string | null; // enlace a la app en Google Play (menú del ecommerce)
   appIosUrl: string | null; // enlace a la app en App Store (iPhone)
@@ -394,6 +404,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       name: restaurant.name,
       branchName: store.branchName,
       logoUrl: store.storeLogoUrl ?? restaurant.logoUrl,
+      logoOnWhite: opts?.includeHidden ? null : await logoVisibleOnWhite(store.storeLogoUrl ?? restaurant.logoUrl),
       bannerUrl: store.bannerUrl ?? restaurant.orderingBannerUrl,
       appAndroidUrl: restaurant.appAndroidUrl ?? null,
       appIosUrl: restaurant.appIosUrl ?? null,
