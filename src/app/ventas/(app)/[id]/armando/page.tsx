@@ -95,9 +95,12 @@ export default function ArmandoPage({ params }: { params: Promise<{ id: string }
 
       <h1 style={{ fontSize: "clamp(26px, 5vw, 40px)", fontWeight: 800, letterSpacing: "-.03em", margin: "14px 0 4px" }}>{name || "Armando su local…"}</h1>
       <p style={{ color: "var(--ink-3)", margin: 0, fontSize: 15 }}>
-        {failed ? "No pudimos leer esta carta" : done ? "¡Listo! Su carta ya está en QuieroComer" : "Leyendo la carta y armando su local…"}
+        {failed ? "No pudimos leer esta carta. A veces es pasajero: prueba reintentar." : done ? "¡Listo! Su carta ya está en QuieroComer" : "Leyendo la carta y armando su local…"}
       </p>
 
+      {failed && st?.error && (
+        <p style={{ margin: "10px auto 0", maxWidth: 520, fontSize: 12, color: "var(--ink-3)", fontFamily: "var(--mono, monospace)", wordBreak: "break-word" }}>Detalle: {st.error.slice(0, 240)}</p>
+      )}
       <div style={{ margin: "22px 0 18px" }}>
         <div className="ventas-mono" style={{ fontSize: "clamp(44px, 9vw, 64px)", fontWeight: 600, color: "var(--amber)", lineHeight: 1 }}>{counter}</div>
         <div style={{ fontSize: 14, color: "var(--ink-3)", marginTop: 4 }}>platos encontrados{categories.length ? ` · ${categories.length} categorías` : ""}</div>
@@ -136,7 +139,8 @@ export default function ArmandoPage({ params }: { params: Promise<{ id: string }
         {done && <Link href={`/ventas/${id}/revision`} className="ventas-btn" style={{ fontSize: 17, padding: "15px 28px" }}>Revisar carta →</Link>}
         {failed && (
           <>
-            <Link href={`/ventas/${id}`} className="ventas-btn">Seguir con el local de ejemplo</Link>
+            <button className="ventas-btn" onClick={() => { setSt((s) => (s ? { ...s, status: "PROCESSING" } : s)); fetch(`/api/ventas/leads/${id}/process`, { method: "POST" }).catch(() => {}); }}>↻ Reintentar</button>
+            <Link href={`/ventas/${id}`} className="ventas-btn ghost">Seguir con el local de ejemplo</Link>
             <Link href="/ventas/nuevo" className="ventas-btn ghost">Probar con otra foto o link</Link>
           </>
         )}

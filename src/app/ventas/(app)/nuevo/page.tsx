@@ -120,6 +120,9 @@ export default function VentasNuevoPage() {
           <label style={label}>Nombre del local {source !== "none" && <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>(opcional si viene en la carta)</span>}</label>
           <input className="ventas-input" placeholder="Ej: Caléndula" value={localName} onChange={(e) => setLocalName(e.target.value)} />
         </div>
+        <details style={{ border: "1px solid var(--line)", borderRadius: 14, padding: "12px 14px", background: "var(--surface)" }}>
+          <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14, color: "var(--ink-2)" }}>Más datos <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>(opcional)</span></summary>
+        <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
           <div>
             <label style={label}>Tipo de cocina</label>
@@ -135,9 +138,11 @@ export default function VentasNuevoPage() {
           </div>
         </div>
         <div>
-          <label style={label}>Nombre de contacto <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>(opcional)</span></label>
+          <label style={label}>Nombre de contacto</label>
           <input className="ventas-input" placeholder="Con quién hablaste" value={contactName} onChange={(e) => setContactName(e.target.value)} />
         </div>
+        </div>
+        </details>
       </div>
 
       {error && <p style={{ color: "#dc2626", fontSize: 14, margin: 0 }}>{error}</p>}
