@@ -7,11 +7,6 @@ import { statusInfo } from "@/lib/ventas/status";
 
 export const dynamic = "force-dynamic";
 
-const EVENT_LABEL: Record<string, string> = {
-  captured: "Local capturado", menu_extracted: "Carta lista", menu_failed: "No se pudo leer la carta", menu_reviewed: "Carta revisada",
-  demo_started: "Demo iniciada", interest_updated: "Intereses marcados", registered: "Se registró", onboarding_task: "Tarea de onboarding creada", email_sent: "Correo enviado",
-  waiter_called: "Llamó al garzón (demo)", loyalty_enrolled: "Se inscribió en la tarjeta (demo)", test_order: "Pedido de prueba", chapter_viewed: "Capítulo visto", link_opened: "El dueño abrió el link", status_changed: "Cambio de estado", note: "Nota",
-};
 
 // Ficha del lead (versión inicial; el CRM completo llega en la Etapa 8).
 export default async function VentasLeadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +16,6 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
   if (!lead) notFound();
   const restaurant = await getLeadRestaurant(lead);
   const dishCount = restaurant ? await prisma.dish.count({ where: { restaurantId: restaurant.id, deletedAt: null } }) : 0;
-  const events = await prisma.leadEvent.findMany({ where: { leadId: id }, orderBy: { createdAt: "desc" }, take: 30, select: { id: true, type: true, chapter: true, createdAt: true } });
   const reg = await prisma.leadRegistration.findUnique({ where: { leadId: id }, select: { sentTo: true, expiresAt: true, completedAt: true, remindedAt: true, createdAt: true } });
   const st = statusInfo(lead.crmStatus);
   const fmt = (d: Date) => d.toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" });
@@ -70,19 +64,6 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      <div className="ventas-card" style={{ padding: 18 }}>
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>Historial</div>
-        {events.length === 0 ? <p style={{ margin: 0, color: "var(--ink-3)", fontSize: 14 }}>Sin actividad todavía.</p> : (
-          <div style={{ display: "grid", gap: 8 }}>
-            {events.map((e) => (
-              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 14 }}>
-                <span>{EVENT_LABEL[e.type] ?? e.type}{e.chapter ? ` · ${e.chapter}` : ""}</span>
-                <span className="ventas-mono" style={{ color: "var(--ink-3)", fontSize: 12, whiteSpace: "nowrap" }}>{fmt(e.createdAt)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
