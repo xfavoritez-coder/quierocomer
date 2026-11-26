@@ -213,14 +213,6 @@ function CartaPhone({ data, active }: { data: DemoData; active: FeatureId }) {
             style={{ position: "relative", width: 44, height: 44, borderRadius: 99, background: c, color: onColor(c), display: "grid", placeItems: "center", boxShadow: `0 8px 20px -4px ${rgba(c, 0.6)}` }}>
             <Bell size={19} />
           </motion.div>
-          <AnimatePresence>
-            {calling && (
-              <motion.div initial={{ opacity: 0, y: 8, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.6, duration: 0.5, ease: EASE }}
-                style={{ position: "absolute", right: 0, bottom: 54, whiteSpace: "nowrap", padding: "7px 11px", borderRadius: 12, background: "#111", color: "#fff", fontWeight: 700, fontSize: 10.5, boxShadow: "0 10px 24px -8px rgba(0,0,0,.5)" }}>
-                🔔 Avisando al garzón… <span style={{ color: "rgba(255,255,255,.6)" }}>Mesa 4</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Recomendaciones del plato */}
