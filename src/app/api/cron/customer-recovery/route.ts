@@ -99,16 +99,26 @@ export async function GET(req: NextRequest) {
           const email = client.email.toLowerCase();
           if (unsubscribed.has(email) || queuedEmails.has(email)) continue;
 
-          // Cooldown: no enviar si recibió email en los últimos cooldownDays
-          const lastEmail = idx.lastSent.get(email);
-          if (lastEmail && (Date.now() - lastEmail) < rc.cooldownDays * 86400000) continue;
-
-          // Frecuencia mensual: emails enviados en últimos 30 días
-          if ((idx.sentLast30.get(email) ?? 0) >= rc.maxEmailsPerMonth) continue;
-
           // Qué automatización aplicar (prioridad: encuesta → cupón)
+          // Se necesita saber ANTES de aplicar el cooldown, porque el cupón es la
+          // continuación natural de la encuesta y no debe ser bloqueado por cooldown.
           const automation = pickAutomation(client, rc, email, idx);
           if (!automation) continue;
+
+          // Cooldown: no enviar si recibió email en los últimos cooldownDays.
+          // Excepción: recovery_incentive es la 2ª parte de la secuencia encuesta→cupón,
+          // no un email independiente, así que se permite aunque el cooldown no haya vencido.
+          if (automation !== "recovery_incentive") {
+            const lastEmail = idx.lastSent.get(email);
+            if (lastEmail && (Date.now() - lastEmail) < rc.cooldownDays * 86400000) continue;
+          }
+
+          // Frecuencia mensual: emails enviados en últimos 30 días.
+          // Excepción: recovery_incentive es la continuación de la secuencia (no cuenta
+          // como email de marketing independiente), así no se restringe por cuota mensual.
+          if (automation !== "recovery_incentive") {
+            if ((idx.sentLast30.get(email) ?? 0) >= rc.maxEmailsPerMonth) continue;
+          }
 
           queuedEmails.add(email);
           jobs.push({
