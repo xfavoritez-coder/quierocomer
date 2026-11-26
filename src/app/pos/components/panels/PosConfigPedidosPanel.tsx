@@ -11,6 +11,7 @@ interface PedidosCfg {
   alertOpenOrdersOnClose?: boolean
   uberEatsAutoAccept?: boolean
   prepAlertMinutes?: number
+  boardView?: 'list' | 'grouped'
 }
 
 function PosToggle({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
@@ -156,6 +157,37 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {/* Vista del tablero */}
+          {(() => {
+            const bv = pedidos.boardView === 'grouped' ? 'grouped' : 'list'
+            const opts: { key: 'list' | 'grouped'; title: string; desc: string }[] = [
+              { key: 'list', title: 'Lista', desc: 'Todos los pedidos corridos, sin agrupar.' },
+              { key: 'grouped', title: 'Agrupado por estado', desc: 'Separados en Aceptado · Preparación · Listo · Reparto, con las mesas activas arriba.' },
+            ]
+            return (
+              <div style={{ background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)', marginBottom: 2 }}>Vista del tablero</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', marginBottom: 12 }}>Cómo se muestran los pedidos en «Todos» y «Pedidos».</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {opts.map(({ key, title, desc }) => {
+                    const on = bv === key
+                    return (
+                      <button key={key} type="button" disabled={savingPed || on} onClick={() => updatePedidos({ boardView: key })}
+                        style={{
+                          flex: 1, textAlign: 'left', padding: '10px 12px', borderRadius: 10, cursor: savingPed ? 'wait' : 'pointer',
+                          border: on ? '2px solid var(--amber)' : '1.5px solid var(--line)',
+                          background: on ? 'rgba(245,158,11,.08)' : 'var(--surface)',
+                        }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: on ? 'var(--amber)' : 'var(--ink)' }}>{title}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2, lineHeight: 1.3 }}>{desc}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
 
           <ToggleRow title="Gestionar todos los pedidos del POS" desc="Activado: el tablero se alimenta SOLO de pedidos que envía tu POS (Toteat) y NO trae los de ecommerce ni manuales (evita duplicados)." checked={posMode} disabled={savingPed} onChange={() => updatePedidos({ posMode: !posMode })} />
           {([
