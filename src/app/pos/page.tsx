@@ -86,8 +86,8 @@ function BranchDropdown({ restaurants, value, onChange, counts = {}, isDesktop =
           display: 'inline-flex', alignItems: 'center', gap: 7,
           padding: '6px 11px', borderRadius: 9,
           border: '1px solid var(--line)', background: 'var(--surface)',
-          fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
-          color: 'var(--ink)', cursor: 'pointer', outline: 'none',
+          fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600,
+          color: 'var(--ink-2)', cursor: 'pointer', outline: 'none',
         }}
       >
         {storeIcon('var(--ink-3)', 13)}
@@ -637,10 +637,11 @@ export default function PosHomePage() {
               ) : restaurant?.name ? (
                 <>
                   <span style={{ width: 1, height: 20, background: 'var(--line)', flexShrink: 0 }} />
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{restaurant.name}</span>
+                  {/* Nombre del local: sutil y alineado al centro con la marca */}
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', lineHeight: 1.15 }}>
+                    <span style={{ fontFamily: 'var(--sans)', fontWeight: 500, fontSize: 13, color: 'var(--ink-3)' }}>{restaurant.name}</span>
                     {restaurant.commune && (
-                      <span style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 500, color: 'var(--ink-3)', opacity: 0.7 }}>{restaurant.commune}</span>
                     )}
                   </div>
                 </>
