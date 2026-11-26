@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { Check, Clock, X, PenLine, Copy, MessageCircle, Mail } from "lucide-react";
+import { Check, Clock, X, PenLine, Copy, Mail } from "lucide-react";
 import { EASE } from "./ui";
 
 type Result = "accepted" | "thinking" | "lost" | "register_now";
@@ -29,7 +29,7 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
   const [lostDetail, setLostDetail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ title: string; sub?: string; registerUrl?: string; whatsappUrl?: string | null } | null>(null);
+  const [done, setDone] = useState<{ title: string; sub?: string; registerUrl?: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const submit = async (result: Result) => {
@@ -46,7 +46,7 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
         window.location.href = d.registerUrl;
         return;
       }
-      if (result === "accepted") setDone({ title: "Enlace de registro enviado", sub: `Correo enviado a ${email}. Envíaselo también por WhatsApp.`, registerUrl: d.registerUrl, whatsappUrl: d.whatsappUrl });
+      if (result === "accepted") setDone({ title: "Enlace de registro enviado", sub: `Le enviamos el enlace a ${email}.`, registerUrl: d.registerUrl });
       if (result === "thinking") setDone({ title: "Seguimiento agendado", sub: `Te recordamos el ${new Date(`${followUp}T12:00:00-03:00`).toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" })}.` });
       if (result === "lost") setDone({ title: "Marcado como perdido", sub: "Te recordaremos reintentar en 90 días." });
     } catch { setError("Error de conexión"); } finally { setBusy(false); }
@@ -83,7 +83,6 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
                     </div>
                     {done.registerUrl && (
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {done.whatsappUrl && <a href={done.whatsappUrl} target="_blank" rel="noreferrer" style={{ ...btn("#25D366"), textDecoration: "none" }}><MessageCircle size={17} /> Enviar por WhatsApp</a>}
                         <button style={btn("#f2f2f2", "#111")} onClick={() => { navigator.clipboard?.writeText(done.registerUrl!); setCopied(true); setTimeout(() => setCopied(false), 1500); }}><Copy size={16} /> {copied ? "¡Copiado!" : "Copiar enlace"}</button>
                       </div>
                     )}
@@ -96,11 +95,8 @@ export default function CloseBar({ leadId, color, open, onClose, initialEmail, i
                     </div>
                     {mode === "accepted" && (
                       <>
-                        <div style={{ color: "#666", fontSize: 14 }}>Le llega un enlace por correo (y lo envías por WhatsApp) para confirmar sus datos. Vence en 14 días.</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                          <input style={input} type="email" placeholder="Correo del dueño" value={email} onChange={(e) => setEmail(e.target.value)} />
-                          <input style={input} inputMode="tel" placeholder="WhatsApp (9 1234 5678)" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-                        </div>
+                        <div style={{ color: "#666", fontSize: 14 }}>Le llega un enlace por correo para confirmar sus datos. Vence en 14 días.</div>
+                        <input style={input} type="email" placeholder="Correo del dueño" value={email} onChange={(e) => setEmail(e.target.value)} />
                       </>
                     )}
                     {mode === "thinking" && (

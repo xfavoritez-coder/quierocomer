@@ -62,7 +62,7 @@ export default async function VentasLeadPage({ params }: { params: Promise<{ id:
         <div className="ventas-card" style={{ padding: 18, display: "grid", gap: 12 }}>
           <div>
             <div style={{ fontWeight: 800 }}>Resultado de la visita</div>
-            <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>Después de la demo, anota cómo terminó. “Aceptó” le envía el enlace de registro por correo y WhatsApp.</div>
+            <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>Después de la demo, anota cómo terminó. “Aceptó” le envía el enlace de registro por correo.</div>
           </div>
           <VisitResult leadId={id} color={restaurant?.cartaAccentColor && /^#[0-9a-fA-F]{6}$/.test(restaurant.cartaAccentColor) ? restaurant.cartaAccentColor : "#DE7C00"}
             email={contact.email} whatsapp={lead.whatsapp ?? ""} planId={lead.recommendedPlan ?? null} localName={restaurant?.name ?? (lead.localName || "este local")} />

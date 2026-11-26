@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { addLeadEvent } from "@/lib/ventas/leads";
-import { registrationToken, registrationUrl, sendRegistrationEmail, whatsappLink } from "@/lib/ventas/registration";
+import { registrationToken, registrationUrl, sendRegistrationEmail } from "@/lib/ventas/registration";
 
 export const runtime = "nodejs";
 const ORIGIN = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-/** Recordatorio a las 48 h si el dueño no completó su registro: correo al dueño (mismo enlace) y aviso al vendedor con el WhatsApp listo. */
+/** Recordatorio a las 48 h si el dueño no completó su registro: correo al dueño (mismo enlace) y aviso al vendedor. */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
@@ -28,11 +28,9 @@ export async function GET(req: Request) {
     const url = registrationUrl(ORIGIN, registrationToken(r.leadId, r.expiresAt));
     if (r.sentTo) await sendRegistrationEmail(r.sentTo, url, r.lead.localName, r.lead.seller?.name ?? null).catch((e) => console.error("[ventas recordatorio]", e));
     if (r.lead.seller?.email) {
-      const wa = r.lead.whatsapp ? whatsappLink(r.lead.whatsapp, r.lead.localName, url) : null;
       await sendAdminEmail({
         to: r.lead.seller.email, subject: `⏰ ${r.lead.localName} aún no completa su registro`, purpose: "ventas_recordatorio", skipLog: true,
-        html: `<p style="font-family:Arial,sans-serif;font-size:15px"><b>${r.lead.localName.replace(/[<>&]/g, "")}</b> recibió su enlace hace 2 días y aún no se registra. Le reenviamos el correo; escríbele por WhatsApp para ayudarlo.</p>
-${wa ? `<p><a href="${wa}" style="font-family:Arial,sans-serif;font-weight:700;color:#16a34a">Abrir WhatsApp con el enlace</a></p>` : ""}
+        html: `<p style="font-family:Arial,sans-serif;font-size:15px"><b>${r.lead.localName.replace(/[<>&]/g, "")}</b> recibió su enlace hace 2 días y aún no se registra. Le reenviamos el correo con su enlace.</p>
 <p><a href="${ORIGIN}/ventas/${r.leadId}" style="font-family:Arial,sans-serif">Ver el local</a></p>`,
       }).catch((e) => console.error("[ventas recordatorio vendedor]", e));
     }

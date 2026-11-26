@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSellerFromRequest } from "@/lib/ventas/session";
 import { getSellerLead, addLeadEvent } from "@/lib/ventas/leads";
-import { createRegistration, registrationUrl, sendRegistrationEmail, whatsappLink } from "@/lib/ventas/registration";
+import { createRegistration, registrationUrl, sendRegistrationEmail } from "@/lib/ventas/registration";
 
 export const runtime = "nodejs";
 
@@ -50,7 +50,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (result === "accepted" || result === "register_now") {
     if (result === "accepted") {
       if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Falta un correo válido del dueño" }, { status: 400 });
-      if (!whatsapp || whatsapp.replace(/\D/g, "").length < 8) return NextResponse.json({ error: "Falta el WhatsApp del dueño" }, { status: 400 });
     }
     let reg;
     try { reg = await createRegistration(id, email || null); } catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 409 }); }
@@ -63,7 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       // En desarrollo no hay envío real: el enlace se muestra en la consola.
       if (process.env.NODE_ENV !== "production") console.log(`[ventas registro] enlace para ${email}: ${url}`);
     }
-    return NextResponse.json({ ok: true, status: "registro_enviado", registerUrl: url, whatsappUrl: whatsapp ? whatsappLink(whatsapp, lead.localName, url) : null, expiresAt: reg.expiresAt });
+    return NextResponse.json({ ok: true, status: "registro_enviado", registerUrl: url, expiresAt: reg.expiresAt });
   }
 
   return NextResponse.json({ error: "Resultado no válido" }, { status: 400 });
