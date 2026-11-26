@@ -1816,7 +1816,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     setStageBusy(null)
   }
 
-  const newOrderLabel = type === 'delivery' ? 'Nuevo delivery' : type === 'retiro' ? 'Nuevo retiro' : 'Nuevo pedido'
+  const newOrderLabel = 'Nuevo pedido'
 
   const listSection = (
     <div className="pos-scroll">

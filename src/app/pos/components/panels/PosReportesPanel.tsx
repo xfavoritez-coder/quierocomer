@@ -3593,7 +3593,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             restaurantId={restaurantId}
             allBranches={allBranches ? allBranches.map(b => ({ id: b.id })) : undefined}
             onSelectClient={async (c) => {
-              // Buscar datos reales: primero por email, luego por phone
+              // Buscar datos reales del cliente por email/phone
               try {
                 const params = new URLSearchParams({ restaurantId })
                 if (c.email) params.set('email', c.email)
@@ -3605,19 +3605,22 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
                     const orders = d.orders as { totalAmount: number; deliveryFee: number; tipAmount: number; createdAt: string }[]
                     const totalSpent = orders.reduce((s, o) => s + Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)), 0)
                     const avgTicket = orders.length > 0 ? Math.round(totalSpent / orders.length) : 0
+                    const daysSince = orders[0] ? Math.round((Date.now() - new Date(orders[0].createdAt).getTime()) / 86400000) : 0
+                    const freq = orders.length >= 2 ? Math.round((new Date(orders[0].createdAt).getTime() - new Date(orders[orders.length - 1].createdAt).getTime()) / 86400000 / (orders.length - 1)) : null
+                    // Calcular status real (misma lógica que client-segmentation.ts)
+                    const status = freq === null ? 'new' as const : daysSince > 90 ? 'churned' as const : daysSince > 45 ? (daysSince / freq >= 3 ? 'churned' as const : 'at_risk' as const) : daysSince / freq < 1.5 ? 'active' as const : daysSince / freq < 3 ? 'at_risk' as const : 'churned' as const
                     setRecoveryClient({
                       email: c.email, name: c.name, phone: c.phone || '',
                       orders: orders.length, totalSpent, avgTicket,
                       lastOrderAt: orders[0]?.createdAt || '', firstOrderAt: orders[orders.length - 1]?.createdAt || '',
-                      daysSinceLastOrder: orders[0] ? Math.round((Date.now() - new Date(orders[0].createdAt).getTime()) / 86400000) : 0,
-                      avgFrequencyDays: orders.length >= 2 ? Math.round((new Date(orders[0].createdAt).getTime() - new Date(orders[orders.length - 1].createdAt).getTime()) / 86400000 / (orders.length - 1)) : null,
-                      status: 'churned' as const, riskScore: 0, score: 0, topProduct: null,
+                      daysSinceLastOrder: daysSince, avgFrequencyDays: freq,
+                      status, riskScore: 0, score: 0, topProduct: null,
                     })
                     return
                   }
                 }
               } catch { /* fallback */ }
-              setRecoveryClient({ email: c.email, name: c.name, phone: c.phone || '', orders: 0, totalSpent: 0, avgTicket: 0, lastOrderAt: '', firstOrderAt: '', daysSinceLastOrder: 0, avgFrequencyDays: null, status: 'churned' as const, riskScore: 0, score: 0, topProduct: null })
+              setRecoveryClient({ email: c.email, name: c.name, phone: c.phone || '', orders: 0, totalSpent: 0, avgTicket: 0, lastOrderAt: '', firstOrderAt: '', daysSinceLastOrder: 0, avgFrequencyDays: null, status: 'new' as const, riskScore: 0, score: 0, topProduct: null })
             }}
           />
           </SectionErrorBoundary>

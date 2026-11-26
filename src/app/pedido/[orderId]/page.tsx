@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_TRACKING_TEXTS, trackingStatusText, type TrackingTexts } from "@/lib/ecommerce/trackingTexts";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
-import StoreBottomNav from "@/components/ecommerce/StoreBottomNav";
 
 const OrderTrackingMap = dynamic(() => import("@/components/ecommerce/OrderTrackingMap"), { ssr: false });
 
@@ -37,6 +36,7 @@ interface OrderData {
   restaurantLogoUrl: string | null;
   restaurantFaviconUrl?: string | null;
   restaurantPhone: string | null;
+  restaurantAddress?: string | null;
   customerName: string;
   orderType: "PICKUP" | "DELIVERY";
   items: OrderItem[];
@@ -340,8 +340,9 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, order?.orderType]);
 
-  // Supabase Realtime
+  // Supabase Realtime (si no está configurado, la página sigue con la consulta periódica)
   useEffect(() => {
+    if (!supabase) return;
     const channel = supabase
       .channel(`pedido-${orderId}`)
       .on("postgres_changes", {
@@ -544,7 +545,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
   return (
     <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: FONT, paddingTop: "env(safe-area-inset-top)" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px calc(120px + env(safe-area-inset-bottom))" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px calc(32px + env(safe-area-inset-bottom))" }}>
 
         {/* Restaurant header — clickeable para volver a la tienda */}
         <a href={storeHome} style={{ display: "block", textAlign: "center", marginBottom: 14, textDecoration: "none" }}>
@@ -749,18 +750,11 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             </div>
           )}
         </div>
+
+        {/* Información del local: contacto y volver a la tienda */}
+        <LocalInfoCard order={order} theme={theme} storeHome={storeHome} />
       </div>
 
-      {/* Barra inferior de la tienda — mantiene el seguimiento "embebido"
-          dentro de la app/web con acceso directo a inicio, menú y carrito. */}
-      <StoreBottomNav
-        color={theme.accent}
-        onHome={() => { window.location.href = storeHome; }}
-        onFavorites={() => { window.location.href = `${storeHome}${storeHome.includes("?") ? "&" : "?"}menu=favorites`; }}
-        onCart={() => { window.location.href = `${storeBase}/checkout`; }}
-        onContact={() => { window.location.href = `${storeHome}${storeHome.includes("?") ? "&" : "?"}menu=contact`; }}
-        onProfile={() => { window.location.href = `${storeHome}${storeHome.includes("?") ? "&" : "?"}menu=profile`; }}
-      />
     </div>
   );
 }
@@ -851,6 +845,40 @@ function NotifyButton({ orderId, accent, textColor }: { orderId: string; accent:
       <button onClick={activate} disabled={state === "busy"} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 20px", borderRadius: 12, border: "none", background: accent, color: "#1a1a1a", fontWeight: 800, fontSize: 14, cursor: state === "busy" ? "wait" : "pointer", opacity: state === "busy" ? 0.6 : 1 }}>
         🔔 {state === "busy" ? "Activando…" : "Avisarme del estado"}
       </button>
+    </div>
+  );
+}
+
+/** Tarjeta del local al final del seguimiento: nombre, dirección, WhatsApp y volver a la tienda. */
+function LocalInfoCard({ order, theme, storeHome }: { order: OrderData; theme: Theme; storeHome: string }) {
+  const wa = order.restaurantPhone?.replace(/\D/g, "") || "";
+  const waNumber = wa.length === 9 ? `56${wa}` : wa;
+  const msg = encodeURIComponent(`Hola, tengo una consulta sobre mi pedido${order.orderNumber ? ` #${order.orderNumber}` : ""}.`);
+  const btn: React.CSSProperties = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "13px 12px", borderRadius: 14, fontSize: 14, fontWeight: 700, textDecoration: "none", fontFamily: FONT };
+  return (
+    <div style={{ marginTop: 16, background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 20, padding: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {order.restaurantLogoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={order.restaurantLogoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 14, objectFit: "cover", flexShrink: 0, background: "#fff" }} />
+        ) : (
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: theme.accent + "22", color: theme.accent, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 20, flexShrink: 0 }}>{order.restaurantName.charAt(0)}</div>
+        )}
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: theme.text }}>{order.restaurantName}</p>
+          {order.restaurantAddress && <p style={{ margin: "2px 0 0", fontSize: 13, color: theme.text2 }}>📍 {order.restaurantAddress}</p>}
+          {wa && <p style={{ margin: "2px 0 0", fontSize: 13, color: theme.text2 }}>¿Dudas con tu pedido? Escríbenos.</p>}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        {wa && (
+          <a href={`https://wa.me/${waNumber}?text=${msg}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, background: "#25D366", color: "#fff" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.1Z"/></svg>
+            WhatsApp
+          </a>
+        )}
+        <a href={storeHome} style={{ ...btn, background: theme.accent, color: "#fff" }}>Volver a la tienda</a>
+      </div>
     </div>
   );
 }

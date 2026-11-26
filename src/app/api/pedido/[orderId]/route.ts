@@ -39,6 +39,7 @@ export async function GET(
           orderingWaitTime: true,
           whatsapp: true,
           phone: true,
+          address: true,
           cartaColorMode: true,
           cartaAccentColor: true,
           ecommerceStoreConfig: true,
@@ -71,13 +72,15 @@ export async function GET(
     trackingTexts = parseTrackingTexts(null);
   }
 
+  const storeCfg = parseStoreConfig(order.restaurant.ecommerceStoreConfig);
+
   return NextResponse.json({
     trackingTexts,
     id: order.id,
     orderNumber: order.orderNumber ?? null,
     restaurantName: order.restaurant.name,
     restaurantLogoUrl: order.restaurant.logoUrl ?? null,
-    restaurantFaviconUrl: parseStoreConfig(order.restaurant.ecommerceStoreConfig).faviconUrl,
+    restaurantFaviconUrl: storeCfg.faviconUrl,
     customerName: order.customerName,
     orderType: order.orderType as "PICKUP" | "DELIVERY",
     items: order.items,
@@ -96,6 +99,7 @@ export async function GET(
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
     restaurantPhone: order.restaurant.whatsapp || order.restaurant.phone || null,
+    restaurantAddress: storeCfg.hideTrackingAddress ? null : (order.restaurant.address ?? null),
     colorMode: order.restaurant.cartaColorMode ?? "LIGHT",
     accentColor: order.restaurant.cartaAccentColor ?? null,
   });

@@ -71,6 +71,7 @@ export interface EcommerceStoreConfig {
   showWhatsApp: boolean; // mostrar botón flotante de WhatsApp en la tienda
   showPhone: boolean; // mostrar teléfono de contacto en la tienda
   hiddenBranch: boolean; // sucursal oculta: no aparece en selector de sucursales, sitemap ni listados públicos, pero funciona normalmente por URL directa
+  hideTrackingAddress: boolean; // ocultar la dirección del local en el link de seguimiento (/pedido)
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -217,7 +218,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     showTableMenu: o.showTableMenu === true,
     posRetryEnabled: o.posRetryEnabled === true,
     favoritesEnabled: o.favoritesEnabled !== false, // ON por defecto en todos los locales (se apaga explícitamente)
-    theme: o.theme === "impact" ? "impact" : o.theme === "modern" ? "modern" : "base",
+    // Modern es el diseño por defecto; "base" (clásico) solo si el local lo eligió.
+    theme: o.theme === "impact" ? "impact" : o.theme === "base" ? "base" : "modern",
     bannerProductIds: Array.isArray(o.bannerProductIds)
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
       : [],
@@ -257,6 +259,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     showWhatsApp: o.showWhatsApp !== false, // default true
     showPhone: o.showPhone !== false, // default true
     hiddenBranch: o.hiddenBranch === true,
+    hideTrackingAddress: o.hideTrackingAddress === true,
   };
 }
 

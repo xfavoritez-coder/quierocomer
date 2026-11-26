@@ -354,7 +354,7 @@ export default function EcommerceConfiguracionPage() {
             <SectionTitle icon={Palette} title="Tema de la tienda" sub="El diseño con el que se ve tu tienda online." />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 12 }}>
               <ThemeOption
-                active={(cfg.theme ?? "base") === "base"}
+                active={cfg.theme === "base"}
                 onClick={() => patch({ theme: "base" })}
                 title="Base"
                 desc="Claro y limpio."
@@ -370,7 +370,7 @@ export default function EcommerceConfiguracionPage() {
                 accent={cfg.primaryColor}
               />
               <ThemeOption
-                active={cfg.theme === "modern"}
+                active={(cfg.theme ?? "modern") === "modern"}
                 onClick={() => patch({ theme: "modern" })}
                 title="Modern"
                 desc="Premium, elegante y minimalista."
@@ -736,6 +736,13 @@ export default function EcommerceConfiguracionPage() {
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Enviar al cliente un correo con el enlace de seguimiento de su pedido. Si lo desactivas, no se envía ningún correo al cliente.</p>
               </div>
               <Toggle on={cfg.trackingEmailEnabled} onClick={() => patch({ trackingEmailEnabled: !cfg.trackingEmailEnabled })} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+              <div style={{ maxWidth: 380 }}>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Ocultar dirección del local</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>No mostrar la dirección del local en el enlace de seguimiento del pedido. Útil para locales sin atención al público o cocinas ocultas.</p>
+              </div>
+              <Toggle on={cfg.hideTrackingAddress} onClick={() => patch({ hideTrackingAddress: !cfg.hideTrackingAddress })} />
             </div>
           </section>
           )}

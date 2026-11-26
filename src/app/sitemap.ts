@@ -45,6 +45,10 @@ async function buildCustomDomainSitemap(host: string): Promise<MetadataRoute.Sit
 // ── Sitemap del dominio principal (cacheado 24h) ──────────────
 // Google no necesita sitemaps en tiempo real; el contenido no depende del host.
 const buildMainSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap> => {
+  // Locales demo capturados en terreno por un vendedor (/ventas): son prospectos que aún no
+  // aceptan, así que su carta NO se publica en Google (a diferencia de los leads web).
+  const fieldDemoSlugs = (await prisma.lead.findMany({ where: { sellerId: { not: null }, generatedSlug: { not: null } }, select: { generatedSlug: true } }))
+    .map((l) => l.generatedSlug as string);
   const [restaurants, dishes, communeRestaurants, demoRestaurants, ecommerceStores] = await Promise.all([
     prisma.restaurant.findMany({
       where: { isActive: true, isDemo: false },
@@ -69,7 +73,7 @@ const buildMainSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap>
     }),
     // Demo restaurants from leads funnel (their carta QR is publicly indexed)
     prisma.restaurant.findMany({
-      where: { isDemo: true, isActive: true },
+      where: { isDemo: true, isActive: true, ...(fieldDemoSlugs.length ? { slug: { notIn: fieldDemoSlugs } } : {}) },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
     }),

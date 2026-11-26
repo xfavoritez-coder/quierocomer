@@ -13,7 +13,8 @@ export default function MetaPixel() {
       const path = window.location.pathname;
       const isMain = h === "quierocomer.com" || h === "www.quierocomer.com" || h.endsWith(".vercel.app") || h === "localhost" || h === "127.0.0.1";
       // No cargar en tiendas (dominio propio) ni en el storefront del dominio principal.
-      if (!isMain || path.startsWith("/ecommerce/")) return;
+      // Tampoco en /ventas (herramienta interna del equipo de ventas).
+      if (!isMain || path.startsWith("/ecommerce/") || path.startsWith("/ventas")) return;
       const w = window as unknown as { fbq?: (...args: unknown[]) => void; _fbq?: unknown };
       if (w.fbq) return;
       /* eslint-disable */

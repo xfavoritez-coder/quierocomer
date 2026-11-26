@@ -75,8 +75,8 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
     ? program.cardColorHex!
     : (restaurant.cartaAccentColor || "#F59E1B");
 
-  const leadData = await prisma.lead.findFirst({ where: { generatedSlug: slug }, select: { panelVisitedAt: true } });
-  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
+  const leadData = await prisma.lead.findFirst({ where: { generatedSlug: slug }, select: { panelVisitedAt: true, sellerId: true } });
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt || !!leadData?.sellerId; // demo de Ventas: sin "Ir al panel"
 
   return (
     <>

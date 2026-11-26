@@ -447,9 +447,25 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
         const influye = await isInfluyeApp(cartaUrl).catch(() => false)
         if (influye) return extractInfluyeApp(cartaUrl)
       }
+      // Sitios Justo con dominio propio (ej: veganmobile.cl): si la detección por HTML
+      // falló (timeout) o el dominio quedó como proveedor desconocido, se reconocen aquí.
+      if (!["Fudo", "Mercat", "Gourmedia"].includes(providerName || "") && await isJustoSite(cartaUrl)) {
+        console.log(`[Pipeline] ${cartaUrl} es un sitio Justo (detectado por HTML) → extractor Justo`)
+        const justoResult = await extractJusto(cartaUrl).catch(() => null)
+        if (justoResult && justoResult.dishes.length >= 3) return justoResult
+      }
       // Generic scraper: Jina AI + Claude. Works with any provider.
       return extractWithScraper(cartaUrl, providerName, extractionConfig);
   }
+}
+
+/** ¿La página es de Justo? Busca sus recursos (getjusto.com) en el HTML. */
+async function isJustoSite(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "QuieroComer-Bot/1.0" }, redirect: "follow", signal: AbortSignal.timeout(12000) })
+    if (!res.ok) return false
+    return /getjusto\.com|orioneat/i.test(await res.text())
+  } catch { return false }
 }
 
 /**
@@ -566,6 +582,17 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
+    // Logo visible sobre fondo blanco: si el extraído es casi todo blanco (ej. Mercat usa uno blanco
+    // para su barra oscura), se busca otra versión en la página. Best-effort.
+    if (lead.cartaUrl && !isFileUpload && !isDirectPdf) {
+      try {
+        const { improveLogo } = await import("./logo");
+        const better = await improveLogo(extraction.logoUrl, lead.cartaUrl);
+        if (better !== extraction.logoUrl) console.log(`[Pipeline] Logo mejorado: ${extraction.logoUrl} → ${better}`);
+        extraction.logoUrl = better;
+      } catch { /* sigue con el logo original */ }
+    }
+
     // Validate extraction quality — only reject if truly empty
     const dishesWithPrice = extraction.dishes.filter(d => d.price > 0);
     if (extraction.dishes.length < 3) {
@@ -607,6 +634,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     let slug = slugify(cleanedName);
     if (!slug) slug = `local-${Date.now().toString(36)}`;
+    // Local capturado en terreno (/ventas): SIEMPRE un local demo nuevo con slug propio.
+    // Nunca se reutiliza un local existente: no se pisa la demo de otro lead ni se
+    // engancha la demo de un vendedor a un restaurante real con el mismo nombre.
+    if (lead.sellerId) {
+      const base = slug;
+      for (let n = 2; await prisma.restaurant.findUnique({ where: { slug }, select: { id: true } }); n++) slug = `${base}-${n}`;
+    }
     const existingRest = await prisma.restaurant.findUnique({ where: { slug } });
 
     // If restaurant already exists with this slug
@@ -732,7 +766,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             name: dish.name.trim(),
             description: dish.description || null,
             price: dish.price,
-            photos: [],
+            // La foto original queda visible de inmediato; luego se reemplaza por la copia optimizada.
+            photos: dish.imageUrl ? [dish.imageUrl] : [],
             position: j,
             dishDiet,
             isSpicy: (dish as any).isSpicy || detected.isSpicy,
@@ -795,6 +830,37 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }).catch(() => {});
     }
 
+    // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
+    // Van antes de la clasificación: en cartas grandes (100+ platos) es lo que más se nota si la función se corta.
+    const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
+    if (dishesWithPhotos.length > 0) {
+      const BATCH = 20;
+      for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
+        const batch = dishesWithPhotos.slice(i, i + BATCH);
+        await Promise.allSettled(
+          batch.map(async (dish) => {
+            const credit = dish.credit;
+            const isUnsplash = !!credit; // has credit = came from Unsplash
+            let finalUrl: string;
+
+            if (isUnsplash) {
+              // Unsplash: store rawUrl, components apply size params at render time
+              finalUrl = dish.externalPhoto!;
+            } else {
+              // Restaurant's own photo: re-upload to Supabase for optimization
+              const dishSlug = slugify(dish.name);
+              const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
+              finalUrl = supabaseUrl || dish.externalPhoto!;
+            }
+
+            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
+            if (credit) updateData.photoCredits = [credit];
+            await prisma.dish.update({ where: { id: dish.id }, data: updateData });
+          }),
+        );
+      }
+    }
+
     // Taxonomy classification — corre DESPUÉS de READY en el mismo pipeline
     // El usuario ya ve el restaurante como importado; reporta progreso por batch
     if (taxonomyInputs.length > 0) {
@@ -836,36 +902,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         console.log(`[Pipeline] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos clasificados`);
       } catch (e) {
         console.error("[Pipeline] Taxonomy failed (non-fatal):", e);
-      }
-    }
-
-    // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
-    const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
-    if (dishesWithPhotos.length > 0) {
-      const BATCH = 10;
-      for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
-        const batch = dishesWithPhotos.slice(i, i + BATCH);
-        await Promise.allSettled(
-          batch.map(async (dish) => {
-            const credit = dish.credit;
-            const isUnsplash = !!credit; // has credit = came from Unsplash
-            let finalUrl: string;
-
-            if (isUnsplash) {
-              // Unsplash: store rawUrl, components apply size params at render time
-              finalUrl = dish.externalPhoto!;
-            } else {
-              // Restaurant's own photo: re-upload to Supabase for optimization
-              const dishSlug = slugify(dish.name);
-              const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
-              finalUrl = supabaseUrl || dish.externalPhoto!;
-            }
-
-            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
-            if (credit) updateData.photoCredits = [credit];
-            await prisma.dish.update({ where: { id: dish.id }, data: updateData });
-          }),
-        );
       }
     }
 

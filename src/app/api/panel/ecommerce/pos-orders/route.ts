@@ -133,7 +133,8 @@ export async function GET(req: NextRequest) {
   // Ubicación del local (origen de despacho) para el mini-mapa en vivo de la tarjeta.
   const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, ecommerceConfig: true, centroPedidosConfig: true } });
   // Umbral (min) de la alerta de retiro atascado en preparación. 0 = off; sin def = 60.
-  const cpCfg = (rLoc?.centroPedidosConfig && typeof rLoc.centroPedidosConfig === "object" && !Array.isArray(rLoc.centroPedidosConfig) ? rLoc.centroPedidosConfig : {}) as { prepAlertMinutes?: number; readyAlertMinutes?: number; uberEnabled?: boolean; pedidosyaEnabled?: boolean; alertOpenOrdersOnClose?: boolean };
+  const cpCfg = (rLoc?.centroPedidosConfig && typeof rLoc.centroPedidosConfig === "object" && !Array.isArray(rLoc.centroPedidosConfig) ? rLoc.centroPedidosConfig : {}) as { prepAlertMinutes?: number; readyAlertMinutes?: number; uberEnabled?: boolean; pedidosyaEnabled?: boolean; alertOpenOrdersOnClose?: boolean; boardView?: "list" | "grouped" };
+  const boardView = cpCfg.boardView === "grouped" ? "grouped" : "list";
   const prepAlertMinutes = typeof cpCfg.prepAlertMinutes === "number" ? cpCfg.prepAlertMinutes : 60;
   const readyAlertMinutes = typeof cpCfg.readyAlertMinutes === "number" ? cpCfg.readyAlertMinutes : 30;
   const alertOpenOrdersOnClose = cpCfg.alertOpenOrdersOnClose === true;
@@ -197,7 +198,7 @@ export async function GET(req: NextRequest) {
   // Seguimiento Delifast pausado globalmente (desde /admin/ajustes) → el board
   // no muestra la alerta de "Delifast no asigna" (no hay datos porque no consultamos).
   const delifastTrackingPaused = (await getPlatformSetting("delifast_tracking_paused")) === "1";
-  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, delifastTrackingPaused, prepAlertMinutes, readyAlertMinutes, uberEnabled, pedidosyaEnabled, alertOpenOrdersOnClose });
+  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, delifastTrackingPaused, prepAlertMinutes, readyAlertMinutes, uberEnabled, pedidosyaEnabled, alertOpenOrdersOnClose, boardView });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

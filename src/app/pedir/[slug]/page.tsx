@@ -187,9 +187,9 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
 
   const leadData = await prisma.lead.findFirst({
     where: { generatedSlug: slug },
-    select: { panelVisitedAt: true },
+    select: { panelVisitedAt: true, sellerId: true },
   });
-  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt || !!leadData?.sellerId; // demo de Ventas: sin "Ir al panel"
 
   return (
     <>

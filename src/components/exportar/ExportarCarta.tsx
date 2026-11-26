@@ -74,7 +74,7 @@ function formatPrice(price: number): string {
   return `$${price.toLocaleString("es-CL")}`;
 }
 
-const FONT_LINK =
+export const FONT_LINK =
   "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Marcellus&family=Jost:wght@300;400;500;600&display=swap";
 
 const F = "var(--font-display)";

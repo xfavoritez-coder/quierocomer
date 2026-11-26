@@ -58,9 +58,9 @@ export default function PosHeader({
               </a>
               {storeName && (
                 <div className="pos-brand-store">
-                  <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{storeName}</span>
+                  <span style={{ fontFamily: 'var(--sans)', fontWeight: 500, fontSize: 13, color: 'var(--ink-3)' }}>{storeName}</span>
                   {branchName && (
-                    <span style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12, color: 'var(--ink-3)' }}>
+                    <span style={{ fontFamily: 'var(--sans)', fontWeight: 500, fontSize: 11, color: 'var(--ink-3)', opacity: 0.7 }}>
                       {branchName}
                     </span>
                   )}

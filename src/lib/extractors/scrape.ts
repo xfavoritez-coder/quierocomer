@@ -228,6 +228,12 @@ async function callClaude(prompt: string, maxTokens = 32000, model = MODEL_FAST)
     method: "POST",
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] }),
+    // Sin límite, una carta enorme podía dejar la función colgada hasta que Vercel la mataba
+    // (y el local quedaba "procesando" para siempre). Mejor fallar con un error claro.
+    signal: AbortSignal.timeout(200_000),
+  }).catch((e) => {
+    if ((e as Error).name === "TimeoutError") throw new Error("La carta es muy grande y la lectura tardó demasiado. Intenta de nuevo o con el link de una sección.");
+    throw e;
   });
   if (!res.ok) throw new Error(`Claude error: ${res.status}`);
   const data = await res.json();
@@ -389,6 +395,53 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000, MO
  */
 export { discoverMenuUrl };
 
+/**
+ * Cartas en markdown con estructura fija (Mercat vía Jina): "## Categoría", "### Plato", "$ 3.500",
+ * descripción e imagen. Se leen directo, sin Claude: es instantáneo y no se corta con cartas grandes
+ * (con 100+ platos la respuesta de Claude tardaba más que el límite de la función).
+ * Devuelve null si el contenido no tiene esa estructura.
+ */
+export function parseStructuredMarkdownMenu(md: string): ExtractedDish[] | null {
+  const body = md.includes("Markdown Content:") ? md.slice(md.indexOf("Markdown Content:") + 17) : md;
+  const lines = body.split("\n").map((l) => l.trim());
+  const dishes: ExtractedDish[] = [];
+  let category = "General";
+  let cur: { name: string; price: number; desc: string[]; img: string | null; cat: string } | null = null;
+  let headers = 0;
+  const flush = () => {
+    if (cur && cur.price > 0 && !/modificador/i.test(cur.cat)) {
+      const description = cur.desc.join(" ").trim();
+      const text = `${cur.name} ${description}`.toLowerCase();
+      dishes.push({
+        name: cur.name,
+        description: description.toLowerCase() === cur.name.toLowerCase() ? "" : description,
+        price: cur.price,
+        imageUrl: cur.img,
+        category: cur.cat,
+        diet: /\bvegan[oa]?s?\b|\bvegetal(es)?\b/.test(text) ? "VEGAN" : /\bvegetarian[oa]s?\b|\bveggie\b/.test(text) ? "VEGETARIAN" : "OMNIVORE",
+        isSpicy: /picante|spicy|🌶/.test(text),
+      });
+    }
+    cur = null;
+  };
+  for (const line of lines) {
+    if (/^##\s+/.test(line) && !/^###/.test(line)) { flush(); category = line.replace(/^##\s+/, "").trim() || "General"; continue; }
+    if (/^###\s+/.test(line)) { flush(); headers++; cur = { name: line.replace(/^###\s+/, "").trim(), price: 0, desc: [], img: null, cat: category }; continue; }
+    if (!cur || !line) continue;
+    const price = line.match(/^\$\s*([\d.,]+)/);
+    if (price && !cur.price) { cur.price = parseInt(price[1].replace(/[.,]/g, ""), 10) || 0; continue; }
+    if (price) continue; // precio tachado / segundo precio
+    const img = line.match(/^!\[[^\]]*\]\((https?:[^)\s]+)\)/);
+    if (img) { cur.img ??= img[1]; continue; }
+    if (/^(agotado|sold out|no disponible)$/i.test(line) || /^\[.*\]\(.*\)$/.test(line)) continue;
+    cur.desc.push(line);
+  }
+  flush();
+  // Solo si la estructura es clara: varios platos y casi todos los encabezados con precio.
+  if (dishes.length < 5 || dishes.length < headers * 0.7) return null;
+  return dishes;
+}
+
 export async function extractWithScraper(cartaUrl: string, providerName?: string | null, extractionConfig?: any): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
@@ -530,6 +583,16 @@ REGLAS IMPORTANTES:
         }
       }
     } catch {}
+  }
+
+  // Markdown estructurado (Mercat): se lee directo, sin Claude.
+  if (isMarkdown) {
+    const structured = parseStructuredMarkdownMenu(pageContent);
+    if (structured) {
+      const title = pageContent.match(/^Title:\s*(.+)$/m)?.[1] || "Restaurante";
+      console.log(`[Scraper] Carta estructurada leída directo: ${structured.length} platos (sin Claude)`);
+      return { restaurantName: cleanName(title), dishes: structured, logoUrl: null, bannerUrl: null };
+    }
   }
 
   console.log("[Scraper] Cleaned length:", cleaned.length, isMarkdown ? "(markdown, no cleaning)" : "(HTML cleaned)");

@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, centroPedidosConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true, happyHours: { where: { isActive: true }, select: { id: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, isActive: true } } } as const;
+    const sel = { id: true, isDemo: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, centroPedidosConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true, happyHours: { where: { isActive: true }, select: { id: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, isActive: true } } } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
@@ -258,6 +258,8 @@ export async function POST(req: NextRequest) {
     const orderNumber = prevCount + 1;
 
     const isOnline = ONLINE_METHODS.includes(paymentMethod);
+    // Local demo (pedido de prueba durante una demo de ventas): nunca pagos reales.
+    if (restaurant.isDemo && isOnline) return NextResponse.json({ error: "Tienda de demostración: elige pago en efectivo." }, { status: 400 });
 
     // Guardar cada item como superset: campos del visor/panel (dishName, unitTotal,
     // selectedOptions) + campos que necesita el POS (name, unit_price, toteat_code, options).
@@ -330,6 +332,13 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Pago offline ──
+    // Pedido de prueba en un local DEMO: solo se guarda y se pasa a su propio POS.
+    // Sin Purchase a Meta, sin envío a Toteat, sin correos ni notificaciones.
+    if (restaurant.isDemo) {
+      await mirrorOnlineOrderToCentro(order.id, "web").catch((e) => console.error("[ecommerce/checkout] demo mirror:", e));
+      return NextResponse.json({ ok: true, orderId: order.id, paid: false, demo: true, total });
+    }
+
     if (!isOnline) {
       // Pedido colocado (efectivo/transferencia = se paga al recibir) → Purchase a Meta (CAPI).
       void fireMetaPurchase(order.id, req);

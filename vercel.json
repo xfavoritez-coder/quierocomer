@@ -26,7 +26,7 @@
     },
     {
       "path": "/api/cron/ecommerce-surveys",
-      "schedule": "0 * * * *"
+      "schedule": "0 11 * * *"
     },
     {
       "path": "/api/cron/ecommerce-delivery-sync",
@@ -58,7 +58,15 @@
     },
     {
       "path": "/api/cron/customer-recovery",
-      "schedule": "0 14 * * *"
+      "schedule": "50 10 * * *"
+    },
+    {
+      "path": "/api/cron/ventas-recordatorios",
+      "schedule": "15 * * * *"
+    },
+    {
+      "path": "/api/cron/ventas-muestra",
+      "schedule": "40 9 * * *"
     }
   ]
 }
