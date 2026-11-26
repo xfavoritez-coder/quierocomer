@@ -8,22 +8,22 @@ export const SELLER_NOTES: Record<ChapterId, { frases: string[]; preguntas: stri
     objeciones: [],
   },
   carta: {
-    frases: ["Tu carta en papel solo informa; esta vende.", "Cambias un precio y se actualiza al tiro en todas las mesas."],
+    frases: ["No reemplazamos tu carta de papel: la complementamos.", "Se traduce sola, recomienda platos y llama al garzón.", "Y si quieres papel, la exportas en PDF con diseño."],
     preguntas: ["¿Cada cuánto reimprimen la carta?", "¿Los garzones alcanzan a atender todas las mesas en hora punta?"],
-    objeciones: [{ o: "Mis clientes prefieren la carta física", r: "Puedes tener las dos: te imprimimos la carta en PDF desde el mismo sistema." }],
+    objeciones: [{ o: "Mis clientes prefieren la carta física", r: "Perfecto, son complementarias: exportas tu carta en PDF con diseño, con los mismos precios que el QR." }],
   },
   loyalty: {
-    frases: ["Que el cliente que vino una vez, vuelva.", "La base de clientes es tuya, no de una app."],
+    frases: ["Cada visita suma un sello, en su celular y sin app.", "Le avisamos cuando pasa cerca y en su cumpleaños."],
     preguntas: ["¿Sabes quiénes son tus clientes frecuentes?", "¿Tienes alguna forma de avisarles de una promo?"],
     objeciones: [{ o: "Mis clientes no se descargan apps", r: "No necesitan app: la tarjeta queda en su celular con un QR." }],
   },
   ecommerce: {
-    frases: ["Tu propia tienda, sin pagar 25–30% de comisión.", "El pedido llega directo a tu cocina."],
+    frases: ["Tu propia tienda: 0% de comisión.", "Con nuestra alianza, un motorista retira y entrega el pedido.", "Haz un pedido de prueba y mira cómo llega al POS."],
     preguntas: ["¿Cuánto venden al mes por apps de delivery?", "¿Qué porcentaje les cobran?"],
     objeciones: [{ o: "La gente igual pide por las apps", r: "Las apps te traen clientes nuevos; tu tienda hace que los que ya te conocen te pidan sin comisión." }],
   },
   pos: {
-    frases: ["Toda tu operación en una pantalla, incluso sin internet.", "Los pedidos de la tienda y del QR entran al mismo POS."],
+    frases: ["Toda tu operación en una pantalla, incluso sin internet.", "Reportes de clientes: nuevos, recurrentes y perdidos.", "Recuperación de clientes: les llega un cupón y vuelven."],
     preguntas: ["¿Qué sistema usan hoy para cobrar?", "¿Cuánto se demoran en cuadrar la caja?"],
     objeciones: [{ o: "Ya tengo un POS", r: "Importamos tus datos y lo dejamos funcionando; además se conecta solo con tu tienda y tu carta." }],
   },

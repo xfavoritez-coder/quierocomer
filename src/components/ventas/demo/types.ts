@@ -25,6 +25,12 @@ export type DemoPlan = {
 };
 export type DemoPlanSection = { id: string; title: string; subtitle: string; plans: DemoPlan[] };
 
+/** Pedido de prueba hecho por el dueño desde su celular (tienda demo). */
+export type LiveOrder = {
+  id: string; number: number | null; customer: string; phone: string; payment: string; note: string | null;
+  lines: { name: string; qty: number; price: number }[]; total: number; at: string;
+};
+
 export type ChapterId = "inicio" | "carta" | "loyalty" | "ecommerce" | "pos" | "planes";
 
 /** Comisión de referencia de las apps de delivery (calculadora de la tienda). */

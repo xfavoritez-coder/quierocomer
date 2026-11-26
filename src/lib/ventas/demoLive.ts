@@ -29,15 +29,17 @@ export async function ensureDemoLoyalty(slug: string | null, opts: { color: stri
  *  local y pago en efectivo (sin cobros ni despacho reales). SOLO restaurantes isDemo. */
 export async function ensureDemoStore(slug: string | null, color: string) {
   if (!slug) return;
-  const r = await prisma.restaurant.findUnique({ where: { slug }, select: { id: true, isDemo: true, ecommerceEnabled: true, ecommerceStoreConfig: true } });
+  const r = await prisma.restaurant.findUnique({ where: { slug }, select: { id: true, isDemo: true, ecommerceEnabled: true, ecommerceStoreConfig: true, waiterPanelActive: true } });
   if (!r?.isDemo) return;
+  // Botón "Llamar al garzón" en su carta, para probarlo durante la demo.
+  if (!r.waiterPanelActive) await prisma.restaurant.update({ where: { id: r.id }, data: { waiterPanelActive: true } }).catch(() => {});
   const cfg = (r.ecommerceStoreConfig && typeof r.ecommerceStoreConfig === "object" && !Array.isArray(r.ecommerceStoreConfig)) ? (r.ecommerceStoreConfig as Record<string, unknown>) : {};
-  if (r.ecommerceEnabled && cfg.demoStore === true) return; // ya preparada
+  if (r.ecommerceEnabled && cfg.demoStore === true && cfg.theme) return; // ya preparada
   await prisma.restaurant.update({
     where: { id: r.id },
     data: {
       ecommerceEnabled: true,
-      ecommerceStoreConfig: { ...cfg, demoStore: true, paymentMethods: ["efectivo"], pickupEnabled: true, deliveryEnabled: false, primaryColor: cfg.primaryColor ?? color } as object,
+      ecommerceStoreConfig: { ...cfg, demoStore: true, theme: cfg.theme ?? "modern", paymentMethods: ["efectivo"], pickupEnabled: true, deliveryEnabled: false, primaryColor: cfg.primaryColor ?? color } as object,
     },
   }).catch((e) => console.error("[ventas] demo store", e));
 }

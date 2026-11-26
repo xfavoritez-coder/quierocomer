@@ -217,7 +217,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     showTableMenu: o.showTableMenu === true,
     posRetryEnabled: o.posRetryEnabled === true,
     favoritesEnabled: o.favoritesEnabled !== false, // ON por defecto en todos los locales (se apaga explícitamente)
-    theme: o.theme === "impact" ? "impact" : o.theme === "modern" ? "modern" : "base",
+    // Modern es el diseño por defecto; "base" (clásico) solo si el local lo eligió.
+    theme: o.theme === "impact" ? "impact" : o.theme === "base" ? "base" : "modern",
     bannerProductIds: Array.isArray(o.bannerProductIds)
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
       : [],

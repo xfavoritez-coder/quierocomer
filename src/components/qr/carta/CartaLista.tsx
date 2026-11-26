@@ -591,7 +591,7 @@ export default function CartaLista({
         </a>
       </footer>
 
-      {!(restaurant as any).isDemo && showWaiter && (
+      {(!(restaurant as any).isDemo || (restaurant as any).fieldDemo) && showWaiter && (
         <div className="fixed z-50" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom)" }}>
           <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />
         </div>

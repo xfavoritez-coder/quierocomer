@@ -139,7 +139,7 @@ export function useViewport() {
 /** Contenedor centrado de un capítulo (deja espacio para la barra y el progreso). */
 export function Stage({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "76px clamp(20px, 5vw, 80px) 64px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", ...style }}>
+    <div style={{ position: "absolute", inset: 0, padding: "clamp(92px, 12vh, 118px) clamp(20px, 5vw, 80px) 64px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", ...style }}>
       {children}
     </div>
   );

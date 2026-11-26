@@ -4,19 +4,20 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Bell, ChevronLeft, ChevronRight, CreditCard, Handshake, Heart, Maximize2, Minimize2, QrCode, ShoppingBag, StickyNote, X } from "lucide-react";
-import type { ChapterId, DemoData } from "./types";
+import type { ChapterId, DemoData, LiveOrder } from "./types";
 import { SELLER_NOTES } from "./notes";
 import { EASE, LocalLogo, clp } from "./ui";
+import { demoPrize } from "./dishes";
 import Intro from "./chapters/Intro";
-import CartaQR from "./chapters/CartaQR";
+import CartaQR, { cartaSteps } from "./chapters/CartaQR";
 import Loyalty from "./chapters/Loyalty";
-import Ecommerce from "./chapters/Ecommerce";
-import Pos from "./chapters/Pos";
+import Ecommerce, { ecommerceSteps } from "./chapters/Ecommerce";
+import Pos, { posSteps } from "./chapters/Pos";
 import Planes, { planesSteps } from "./chapters/Planes";
 import CloseBar from "./CloseBar";
 import { recommendPlanId, withRecommendation, type InterestModule } from "./recommend";
 
-export type ChapterProps = { data: DemoData; step: number; onStart?: () => void };
+export type ChapterProps = { data: DemoData; step: number; onStart?: () => void; live?: { orders: LiveOrder[] } };
 
 /** Datos del lead que solo ve el vendedor (cierre e intereses). */
 export type SellerContext = { email: string; whatsapp: string; interests: string[] };
@@ -33,10 +34,10 @@ type Chapter = { id: ChapterId; title: string; steps: number | ((d: DemoData) =>
 
 const CHAPTERS: Chapter[] = [
   { id: "inicio", title: "Inicio", steps: 2, dark: true, Comp: Intro, qr: QR_CARTA },
-  { id: "carta", title: "Carta QR", steps: 5, dark: false, Comp: CartaQR, qr: QR_CARTA },
+  { id: "carta", title: "Carta QR", steps: cartaSteps, dark: false, Comp: CartaQR, qr: QR_CARTA },
   { id: "loyalty", title: "Fidelización", steps: 4, dark: true, Comp: Loyalty, qr: QR_LOYALTY },
-  { id: "ecommerce", title: "Tienda online", steps: 4, dark: false, Comp: Ecommerce, qr: QR_STORE },
-  { id: "pos", title: "POS", steps: 4, dark: true, Comp: Pos, qr: QR_CARTA },
+  { id: "ecommerce", title: "Tienda online", steps: ecommerceSteps, dark: false, Comp: Ecommerce, qr: QR_STORE },
+  { id: "pos", title: "POS", steps: posSteps, dark: true, Comp: Pos, qr: QR_CARTA },
   { id: "planes", title: "Planes", steps: planesSteps, dark: false, Comp: Planes, qr: QR_CARTA },
 ];
 
@@ -88,6 +89,10 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
     if (started.current) return; // una sola vez (React en desarrollo ejecuta los efectos dos veces)
     started.current = true;
     track({ type: "demo_started" });
+    // Deja listo el local demo (garzón, tarjeta, tienda) y refresca su carta en caché.
+    if (mode === "seller" && data.leadId && data.slug) {
+      fetch(`/api/ventas/leads/${data.leadId}/prepare`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color: data.color, prize: demoPrize(data)?.name ?? null }) }).catch(() => {});
+    }
   }, [track]);
   useEffect(() => {
     const prev = lastChapter.current;
@@ -105,6 +110,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
 
   // ── En vivo: lo que el dueño hace en su celular (llamar garzón, inscribirse) ──
   const [toasts, setToasts] = useState<LiveEvent[]>([]);
+  const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([]);
   useEffect(() => {
     if (mode !== "seller" || !data.leadId || !data.slug) return;
     let since = new Date().toISOString();
@@ -120,6 +126,10 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
           seen.add(ev.id);
           if (ev.at > since) since = ev.at;
           setToasts((t) => [...t.slice(-2), ev]);
+          if (ev.type === "test_order" && ev.order) {
+            const o = ev.order;
+            setLiveOrders((list) => [...list, { id: ev.id, number: o.number, customer: o.customer, phone: o.phone, payment: o.payment, note: o.note, lines: o.lines, total: o.total, at: ev.at }]);
+          }
           setTimeout(() => setToasts((t) => t.filter((x) => x.id !== ev.id)), 7000);
           chime();
           track({ type: ev.type, payload: { label: ev.label } });
@@ -216,7 +226,7 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
             transition={{ duration: reduce ? 0.2 : 0.85, ease: EASE }}
             style={{ position: "absolute", inset: 0 }}
           >
-            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} />
+            <chapter.Comp data={data} step={step} onStart={canClose ? () => setCloseOpen(true) : undefined} live={{ orders: liveOrders }} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -361,7 +371,10 @@ export default function DemoShell({ data: baseData, mode = "seller", exitHref, s
   );
 }
 
-type LiveEvent = { id: string; type: "waiter_called" | "loyalty_enrolled" | "test_order"; label: string; at: string; detail?: string; total?: number };
+type LiveEvent = {
+  id: string; type: "waiter_called" | "loyalty_enrolled" | "test_order"; label: string; at: string; detail?: string; total?: number;
+  order?: { number: number | null; customer: string; phone: string; payment: string; note: string | null; lines: { name: string; qty: number; price: number }[]; total: number };
+};
 
 /** Sonido corto de dos tonos (sin archivos). Requiere una interacción previa (tecla o clic). */
 function chime() {

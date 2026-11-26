@@ -307,10 +307,14 @@ export default async function CartaPage({
   // Fetch lead data for DemoBanner inline form (only if demo)
   const leadData = (restaurant as any).isDemo ? await prisma.lead.findFirst({
     where: { generatedSlug: slug },
-    select: { ownerName: true, email: true, whatsapp: true, panelVisitedAt: true },
+    select: { ownerName: true, email: true, whatsapp: true, panelVisitedAt: true, sellerId: true },
     orderBy: { createdAt: "desc" },
   }).catch(() => null) : null;
-  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
+  // Demo de QuieroComer Ventas (presentada por un vendedor): carta "real" para probar en vivo
+  // (botón del garzón) y sin los avisos de "Ir al panel" / "Vista previa".
+  const isFieldDemo = !!leadData?.sellerId;
+  if (isFieldDemo) (restaurant as any).fieldDemo = true;
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt || isFieldDemo;
   // Empty carta: show "próximamente" when demo restaurant has no dishes yet
   if ((restaurant as any).isDemo && dishes.length === 0 && !isShowcase && !isEmbed) {
     return <CartaProximamente restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;
@@ -469,7 +473,7 @@ export default async function CartaPage({
           }
         `}} />
       )}
-      {(restaurant as any).isDemo && !isShowcase && (restaurant as any).defaultView !== "impact" && (
+      {(restaurant as any).isDemo && !isFieldDemo && !isShowcase && (restaurant as any).defaultView !== "impact" && (
         <>
           <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
           <div style={{ height: 0 }} />

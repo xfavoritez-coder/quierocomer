@@ -8,6 +8,18 @@ import type { DemoData } from "../types";
 import { TabletFrame } from "../frames";
 import { BrandText, CountUp, EASE, Eyebrow, Headline, LocalLogo, Reveal, Stage, avgTicket, clp, featuredDishes, lighten, onColor, rgba, useViewport } from "../ui";
 
+export const posSteps = 8;
+
+const COPY: Record<number, { t1: React.ReactNode; t2: React.ReactNode; sub: string }> = {
+  1: { t1: "Mesas, cuentas y cobros.", t2: "Con tus platos ya cargados.", sub: "Toca una mesa libre, agrega platos y cobra." },
+  2: { t1: "Se cae el wifi.", t2: "Tú sigues vendiendo.", sub: "Las ventas se guardan y se sincronizan solas cuando vuelve internet." },
+  3: { t1: "Cada pedido,", t2: "su comanda.", sub: "Del salón, de tu tienda online o de las apps: todo entra al mismo POS y se imprime en cocina al instante." },
+  4: { t1: "Conoce a tus clientes.", t2: "No solo tus ventas.", sub: "Clientes nuevos y recurrentes, tus platos estrella y quiénes dejaron de venir. Reportes que te dicen qué hacer." },
+  5: { t1: "El cliente que se fue,", t2: "vuelve.", sub: "Detectamos a quien dejó de pedir y le enviamos un cupón automático. Tú solo ves cómo regresan." },
+  6: { t1: "Inventario y bodega,", t2: "al día.", sub: "Cada venta descuenta los insumos. Te avisamos antes de que algo se acabe." },
+  7: { t1: "¿Más de un local?", t2: "Todo en un solo lugar.", sub: "Ventas, cajas y reportes de todas tus sucursales, juntos o por separado." },
+};
+
 export default function Pos({ data, step }: ChapterProps) {
   const { narrow, w } = useViewport();
   const c = data.color;
@@ -23,32 +35,41 @@ export default function Pos({ data, step }: ChapterProps) {
     );
   }
 
-  const titles: Record<number, React.ReactNode> = {
-    1: <>Mesas, cuentas y cobros.<br /><BrandText color={accent}>Con tus platos ya cargados.</BrandText><div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", fontWeight: 500, letterSpacing: 0, color: "rgba(255,255,255,.55)", marginTop: 16, lineHeight: 1.5 }}>Toca una mesa libre, agrega platos y cobra.</div></>,
-    2: <>Se cae el wifi.<br /><BrandText color={accent}>Tú sigues vendiendo.</BrandText></>,
-    3: <>Tu día,<br /><BrandText color={accent}>en números.</BrandText></>,
-  };
-  const tabletW = Math.min(narrow ? w - 40 : 800, 800);
+  const k = Math.min(step, posSteps - 1);
+  const copy = COPY[k];
+  const tabletW = Math.min(narrow ? w - 40 : 780, 780);
+  const screen =
+    k === 1 || k === 2 ? <PosRegister key={k === 2 ? "offline" : "online"} data={data} offline={k === 2} />
+    : k === 3 ? <PosComandas data={data} />
+    : k === 4 ? <PosReports data={data} />
+    : k === 5 ? <PosRecovery data={data} />
+    : k === 6 ? <PosInventory data={data} />
+    : <PosBranches data={data} />;
 
   return (
-    <Stage style={{ flexDirection: narrow ? "column" : "row", gap: "clamp(24px, 4vw, 70px)" }}>
+    <Stage style={{ flexDirection: narrow ? "column" : "row", gap: "clamp(24px, 4vw, 64px)" }}>
       <div style={{ flex: "0 1 380px", minWidth: 0 }}>
         <Reveal step={step} at={1}><Eyebrow color={accent}>POS · {data.name}</Eyebrow></Reveal>
         <AnimatePresence mode="wait">
-          <motion.div key={step} initial={{ opacity: 0, y: 14, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(6px)" }} transition={{ duration: 0.6, ease: EASE }}>
-            <Headline size="md" style={{ marginTop: 14, color: "#fff" }}>{titles[step]}</Headline>
-            {step === 3 && (
-              <div style={{ marginTop: 26 }}>
-                <div style={{ fontSize: "clamp(46px, 5vw, 78px)", fontWeight: 750, letterSpacing: "-.045em", lineHeight: 1, color: accent }}><CountUp value={2} run money={false} />h</div>
-                <div style={{ fontSize: 16, color: "rgba(255,255,255,.55)", marginTop: 4 }}>al día que ahorras cuadrando caja y armando informes</div>
-              </div>
-            )}
+          <motion.div key={k} initial={{ opacity: 0, y: 14, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -10, filter: "blur(6px)" }} transition={{ duration: 0.6, ease: EASE }}>
+            <Headline size="md" style={{ marginTop: 14, color: "#fff" }}>{copy.t1}<br /><BrandText color={accent}>{copy.t2}</BrandText></Headline>
+            <div style={{ fontSize: "clamp(15px, 1.3vw, 18px)", color: "rgba(255,255,255,.58)", marginTop: 16, lineHeight: 1.5 }}>{copy.sub}</div>
           </motion.div>
         </AnimatePresence>
+        {!narrow && (
+          <div style={{ display: "flex", gap: 6, marginTop: 26, flexWrap: "wrap" }}>
+            {["Caja", "Sin internet", "Comandas", "Reportes", "Recuperación", "Inventario", "Sucursales"].map((t, i) => (
+              <motion.span key={t} initial={false} animate={{ background: i + 1 === k ? accent : "rgba(255,255,255,.07)", color: i + 1 === k ? onColor(accent) : "rgba(255,255,255,.5)" }}
+                style={{ padding: "6px 12px", borderRadius: 99, fontSize: 12.5, fontWeight: 700 }}>{t}</motion.span>
+            ))}
+          </div>
+        )}
       </div>
       <Reveal step={step} at={1} y={70} delay={0.2}>
         <TabletFrame width={tabletW}>
-          {step === 3 ? <PosDashboard data={data} /> : <PosRegister key={step === 2 ? "offline" : "online"} data={data} offline={step === 2} />}
+          <AnimatePresence mode="wait">
+            <motion.div key={k === 2 ? 1 : k} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }} style={{ position: "absolute", inset: 0 }}>{screen}</motion.div>
+          </AnimatePresence>
         </TabletFrame>
       </Reveal>
     </Stage>
@@ -202,54 +223,229 @@ function PosRegister({ data, offline }: { data: DemoData; offline: boolean }) {
   );
 }
 
-function PosDashboard({ data }: { data: DemoData }) {
-  const c = data.color;
-  const ticket = avgTicket(data);
-  const orders = 87;
-  const top = featuredDishes(data, 5).map((d, i) => ({ name: d.name, qty: [34, 27, 21, 16, 12][i] }));
-  const hours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
-  const load = [40, 95, 80, 30, 18, 22, 35, 60, 100, 88, 50, 20];
+// ── Pantallas del POS ──────────────────────────────────────────────────────
+const card: React.CSSProperties = { background: "#fff", borderRadius: 12, padding: "11px 12px" };
+const kpiLabel: React.CSSProperties = { color: "#999", fontSize: 10, fontWeight: 700 };
 
+function Shell({ data, title, children }: { data: DemoData; title?: string; children: React.ReactNode }) {
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", fontSize: 11, color: "#1a1a1a" }}>
       <PosTopBar data={data} offline={false} />
-      <div style={{ flex: 1, padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "auto 1fr", gap: 10, minHeight: 0 }}>
-        {[
-          { l: "Ventas de hoy", v: <CountUp value={orders * ticket} run /> },
-          { l: "Pedidos", v: <CountUp value={orders} run money={false} /> },
-          { l: "Ticket promedio", v: <CountUp value={ticket} run /> },
-        ].map((k) => (
-          <div key={k.l} style={{ background: "#fff", borderRadius: 12, padding: "11px 12px" }}>
-            <div style={{ color: "#999", fontSize: 10, fontWeight: 700 }}>{k.l}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-.03em", marginTop: 4 }}>{k.v}</div>
+      {title && <div style={{ padding: "12px 14px 0", fontWeight: 800, fontSize: 13 }}>{title}</div>}
+      <div style={{ flex: 1, padding: 14, minHeight: 0, display: "flex", flexDirection: "column" }}>{children}</div>
+    </div>
+  );
+}
+
+/** Comandas: pedidos de distintos canales que se imprimen en cocina. */
+function PosComandas({ data }: { data: DemoData }) {
+  const reduce = useReducedMotion();
+  const c = data.color;
+  const d = featuredDishes(data, 6).filter((x) => x.price > 0);
+  const tickets = [
+    { src: "Salón · Mesa 4", color: "#8b5cf6", items: d.slice(0, 3) },
+    { src: "Tienda online · Retiro", color: c, items: d.slice(2, 4) },
+    { src: "Uber Eats · Delivery", color: "#16a34a", items: d.slice(4, 6).length ? d.slice(4, 6) : d.slice(0, 2) },
+  ];
+  const [n, setN] = useState(reduce ? 3 : 0);
+  useEffect(() => {
+    if (reduce) return;
+    const ts = [0, 1, 2].map((i) => setTimeout(() => setN(i + 1), 500 + i * 1400));
+    return () => ts.forEach(clearTimeout);
+  }, [reduce]);
+  return (
+    <Shell data={data} title="Cocina · comandas">
+      <div style={{ flex: 1, display: "flex", gap: 12, alignItems: "flex-start" }}>
+        {tickets.map((t, i) => (
+          <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ width: "86%", height: 16, borderRadius: "8px 8px 3px 3px", background: "#2b2b2e", boxShadow: "inset 0 -3px 0 #111" }} />
+            <motion.div initial={false} animate={{ height: i < n ? "auto" : 0 }} transition={{ duration: 1.1, ease: EASE }}
+              style={{ width: "78%", overflow: "hidden", background: "#fffefa", boxShadow: "0 10px 20px -10px rgba(0,0,0,.35)", fontFamily: "var(--demo-mono)", fontSize: 10 }}>
+              <div style={{ padding: "9px 10px 12px", borderBottom: "2px dashed #ddd" }}>
+                <div style={{ fontWeight: 800, fontSize: 10.5, color: t.color }}>{t.src}</div>
+                <div style={{ color: "#999", marginBottom: 6 }}>#{140 + i} · 13:4{i}</div>
+                {t.items.map((x) => <div key={x.name} style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>1× {x.name}</div>)}
+              </div>
+            </motion.div>
           </div>
         ))}
-        <div style={{ gridColumn: "span 2", background: "#fff", borderRadius: 12, padding: 12, display: "flex", flexDirection: "column", minHeight: 0 }}>
-          <b style={{ fontSize: 11.5 }}>Horas punta</b>
-          <div style={{ flex: 1, display: "flex", alignItems: "flex-end", gap: 6, marginTop: 8 }}>
-            {hours.map((h, i) => (
-              <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, height: "100%", justifyContent: "flex-end" }}>
-                <motion.div initial={{ height: 0 }} animate={{ height: `${load[i]}%` }} transition={{ duration: 1, ease: EASE, delay: 0.3 + i * 0.05 }}
-                  style={{ width: "100%", borderRadius: 5, background: load[i] >= 80 ? c : rgba(c, 0.3) }} />
-                <span style={{ fontSize: 8.5, color: "#999", fontFamily: "var(--demo-mono)" }}>{h}</span>
-              </div>
-            ))}
-          </div>
+      </div>
+    </Shell>
+  );
+}
+
+/** Reportes avanzados: clientes nuevos/recurrentes, platos estrella, clientes perdidos. */
+function PosReports({ data }: { data: DemoData }) {
+  const c = data.color;
+  const top = featuredDishes(data, 4).map((d, i) => ({ name: d.name, qty: [42, 31, 24, 15][i] }));
+  const ring = (pct: number) => `conic-gradient(${c} 0 ${pct}%, ${rgba(c, 0.18)} ${pct}% 100%)`;
+  return (
+    <Shell data={data} title="Reportes · últimos 30 días">
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "auto 1fr", gap: 10, minHeight: 0 }}>
+        <div style={card}><div style={kpiLabel}>Clientes nuevos</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}><CountUp value={186} run money={false} /></div><div style={{ color: "#16a34a", fontWeight: 700, fontSize: 10 }}>▲ 12% vs mes anterior</div></div>
+        <div style={card}><div style={kpiLabel}>Clientes recurrentes</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}><CountUp value={412} run money={false} /></div><div style={{ color: "#16a34a", fontWeight: 700, fontSize: 10 }}>▲ 8%</div></div>
+        <div style={{ ...card, background: "#fef2f2" }}><div style={{ ...kpiLabel, color: "#dc2626" }}>Clientes perdidos</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 4, color: "#dc2626" }}><CountUp value={37} run money={false} /></div><div style={{ color: "#b91c1c", fontWeight: 700, fontSize: 10 }}>no vuelven hace +45 días</div></div>
+        <div style={{ ...card, display: "flex", alignItems: "center", gap: 14 }}>
+          <motion.div initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} transition={{ duration: 1, ease: EASE }} style={{ width: 84, height: 84, borderRadius: "50%", background: ring(69), display: "grid", placeItems: "center", flexShrink: 0 }}>
+            <div style={{ width: 58, height: 58, borderRadius: "50%", background: "#fff", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 15 }}>69%</div>
+          </motion.div>
+          <div><b style={{ fontSize: 11.5 }}>Vuelven</b><div style={{ color: "#888", marginTop: 3, lineHeight: 1.35 }}>de cada 10 clientes, 7 repiten en el mes</div></div>
         </div>
-        <div style={{ background: "#fff", borderRadius: 12, padding: 12 }}>
-          <b style={{ fontSize: 11.5 }}>Más vendidos</b>
+        <div style={{ ...card, gridColumn: "span 2" }}>
+          <b style={{ fontSize: 11.5 }}>Platos estrella</b>
           <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
             {top.map((t, i) => (
               <div key={t.name}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10 }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span><span style={{ fontFamily: "var(--demo-mono)", fontWeight: 700 }}>{t.qty}</span></div>
                 <div style={{ height: 5, background: "#f1efea", borderRadius: 3, marginTop: 3 }}>
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${(t.qty / top[0].qty) * 100}%` }} transition={{ duration: 1, ease: EASE, delay: 0.5 + i * 0.1 }} style={{ height: "100%", borderRadius: 3, background: c }} />
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${(t.qty / top[0].qty) * 100}%` }} transition={{ duration: 1, ease: EASE, delay: 0.4 + i * 0.1 }} style={{ height: "100%", borderRadius: 3, background: c }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </Shell>
+  );
+}
+
+/** Recuperación de clientes: se va, recibe un cupón, vuelve. */
+function PosRecovery({ data }: { data: DemoData }) {
+  const reduce = useReducedMotion();
+  const c = data.color;
+  const dish = featuredDishes(data, 1)[0];
+  const people = [
+    { n: "María González", d: 52 }, { n: "Jorge Pérez", d: 47 }, { n: "Valentina Díaz", d: 61 },
+  ];
+  const [k, setK] = useState(reduce ? 3 : 0);
+  useEffect(() => {
+    if (reduce) return;
+    const ts = [setTimeout(() => setK(1), 900), setTimeout(() => setK(2), 2300), setTimeout(() => setK(3), 3900)];
+    return () => ts.forEach(clearTimeout);
+  }, [reduce]);
+  return (
+    <Shell data={data} title="Recuperación de clientes">
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 12, minHeight: 0 }}>
+        <div style={{ ...card, display: "grid", gap: 8, alignContent: "start" }}>
+          <div style={kpiLabel}>No vuelven hace +45 días</div>
+          {people.map((p, i) => {
+            const back = i === 0 && k >= 3;
+            const sent = k >= 1;
+            return (
+              <motion.div key={p.n} layout style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 9px", borderRadius: 10, background: back ? "#f0fdf4" : "#faf9f7" }}>
+                <div style={{ width: 26, height: 26, borderRadius: 99, background: rgba(c, 0.15), color: c, display: "grid", placeItems: "center", fontWeight: 800 }}>{p.n[0]}</div>
+                <div style={{ flex: 1, minWidth: 0 }}><b>{p.n}</b><div style={{ color: "#999", fontSize: 9.5 }}>última visita hace {p.d} días</div></div>
+                <AnimatePresence mode="wait">
+                  <motion.span key={back ? "b" : sent ? "s" : "w"} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                    style={{ fontSize: 9.5, fontWeight: 800, padding: "3px 8px", borderRadius: 99, background: back ? "#16a34a" : sent ? rgba(c, 0.15) : "#eee", color: back ? "#fff" : sent ? c : "#999" }}>
+                    {back ? "¡Volvió!" : sent ? "Cupón enviado" : "En riesgo"}
+                  </motion.span>
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gap: 10, alignContent: "start" }}>
+          <motion.div initial={false} animate={{ opacity: k >= 2 ? 1 : 0.25, y: k >= 2 ? 0 : 8 }} transition={{ duration: 0.6, ease: EASE }} style={{ ...card, border: `1.5px dashed ${c}` }}>
+            <div style={kpiLabel}>Correo automático</div>
+            <div style={{ fontWeight: 800, fontSize: 12.5, marginTop: 4 }}>María, te extrañamos 💛</div>
+            <div style={{ color: "#666", marginTop: 4, lineHeight: 1.35 }}>Vuelve a {data.name} con <b style={{ color: c }}>15% de descuento</b>{dish ? ` en tu ${dish.name}` : ""}. Válido 7 días.</div>
+            <div style={{ marginTop: 8, display: "inline-block", fontFamily: "var(--demo-mono)", fontWeight: 800, padding: "4px 10px", borderRadius: 8, background: rgba(c, 0.12), color: c }}>VUELVE15</div>
+          </motion.div>
+          <motion.div initial={false} animate={{ opacity: k >= 3 ? 1 : 0.25 }} transition={{ duration: 0.6 }} style={{ ...card, background: "#111", color: "#fff" }}>
+            <div style={{ ...kpiLabel, color: "rgba(255,255,255,.5)" }}>Recuperados este mes</div>
+            <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{k >= 3 ? <CountUp value={14} run money={false} /> : 0} <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.55)" }}>clientes volvieron</span></div>
+          </motion.div>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+/** Inventario y bodega: stock que baja con cada venta y alerta de reposición. */
+function PosInventory({ data }: { data: DemoData }) {
+  const reduce = useReducedMotion();
+  const c = data.color;
+  const items = [
+    { n: "Arroz", u: "kg", from: 18, to: 16.4, max: 25 },
+    { n: "Palta", u: "kg", from: 3.2, to: 1.4, max: 10, low: true },
+    { n: "Queso crema", u: "kg", from: 6, to: 5.1, max: 10 },
+    { n: "Bebidas lata", u: "un", from: 64, to: 52, max: 96 },
+  ];
+  const [sold, setSold] = useState(reduce);
+  useEffect(() => { if (reduce) return; const t = setTimeout(() => setSold(true), 900); return () => clearTimeout(t); }, [reduce]);
+  return (
+    <Shell data={data} title="Bodega · stock en tiempo real">
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 12, minHeight: 0 }}>
+        <div style={{ ...card, display: "grid", gap: 11, alignContent: "start" }}>
+          {items.map((it) => {
+            const v = sold ? it.to : it.from;
+            const low = sold && it.low;
+            return (
+              <div key={it.n}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}><b>{it.n}</b><span style={{ fontFamily: "var(--demo-mono)", fontWeight: 700, color: low ? "#dc2626" : "#1a1a1a" }}>{v.toLocaleString("es-CL")} {it.u}</span></div>
+                <div style={{ height: 7, background: "#f1efea", borderRadius: 4, marginTop: 4 }}>
+                  <motion.div initial={false} animate={{ width: `${(v / it.max) * 100}%`, background: low ? "#dc2626" : c }} transition={{ duration: 1.2, ease: EASE }} style={{ height: "100%", borderRadius: 4 }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gap: 10, alignContent: "start" }}>
+          <motion.div initial={false} animate={{ opacity: sold ? 1 : 0.3 }} style={card}>
+            <div style={kpiLabel}>Venta registrada</div>
+            <div style={{ marginTop: 4, color: "#666" }}>Cada plato vendido descuenta sus insumos de la bodega.</div>
+          </motion.div>
+          <AnimatePresence>
+            {sold && (
+              <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 1.2, duration: 0.6, ease: EASE }} style={{ ...card, background: "#fef2f2", border: "1px solid #fecaca" }}>
+                <div style={{ fontWeight: 800, color: "#dc2626" }}>⚠️ Queda poca palta</div>
+                <div style={{ color: "#7f1d1d", marginTop: 3 }}>1,4 kg · alcanza para hoy. ¿Hacer pedido al proveedor?</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+/** Multisucursal: todas las sucursales en un solo panel. */
+function PosBranches({ data }: { data: DemoData }) {
+  const c = data.color;
+  const t = avgTicket(data);
+  const branches = [
+    { n: `${data.name} · Centro`, v: 87 * t, o: 87 },
+    { n: `${data.name} · Providencia`, v: 64 * t, o: 64 },
+    { n: `${data.name} · Ñuñoa`, v: 52 * t, o: 52 },
+  ];
+  const total = branches.reduce((s, b) => s + b.v, 0);
+  return (
+    <Shell data={data} title="Todas las sucursales · hoy">
+      <div style={{ flex: 1, display: "grid", gridTemplateRows: "auto 1fr", gap: 10, minHeight: 0 }}>
+        <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div><div style={kpiLabel}>Ventas totales</div><div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}><CountUp value={total} run /></div></div>
+          <div style={{ textAlign: "right" }}><div style={kpiLabel}>Pedidos</div><div style={{ fontSize: 24, fontWeight: 800, marginTop: 2 }}><CountUp value={203} run money={false} /></div></div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {branches.map((b, i) => (
+            <motion.div key={b.n} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.15, duration: 0.6, ease: EASE }} style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ width: 28, height: 28, borderRadius: 9, background: rgba(c, 0.14), color: c, display: "grid", placeItems: "center", fontWeight: 800 }}>{i + 1}</div>
+                <div style={{ fontWeight: 800, marginTop: 8, lineHeight: 1.25 }}>{b.n}</div>
+                <div style={{ color: "#16a34a", fontWeight: 700, fontSize: 10, marginTop: 2 }}>● Caja abierta</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "var(--demo-mono)", fontWeight: 700, fontSize: 15, marginTop: 10 }}>{clp(b.v)}</div>
+                <div style={{ height: 5, background: "#f1efea", borderRadius: 3, marginTop: 6 }}>
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${(b.v / branches[0].v) * 100}%` }} transition={{ duration: 1, ease: EASE, delay: 0.5 + i * 0.1 }} style={{ height: "100%", borderRadius: 3, background: c }} />
+                </div>
+                <div style={{ color: "#999", fontSize: 10, marginTop: 4 }}>{b.o} pedidos</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </Shell>
   );
 }

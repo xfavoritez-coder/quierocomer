@@ -354,7 +354,7 @@ export default function EcommerceConfiguracionPage() {
             <SectionTitle icon={Palette} title="Tema de la tienda" sub="El diseño con el que se ve tu tienda online." />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 12 }}>
               <ThemeOption
-                active={(cfg.theme ?? "base") === "base"}
+                active={cfg.theme === "base"}
                 onClick={() => patch({ theme: "base" })}
                 title="Base"
                 desc="Claro y limpio."
@@ -370,7 +370,7 @@ export default function EcommerceConfiguracionPage() {
                 accent={cfg.primaryColor}
               />
               <ThemeOption
-                active={cfg.theme === "modern"}
+                active={(cfg.theme ?? "modern") === "modern"}
                 onClick={() => patch({ theme: "modern" })}
                 title="Modern"
                 desc="Premium, elegante y minimalista."
