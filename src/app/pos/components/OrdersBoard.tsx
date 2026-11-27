@@ -113,6 +113,33 @@ const STAGE_COLOR: Record<string, string> = {
   delivered: '#6b7280',
 }
 
+// ¿Es un pedido de mesa (consumo en el local)?
+function isDineInOrder(o: { isDelivery?: boolean; saleType?: string | null }): boolean {
+  const deliv = !!o.isDelivery || o.saleType === 'delivery'
+  return !deliv && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+}
+
+// Grupos de la vista "agrupada por estado" (en orden de aparición). 'accepted' =
+// cualquier etapa previa a preparación (new/confirmed/accepted/pending/…).
+const BOARD_GROUPS: { key: string; label: string; color: string; match: (stage: string) => boolean }[] = [
+  { key: 'accepted', label: 'Aceptado', color: '#8b5cf6', match: s => !['preparing', 'ready', 'out_for_delivery', 'delivered'].includes(s) },
+  { key: 'preparing', label: 'En preparación', color: STAGE_COLOR.preparing, match: s => s === 'preparing' },
+  { key: 'ready', label: 'Listo', color: STAGE_COLOR.ready, match: s => s === 'ready' },
+  { key: 'out_for_delivery', label: 'En reparto', color: STAGE_COLOR.out_for_delivery, match: s => s === 'out_for_delivery' },
+  { key: 'delivered', label: 'Entregado', color: STAGE_COLOR.delivered, match: s => s === 'delivered' },
+]
+
+// Cabecera de cada grupo en la vista agrupada: punto de color + etiqueta + conteo.
+function GroupHeader({ color, label, count }: { color: string; label: string; count: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 2px 10px' }}>
+      <span style={{ width: 9, height: 9, borderRadius: 3, background: color, flexShrink: 0 }} />
+      <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 13, color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</span>
+      <span style={{ fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 999, padding: '1px 8px' }}>{count}</span>
+    </div>
+  )
+}
+
 function nextAction(stage: string, isDelivery: boolean, delifastVentaId?: string | null): { label: string; stage: string } | null {
   if (stage === 'preparing') return { label: 'Listo', stage: 'ready' }
   // Órdenes con Delifast asignado: Delifast controla los estados de reparto y entrega
@@ -338,7 +365,7 @@ function OrderCard({
   stageBusy: string | null
   blocked: boolean
   branchLabel?: string
-  cols?: 1 | 2 | 3
+  cols?: 1 | 2 | 3 | 4
   waitTimeDriver: number
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
@@ -1357,8 +1384,8 @@ export function OrderDetailPanel({
   )
 }
 
-// Ícono del botón de vista: refleja el modo actual (filas / 2 col / 3 col).
-function ViewIcon({ cols }: { cols: 1 | 2 | 3 }) {
+// Ícono del botón de vista: refleja el modo actual (filas / 2 col / 3 col / 4 col).
+function ViewIcon({ cols }: { cols: 1 | 2 | 3 | 4 }) {
   if (cols === 1) {
     return (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1373,9 +1400,16 @@ function ViewIcon({ cols }: { cols: 1 | 2 | 3 }) {
       </svg>
     )
   }
+  if (cols === 3) {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="3" y="4" width="4.5" height="16" rx="1" /><rect x="9.75" y="4" width="4.5" height="16" rx="1" /><rect x="16.5" y="4" width="4.5" height="16" rx="1" />
+      </svg>
+    )
+  }
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <rect x="3" y="4" width="4.5" height="16" rx="1" /><rect x="9.75" y="4" width="4.5" height="16" rx="1" /><rect x="16.5" y="4" width="4.5" height="16" rx="1" />
+      <rect x="3" y="4" width="3.3" height="16" rx="1" /><rect x="8.23" y="4" width="3.3" height="16" rx="1" /><rect x="13.46" y="4" width="3.3" height="16" rx="1" /><rect x="18.7" y="4" width="3.3" height="16" rx="1" />
     </svg>
   )
 }
@@ -1470,6 +1504,9 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const [delifastPaused, setDelifastPaused] = useState(false)
   const [uberEnabled, setUberEnabled] = useState(false)
   const [pedidosyaEnabled, setPedidosyaEnabled] = useState(false)
+  // Vista del tablero (config del local): 'list' = pedidos corridos; 'grouped' =
+  // agrupados por estado con las mesas activas arriba.
+  const [boardView, setBoardView] = useState<'list' | 'grouped'>('list')
   const [waitTimeDriver, setWaitTimeDriver] = useState(20) // minutes, default 20
   // Delifast "stuck" alert: orders without tracking & orders stuck past waitTimeDriver
   const [noTrackingOrderIds, setNoTrackingOrderIds] = useState<Set<string>>(new Set())
@@ -1485,24 +1522,25 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   // Vista del tablero: 1 = filas, 2/3 = columnas. Se recuerda POR DISPOSITIVO
   // en localStorage. Arranca en 1 para no romper la hidratación y se carga el
   // valor guardado tras montar.
-  const [viewCols, setViewCols] = useState<1 | 2 | 3>(1)
+  const [viewCols, setViewCols] = useState<1 | 2 | 3 | 4>(1)
   useEffect(() => {
     try {
       // v2: nuevo default = 2 columnas en desktop. Clave distinta para ignorar
       // la preferencia anterior (que arrancaba en 1).
       const v = parseInt(localStorage.getItem('pos:boardCols:v2') || '', 10)
-      if (v === 1 || v === 2 || v === 3) setViewCols(v)
-      else setViewCols(window.innerWidth >= 900 ? 3 : window.innerWidth >= 600 ? 2 : 1)
+      if (v === 1 || v === 2 || v === 3 || v === 4) setViewCols(v)
+      else setViewCols(window.innerWidth >= 1100 ? 4 : window.innerWidth >= 900 ? 3 : window.innerWidth >= 600 ? 2 : 1)
     } catch { }
   }, [])
   // Máximo de columnas que caben bien según el ancho del dispositivo: teléfono
   // = 1 (en móvil 2/3 columnas se ven apretadas y cortan el texto), tablet = 2,
-  // desktop = 3. Arranca en 1 para que el SSR no choque con la hidratación.
-  const [maxCols, setMaxCols] = useState<1 | 2 | 3>(1)
+  // desktop = 3, pantalla ancha = 4. Arranca en 1 para que el SSR no choque con
+  // la hidratación.
+  const [maxCols, setMaxCols] = useState<1 | 2 | 3 | 4>(1)
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth
-      setMaxCols(w >= 900 ? 3 : w >= 600 ? 2 : 1)
+      setMaxCols(w >= 1100 ? 4 : w >= 900 ? 3 : w >= 600 ? 2 : 1)
     }
     compute()
     window.addEventListener('resize', compute)
@@ -1510,13 +1548,13 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   }, [])
   const cycleView = useCallback(() => {
     setViewCols(prev => {
-      const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3
+      const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3 | 4
       try { localStorage.setItem('pos:boardCols:v2', String(next)) } catch { }
       return next
     })
   }, [maxCols])
   // Columnas efectivas: la preferencia guardada, acotada a lo que cabe.
-  const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3
+  const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3 | 4
   // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
   // Ordenamiento: campo + dirección. Se recuerda en localStorage.
   type SortField = 'hora' | 'total' | 'estado'
@@ -1724,6 +1762,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
           setDelifastEnabled(!!d.delifastEnabled)
           setDelifastPaused(!!d.delifastTrackingPaused)
           setUberEnabled(!!d.uberEnabled); setPedidosyaEnabled(!!d.pedidosyaEnabled)
+          setBoardView(d.boardView === 'grouped' ? 'grouped' : 'list')
           if (d.driverTime) setWaitTimeDriver(parseInt(d.driverTime, 10) || 20)
           setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
         }
@@ -1818,6 +1857,41 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
 
   const newOrderLabel = 'Nuevo pedido'
 
+  // Tarjeta de pedido, reutilizada por la vista en lista y la agrupada.
+  const renderCard = (o: PosOrderLite, cardCols: 1 | 2 | 3 | 4 = cols) => (
+    <OrderCard
+      key={o.id}
+      order={o}
+      restaurantId={o._branchId ?? restaurantId}
+      isSelected={selected?.id === o.id}
+      showTypeChip={type === 'todos'}
+      cols={cardCols}
+      stageBusy={stageBusy}
+      blocked={blockedId === o.id}
+      waitTimeDriver={waitTimeDriver}
+      branchLabel={allBranches && allBranches.length > 1 && o._branchId
+        ? (allBranches.find(b => b.id === o._branchId)?.branchName || allBranches.find(b => b.id === o._branchId)?.name)
+        : undefined}
+      onSelect={() => {
+        if (isDesktop) {
+          setSelected(prev => prev?.id === o.id ? null : o)
+        } else {
+          setSelected(o)
+        }
+      }}
+      onStageChange={changeStage}
+      onCobro={handleCobro}
+      onBlock={blockAdvance}
+      onDismissBlock={dismissBlock}
+      onDelifastNoTracking={handleDelifastNoTracking}
+      uberEnabled={uberEnabled}
+      pedidosyaEnabled={pedidosyaEnabled}
+      onCourierChanged={fetchOrders}
+      delifastPaused={delifastPaused}
+      delifastStuck={delifastAlertVisible && (stuckOrderIds.has(o.id) || noTrackingOrderIds.has(o.id))}
+    />
+  )
+
   const listSection = (
     <div className="pos-scroll">
       <div className="pos-pad">
@@ -1857,7 +1931,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                     <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--line)' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Vista</div>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {([1, 2, 3] as const).filter(c => c <= maxCols).map(c => (
+                        {([1, 2, 3, 4] as const).filter(c => c <= maxCols).map(c => (
                           <button key={c} onClick={() => { setViewCols(c); try { localStorage.setItem('pos:boardCols:v2', String(c)) } catch {} }}
                             style={{
                               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
@@ -1944,41 +2018,38 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
             </div>
             <p>Sin pedidos activos.</p>
           </div>
-        ) : (
+        ) : boardView === 'grouped' ? (() => {
+          // Mesas activas arriba (más compactas); el resto agrupado por estado.
+          const isActiveMesa = (o: PosOrderLite) => isDineInOrder(o) && o.opsStage !== 'delivered' && o.posStatus !== 'canceled'
+          const mesas = list.filter(isActiveMesa)
+          const rest = list.filter(o => !isActiveMesa(o))
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {mesas.length > 0 && (
+                <div>
+                  <GroupHeader color="#8b5cf6" label="Mesas activas" count={mesas.length} />
+                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isDesktop ? 185 : 150}px, 1fr))`, gap: 10, alignItems: 'stretch' }}>
+                    {mesas.map((o) => renderCard(o, 2))}
+                  </div>
+                </div>
+              )}
+              {BOARD_GROUPS.map((g) => {
+                const gOrders = rest.filter(o => g.match(o.opsStage ?? ''))
+                if (!gOrders.length) return null
+                return (
+                  <div key={g.key}>
+                    <GroupHeader color={g.color} label={g.label} count={gOrders.length} />
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 14, alignItems: 'stretch' }}>
+                      {gOrders.map((o) => renderCard(o))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })() : (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 14, alignItems: 'stretch' }}>
-            {list.map((o) => (
-              <OrderCard
-                key={o.id}
-                order={o}
-                restaurantId={o._branchId ?? restaurantId}
-                isSelected={selected?.id === o.id}
-                showTypeChip={type === 'todos'}
-                cols={cols}
-                stageBusy={stageBusy}
-                blocked={blockedId === o.id}
-                waitTimeDriver={waitTimeDriver}
-                branchLabel={allBranches && allBranches.length > 1 && o._branchId
-                  ? (allBranches.find(b => b.id === o._branchId)?.branchName || allBranches.find(b => b.id === o._branchId)?.name)
-                  : undefined}
-                onSelect={() => {
-                  if (isDesktop) {
-                    setSelected(prev => prev?.id === o.id ? null : o)
-                  } else {
-                    setSelected(o)
-                  }
-                }}
-                onStageChange={changeStage}
-                onCobro={handleCobro}
-                onBlock={blockAdvance}
-                onDismissBlock={dismissBlock}
-                onDelifastNoTracking={handleDelifastNoTracking}
-                uberEnabled={uberEnabled}
-                pedidosyaEnabled={pedidosyaEnabled}
-                onCourierChanged={fetchOrders}
-                delifastPaused={delifastPaused}
-                delifastStuck={delifastAlertVisible && (stuckOrderIds.has(o.id) || noTrackingOrderIds.has(o.id))}
-              />
-            ))}
+            {list.map((o) => renderCard(o))}
           </div>
         )}
       </div>
