@@ -1550,9 +1550,16 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     setViewCols(prev => {
       const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3 | 4
       try { localStorage.setItem('pos:boardCols:v2', String(next)) } catch { }
+      userChoseColsRef.current = true
       return next
     })
   }, [maxCols])
+  // Auto-escalar a 4 columnas cuando hay muchos pedidos y cabe en pantalla,
+  // solo si el usuario no fijó manualmente un valor en localStorage.
+  const userChoseColsRef = useRef(false)
+  useEffect(() => {
+    try { userChoseColsRef.current = !!localStorage.getItem('pos:boardCols:v2') } catch {}
+  }, [])
   // Columnas efectivas: la preferencia guardada, acotada a lo que cabe.
   const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3 | 4
   // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
@@ -1837,6 +1844,13 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     })
   }, [orders, type, sortDir, sortField, search])
 
+  // Auto-escalar columnas según cantidad de pedidos (solo si el usuario no eligió manualmente)
+  useEffect(() => {
+    if (userChoseColsRef.current) return
+    if (list.length > 5 && maxCols >= 4) setViewCols(4)
+    else if (list.length > 2 && maxCols >= 3) setViewCols(3)
+  }, [list.length, maxCols])
+
   const changeStage = async (order: PosOrderLite, stage: string) => {
     const rid = order._branchId || restaurantId
     if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(rid, order, delifastEnabled))) return
@@ -1932,7 +1946,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                       <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Vista</div>
                       <div style={{ display: 'flex', gap: 6 }}>
                         {([1, 2, 3, 4] as const).filter(c => c <= maxCols).map(c => (
-                          <button key={c} onClick={() => { setViewCols(c); try { localStorage.setItem('pos:boardCols:v2', String(c)) } catch {} }}
+                          <button key={c} onClick={() => { setViewCols(c); userChoseColsRef.current = true; try { localStorage.setItem('pos:boardCols:v2', String(c)) } catch {} }}
                             style={{
                               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                               padding: '8px 6px', borderRadius: 8, cursor: 'pointer',
