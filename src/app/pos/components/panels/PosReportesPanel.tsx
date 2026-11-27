@@ -160,6 +160,7 @@ interface Report {
   productSales: number
   deliveryTotal: number
   tipsTotal: number
+  discountTotal: number
   grossTotal: number
   hourly: HourBucket[]
   dowStats?: DowStat[]
@@ -3379,6 +3380,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             productSales: valid.reduce((s, r) => s + r.productSales, 0),
             deliveryTotal: valid.reduce((s, r) => s + r.deliveryTotal, 0),
             tipsTotal: valid.reduce((s, r) => s + r.tipsTotal, 0),
+            discountTotal: valid.reduce((s, r) => s + (r.discountTotal ?? 0), 0),
             grossTotal: valid.reduce((s, r) => s + r.grossTotal, 0),
             hourly: mergeByKey(valid.flatMap(r => r.hourly), 'hour', ['sales', 'orders']).sort((a, b) => a.hour - b.hour),
             channels: mergeByKey(valid.flatMap(r => r.channels), 'name', ['sales', 'orders']),
@@ -3905,6 +3907,9 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
                     prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined} />
                   {data.cancellations && data.cancellations.count > 0 && (
                     <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />
+                  )}
+                  {(data.discountTotal ?? 0) > 0 && (
+                    <Stat label="Descuentos" value={clp(data.discountTotal)} hint="Cupones y dctos aplicados" color="#f59e0b" />
                   )}
                 </div>
               </>)

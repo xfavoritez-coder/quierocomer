@@ -691,6 +691,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             subscriptionStatus: "NONE",
             billingExempt: true,
             waiterPanelActive: true,
+            orderingEnabled: true,
             menuImported: true,
             website: lead.cartaUrl,
             ownerViewToken,

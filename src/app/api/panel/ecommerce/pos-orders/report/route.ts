@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { id: true, externalId: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true, rawPayload: true },
+    select: { id: true, externalId: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, discountAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true, rawPayload: true },
   });
 
   // OnlineOrder (ecommerce nativo) que NO están espejados al POS. Para locales SIN
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       status: { not: "CANCELLED" },
       OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY_METHODS } }],
     },
-    select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true, statusHistory: true, customerName: true, customerPhone: true, deliveryAddress: true, orderNumber: true, courier: true, paymentMethod: true },
+    select: { id: true, total: true, deliveryFee: true, discount: true, createdAt: true, items: true, orderType: true, fromApp: true, statusHistory: true, customerName: true, customerPhone: true, deliveryAddress: true, orderNumber: true, courier: true, paymentMethod: true },
   });
   const unmirroredOnline = onlineOrders.filter((o) => !mirroredOnlineIds.has(o.id));
   // Mapa de items de OnlineOrder para recuperar precios en PosOrders espejados
@@ -85,6 +85,7 @@ export async function GET(req: NextRequest) {
   let productSales = 0; // total con IVA, sin delivery ni propinas
   let deliveryTotal = 0;
   let tipsTotal = 0;
+  let discountTotal = 0;
   let grossTotal = 0; // lo que pagó el cliente (referencia)
   let ordersWithTip = 0;
   let filteredCount = 0; // contador cuando untilHour está activo
@@ -115,6 +116,7 @@ export async function GET(req: NextRequest) {
     productSales += net;
     deliveryTotal += o.deliveryFee || 0;
     tipsTotal += o.tipAmount || 0;
+    discountTotal += o.discountAmount || 0;
     grossTotal += o.totalAmount || 0;
     if ((o.tipAmount || 0) > 0) ordersWithTip++;
     const h = chileHour(o.createdAt);
@@ -225,6 +227,7 @@ export async function GET(req: NextRequest) {
     const net = Math.max(0, (o.total || 0) - fee);
     productSales += net;
     deliveryTotal += fee;
+    discountTotal += o.discount || 0;
     grossTotal += o.total || 0;
     const h = chileHour(o.createdAt);
     hourly[h].sales += net;
@@ -697,6 +700,7 @@ export async function GET(req: NextRequest) {
     productSales,
     deliveryTotal,
     tipsTotal,
+    discountTotal,
     grossTotal,
     hourly,
     dowStats,

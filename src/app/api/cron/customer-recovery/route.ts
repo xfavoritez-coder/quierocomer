@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
       if (Date.now() - startMs > TIME_BUDGET_MS) break;
       const cfg = parseStoreConfig(rest.ecommerceStoreConfig);
       const rc = cfg.recovery;
-      const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : `${BASE}/ecommerce/${rest.slug}`;
+      const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : cfg.brandDomain ? `https://${cfg.brandDomain}` : `${BASE}/ecommerce/${rest.slug}`;
 
       try {
         // Segmentar clientes (+ importados manuales como perdidos sintéticos)

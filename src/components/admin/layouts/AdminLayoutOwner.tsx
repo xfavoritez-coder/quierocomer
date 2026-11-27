@@ -97,7 +97,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     }] : []),
     ...(opts.hasEcommerce ? [{
       key: "ecommerce",
-      label: "Ecommerce",
+      label: "Tienda Online",
       icon: Rocket,
       items: [
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
