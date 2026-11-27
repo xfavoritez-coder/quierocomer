@@ -622,7 +622,7 @@ export default function PastOrderDetail({
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
-          <CouponDiscountRow discountAmount={order.discountAmount} couponCode={order.couponCode} />
+          <CouponDiscountRow discountAmount={order.discountAmount} couponCode={order.couponCode} totalAmount={order.totalAmount} />
           {(order.tipAmount ?? 0) > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
               <span>Propina</span>

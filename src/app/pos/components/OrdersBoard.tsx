@@ -1234,7 +1234,7 @@ export function OrderDetailPanel({
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
-          <CouponDiscountRow discountAmount={order.discountAmount} couponCode={order.couponCode} />
+          <CouponDiscountRow discountAmount={order.discountAmount} couponCode={order.couponCode} totalAmount={order.totalAmount} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
             <span>Total</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
