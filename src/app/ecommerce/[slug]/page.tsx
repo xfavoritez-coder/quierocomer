@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requestIsFromApp } from "@/lib/ecommerce/appRequest";
 import type { Metadata } from "next";
 import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain, loadEcommerceBrand, loadBrandSlugForSlug } from "@/lib/ecommerce/storefront-data";
@@ -141,6 +141,17 @@ export default async function EcommerceStorePage({ params, searchParams }: { par
   // Catálogo cacheado + disponibilidad/horario en vivo mezclados.
   const data = await getEcommerceStorefront(slug, { fromApp });
   if (!data) return notFound();
+
+  // Si la sucursal pertenece a una marca con dominio propio, redirigir allá
+  // (preservando query params como ?coupon=VUELVE-XXX). Esto cubre links de
+  // emails de recuperación que apuntaban a quierocomer.com en vez del dominio.
+  if (!slug.includes(".") && data.tenant.brandSlug) {
+    const brand = await loadEcommerceBrand(data.tenant.brandSlug);
+    if (brand?.brandDomain) {
+      const qs = Object.entries(sp).map(([k, v]) => `${k}=${encodeURIComponent(Array.isArray(v) ? v[0] ?? "" : v ?? "")}`).join("&");
+      redirect(`https://${brand.brandDomain}${qs ? `?${qs}` : ""}`);
+    }
+  }
 
   // Si el request llegó por el dominio propio, el `slug` param es el host (= customDomain):
   // en ese caso las URLs internas son limpias (base ""); en el dominio principal usamos /ecommerce/<slug>.
