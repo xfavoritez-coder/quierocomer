@@ -1716,11 +1716,10 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const delifastAlertActive = stuckOrderIds.size >= 1 || noTrackingOrderIds.size >= 2
   const delifastAlertVisible = delifastAlertActive && Date.now() > delifastAlertDismissedUntil
 
-  // Play sound once when alert first activates
+  // Track alert state (sin sonido — la alerta visual y el borde rojo son suficientes)
   useEffect(() => {
     if (delifastAlertActive && !delifastAlertSoundFiredRef.current) {
       delifastAlertSoundFiredRef.current = true
-      playDelifastWarning()
     }
     if (!delifastAlertActive) {
       delifastAlertSoundFiredRef.current = false
